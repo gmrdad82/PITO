@@ -37,8 +37,13 @@ bundle exec rubocop # Lint
 
 ## Build Tracking
 
-- **`docs/plan.md`** — build plan with checkboxes
-- **`docs/log.md`** — chronological session log (what was done, decisions made)
+Plans live in `docs/<phase>/` subdirectories. Each phase has its own plan and log:
+
+- **Current phase: `docs/alpha/`**
+  - `plan.md` — build plan with checkboxes
+  - `log.md` — chronological session log (what was done, decisions made)
+
+Future phases (e.g. `docs/beta/`) will follow the same structure.
 
 ## Configuration Strategy
 
