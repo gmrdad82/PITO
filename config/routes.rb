@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   resources :productions, only: [ :index ]
   resources :notes, only: [ :index ]
   get "settings", to: "settings#index"
+  patch "settings", to: "settings#update"
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

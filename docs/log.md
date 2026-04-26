@@ -72,3 +72,19 @@
 - AppSetting.value encrypted with `deterministic: true` so we can query by encrypted value (needed for lookups)
 - Production belongs_to :video is optional (can plan a production before filming/uploading)
 - VideoStat uniqueness scoped to [video_id, date] — one stats row per video per day
+
+---
+
+**Step 4: Settings page for OAuth credentials** — completed
+
+- Built Settings page with form to manage YouTube OAuth config (client_id, client_secret, redirect_uri) via AppSetting
+- SettingsController with index (GET) and update (PATCH) actions
+- Empty fields don't overwrite existing values (safe partial updates)
+- Client secret uses password input type
+- Fixed CI: Active Record Encryption keys provided via config when ENV["CI"] is set (no master key needed)
+- 7 request specs for settings CRUD + flash messages
+- 52 total specs, 0 failures
+
+**Decisions:**
+- Single form with all three OAuth fields rather than individual key/value CRUD — simpler UX for a fixed set of settings
+- CI encryption keys hardcoded in test.rb behind ENV["CI"] guard — these are throwaway test keys, not real secrets
