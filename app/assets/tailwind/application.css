@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* Craigslist-style: blue underlined links */
+a {
+  color: #0000cc;
+  text-decoration: underline;
+}
+a:visited {
+  color: #551a8b;
+}
+a:hover {
+  color: #0000ff;
+}
+
+/* Dense tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8125rem;
+}
+th, td {
+  text-align: left;
+  padding: 3px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+th {
+  font-weight: 600;
+}
+tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Plain form inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  border: 1px solid #d1d5db;
+  padding: 4px 6px;
+  font-size: 0.8125rem;
+  border-radius: 1px;
+  width: 100%;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 1px solid #0000cc;
+  border-color: #0000cc;
+}
+
+/* Small bordered submit buttons */
+input[type="submit"],
+button[type="submit"] {
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: 3px 12px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  border-radius: 1px;
+}
+input[type="submit"]:hover,
+button[type="submit"]:hover {
+  background: #f3f4f6;
+}

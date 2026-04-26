@@ -43,9 +43,11 @@ bundle exec rubocop # Lint
 
 ## Configuration Strategy
 
-- `.env` — infrastructure connection info ONLY (host/port for MySQL, Redis URL). No secrets.
-- `rails credentials:edit` — MySQL database/username/password per environment.
+- `.env.development` / `.env.test` — per-environment infrastructure connection info ONLY (host/port for MySQL, Redis URL). No secrets. Gitignored.
+- `.env.example` — template for the above. Committed.
+- `rails credentials:edit` — MySQL database/username/password per environment, Sidekiq web auth.
 - `config/master.key` — on disk, gitignored. Never in .env.
+- CI uses its own env vars defined in `.github/workflows/ci.yml` (no master key needed).
 - `AppSetting` table — YouTube OAuth config (client_id, client_secret, redirect_uri). Managed via web UI.
 - Per-channel OAuth tokens stored encrypted on Channel rows.
 
@@ -58,7 +60,7 @@ Craigslist-inspired: white background, black text, blue underlined links (#0000c
 - YouTube API calls isolated in service objects under `app/services/youtube/`
 - All YouTube config is web-managed (AppSetting + Channel encrypted attrs) — no YouTube secrets in env/credentials
 - Single-tenant now, architecture leaves room for multi-tenant later
-- Sidekiq Web mounted at /sidekiq (unauthenticated in V1)
+- Sidekiq Web mounted at /sidekiq, protected with HTTP basic auth (credentials: `sidekiq.username`, `sidekiq.password`)
 
 ## Project Docs (pre-Rails, in _temp/)
 

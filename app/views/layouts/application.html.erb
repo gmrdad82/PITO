@@ -3,28 +3,49 @@
   <head>
     <title><%= content_for(:title) || "Pito" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Pito">
-    <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="bg-white text-black font-sans text-sm leading-tight">
+    <header class="border-b border-gray-200 py-2 px-4">
+      <div class="max-w-6xl mx-auto flex flex-wrap items-baseline gap-x-1">
+        <a href="/" class="font-bold text-sm no-underline text-black mr-3">pito</a>
+        <nav class="flex flex-wrap items-baseline gap-x-1 text-xs">
+          <%= nav_link "Dashboard", root_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Channels", channels_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Compare", compare_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Production", productions_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Notes", notes_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Settings", settings_path %>
+          <span class="text-gray-400">&middot;</span>
+          <%= nav_link "Sidekiq", sidekiq_web_path %>
+        </nav>
+      </div>
+    </header>
+
+    <% if flash[:notice] %>
+      <div class="max-w-6xl mx-auto px-4 pt-2 text-xs text-green-800"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="max-w-6xl mx-auto px-4 pt-2 text-xs text-red-800"><%= flash[:alert] %></div>
+    <% end %>
+
+    <main class="max-w-6xl mx-auto px-4 py-3">
       <%= yield %>
     </main>
   </body>

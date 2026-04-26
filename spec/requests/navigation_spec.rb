@@ -1,0 +1,37 @@
+require "rails_helper"
+
+RSpec.describe "Navigation", type: :request do
+  %w[/ /channels /compare /productions /notes /settings].each do |path|
+    it "GET #{path} returns 200" do
+      get path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "GET #{path} includes top nav links" do
+      get path
+      body = response.body
+      expect(body).to include("Dashboard")
+      expect(body).to include("Channels")
+      expect(body).to include("Compare")
+      expect(body).to include("Production")
+      expect(body).to include("Notes")
+      expect(body).to include("Settings")
+      expect(body).to include("Sidekiq")
+    end
+  end
+
+  describe "GET /sidekiq" do
+    it "requires authentication" do
+      get "/sidekiq"
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "grants access with valid credentials" do
+      username = Rails.application.credentials.dig(:sidekiq, Rails.env.to_sym, :username) || ""
+      password = Rails.application.credentials.dig(:sidekiq, Rails.env.to_sym, :password) || ""
+      credentials = ActionController::HttpAuthentication::Basic.encode_credentials(username, password)
+      get "/sidekiq", headers: { "HTTP_AUTHORIZATION" => credentials }
+      expect(response).to have_http_status(:ok).or have_http_status(:found)
+    end
+  end
+end

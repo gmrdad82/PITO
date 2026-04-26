@@ -74,6 +74,7 @@ jobs:
         image: mysql:8
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: pito_test
         ports:
           - 3306:3306
         options: >-
@@ -81,8 +82,6 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
-          --character-set-server=utf8mb4
-          --collation-server=utf8mb4_unicode_ci
       redis:
         image: redis:7
         ports:
@@ -97,6 +96,9 @@ jobs:
       RAILS_ENV: test
       MYSQL_HOST: 127.0.0.1
       MYSQL_PORT: 3306
+      MYSQL_DATABASE: pito_test
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ""
       REDIS_URL: redis://127.0.0.1:6379/0
 
     steps:
@@ -109,8 +111,7 @@ jobs:
           bundler-cache: true
 
       - name: Set up database
-        run: |
-          bin/rails db:create db:migrate
+        run: bin/rails db:create db:migrate
 
       - name: Run RSpec
         run: bundle exec rspec

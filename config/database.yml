@@ -17,9 +17,9 @@ development:
 
 test:
   <<: *default
-  database: <%= Rails.application.credentials.dig(:mysql, :test, :database) || "pito_test" %>
-  username: <%= Rails.application.credentials.dig(:mysql, :test, :username) || "root" %>
-  password: <%= Rails.application.credentials.dig(:mysql, :test, :password) || "" %>
+  database: <%= ENV.fetch("MYSQL_DATABASE", Rails.application.credentials.dig(:mysql, :test, :database) || "pito_test") %>
+  username: <%= ENV.fetch("MYSQL_USERNAME", Rails.application.credentials.dig(:mysql, :test, :username) || "root") %>
+  password: <%= ENV.fetch("MYSQL_PASSWORD", Rails.application.credentials.dig(:mysql, :test, :password) || "") %>
 
 production:
   <<: *default

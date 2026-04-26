@@ -17,7 +17,6 @@
 - Configured Sidekiq initializer with Redis URL, sidekiq-cron loader, cron schedule file (jobs commented until Step 6)
 - Set Redis as cache store in development
 - Set Sidekiq as Active Job queue adapter
-- Mounted Sidekiq::Web at /sidekiq in routes
 - Configured RSpec with FactoryBot, Shoulda Matchers, WebMock
 - Pinned Chartkick + Chart.js in importmap
 - Wrote CLAUDE.md and README.md
@@ -27,3 +26,26 @@
 - Used mise.toml (not just .ruby-version) because mise had a bug with --path .ruby-version; kept .ruby-version too for compatibility
 - Kept solid_queue/solid_cache/solid_cable gems from Rails generator (only used in production config, won't interfere with Sidekiq in dev)
 - MySQL uses empty root password for local dev simplicity
+
+---
+
+**Step 2: Craigslist-style layout + top nav + Sidekiq Web** — completed
+
+- Created Craigslist-inspired Tailwind CSS: blue underlined links (#0000cc), dense tables, plain form inputs, small bordered buttons
+- Created application layout with top nav: `pito · Dashboard · Channels · Compare · Production · Notes · Settings · Sidekiq`
+- Created `nav_link` helper (bold span for current page, link for others)
+- Created placeholder controllers and views for all nav pages
+- Added Sidekiq::Web with HTTP basic auth from credentials (`sidekiq.username`, `sidekiq.password`)
+- Added pry-rails for console
+- Fixed CI workflow: MySQL/Redis via GitHub Actions services, test DB creds via env vars
+- Split `.env` into `.env.development` and `.env.test` (both gitignored); `.env.example` is committed
+- CI has its own env vars defined in the workflow file
+- Fixed RSpec force-setting `RAILS_ENV=test` (user has `RAILS_ENV=development` globally)
+- database.yml test section reads from env vars first (for CI), falls back to credentials (for local)
+- 16 specs, 0 failures
+
+**Decisions:**
+- Force `ENV["RAILS_ENV"] = "test"` in rails_helper (not `||=`) because user has RAILS_ENV=development globally
+- Sidekiq Web protected with HTTP basic auth via rails credentials, not left open
+- CI test job uses env vars for DB config (no master key needed in CI)
+- Separate .env.development/.env.test files instead of single .env
