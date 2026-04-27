@@ -1,5 +1,20 @@
 # Log
 
+## 2026-04-27
+
+### Session — Phase 16 Step 1: MCP stdio server
+
+- Added `mcp` gem (v0.14.0, official Ruby MCP SDK)
+- Created `bin/mcp` — standalone stdio process, boots Rails, does not touch Puma
+- 15 tools covering full app functionality: list/get/create/update/delete for channels, videos, saved views + dashboard analytics, search, settings management
+- 3 resources: design doc, app status, mcp documentation
+- Created `docs/mcp.md` with tool catalog, data shapes, architecture
+- Updated CLAUDE.md with MCP references
+- Fixed json-schema MultiJSON deprecation (initializer)
+- 38 new specs, 404 total passing
+- Decision: no auth for local stdio (auth deferred to Step 2 HTTP transport)
+- Decision: stdio transport is inherently a separate process (not in Procfile) — MCP client launches it on-demand
+
 ## 2026-04-26
 
 ### Session 1
