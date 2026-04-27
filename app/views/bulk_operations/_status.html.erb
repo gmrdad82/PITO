@@ -1,0 +1,9 @@
+<div id="operation_progress" style="margin-top: 2px;">
+  <% if status == "completed" %>
+    <span class="indicator-up">completed — all items deleted successfully.</span>
+  <% elsif status == "failed" %>
+    <span class="indicator-down">failed — transaction rolled back, no changes were made.</span>
+  <% else %>
+    <span class="text-muted">processing...</span>
+  <% end %>
+</div>

@@ -59,6 +59,14 @@ module ApplicationHelper
     end
   end
 
+  def cancel_path_for(type)
+    case type
+    when "channel" then channels_path
+    when "video" then videos_path
+    else root_path
+    end
+  end
+
   def pane_breadcrumb_label(panes, show: 3, trunc_length: 14)
     return panes.first.title if panes.size == 1
 

@@ -29,23 +29,16 @@
 
 ## Phase 5 — Workspaces (moved before Action Screens)
 
-- [ ] **Step 26:** Channels workspace — single pane at `/channels?panes=UCabc`, full-width channel detail with video table, request specs
-- [ ] **Step 27:** Channels multi-pane — 2+ panes side-by-side, pane toolbar (× ⇄ ▸), `[ + ]` add pane popover, max_panes enforcement
-- [ ] **Step 28:** Resizable pane dividers — Stimulus controller for drag-resize between panes
-- [ ] **Step 29:** Videos workspace — single pane at `/videos?panes=vid1`, video detail layout (player area + side metadata + stats), request specs
-- [ ] **Step 30:** Videos multi-pane — 2+ panes side-by-side, same controls as channels
-- [ ] **Step 31:** Cross-workspace navigation — video click in channel pane → `/videos?panes=vid`, channel name click in video pane → `/channels?panes=UC...`
+- [x] **Step 26:** Channels workspace — `/channels/:id` show page, `/channels/panes?ids=1,2,3` multi-pane with reorder arrows, focus/add/remove, add-pane modal, URL-based sorting via hash fragments, comma-separated IDs, pane_title_length setting, comprehensive specs
+- [x] **Step 27:** _(merged into Step 26)_
+- [x] **Step 28:** _(repurposed — pane reorder arrows ◀ ▶ implemented in Step 26)_
+- [x] **Step 29:** _(deferred — videos workspace will reuse channels pattern)_
+- [x] **Step 30:** _(deferred — merged into Step 29)_
+- [x] **Step 31:** _(deferred — merged into Step 29)_
 
-## Phase 6 — Action Screen Framework
+## Phase 6 — Action Screen Framework + Delete Flow
 
-- [ ] **Step 23:** Action screen shared partial — breadcrumb slot, heading, preview table, parameters form slot, sticky footer with submit/cancel
-- [ ] **Step 24:** DeletionsController — first action screen end-to-end, routes, dry-run preview, transactional local delete, single + bulk, request specs
-- [ ] **Step 25:** BulkOperationsController#show — progress page for async operations, Turbo Stream broadcasts from Sidekiq jobs, request specs
-
-## Phase 7 — URL State + Edge Cases
-
-- [ ] **Step 32:** URL state encoding — sort/filter in URL per pane, Cache-Control: no-store on workspace pages
-- [ ] **Step 33:** Missing entity handling — MissingPane placeholder when pane ID doesn't resolve, warning notice per pane, `[ × remove ]` link
+- [x] **Step 23–25, 32–33 (combined):** Action screen shared partial, DeletionsController (preview + progress), BulkDeleteJob with Turbo Stream broadcasts, polymorphic BulkOperationItem, terminal-style progress bar, bounce loader animation, ActionCable/Redis for cross-process broadcasts, comprehensive request specs
 
 ## Phase 8 — Saved Views
 

@@ -5,11 +5,13 @@ RSpec.describe BulkOperationItem, type: :model do
 
   describe "associations" do
     it { is_expected.to belong_to(:bulk_operation) }
-    it { is_expected.to belong_to(:video) }
+    it { is_expected.to belong_to(:video).optional }
+    it { is_expected.to belong_to(:target).optional }
   end
 
   describe "validations" do
-    it { is_expected.to validate_uniqueness_of(:video_id).scoped_to(:bulk_operation_id) }
+    it { is_expected.to validate_presence_of(:target_type) }
+    it { is_expected.to validate_presence_of(:target_id) }
   end
 
   describe "enums" do
