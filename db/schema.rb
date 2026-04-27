@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_223653) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_27_021551) do
   create_table "app_settings", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "key"
@@ -24,10 +24,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_223653) do
     t.datetime "created_at", null: false
     t.text "error_message"
     t.integer "status", default: 0, null: false
+    t.bigint "target_id"
+    t.string "target_type"
     t.datetime "updated_at", null: false
-    t.bigint "video_id", null: false
+    t.bigint "video_id"
     t.index ["bulk_operation_id", "video_id"], name: "index_bulk_operation_items_on_bulk_operation_id_and_video_id", unique: true
     t.index ["bulk_operation_id"], name: "index_bulk_operation_items_on_bulk_operation_id"
+    t.index ["target_type", "target_id"], name: "index_bulk_operation_items_on_target_type_and_target_id"
     t.index ["video_id"], name: "index_bulk_operation_items_on_video_id"
   end
 

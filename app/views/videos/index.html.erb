@@ -1,6 +1,6 @@
 <% content_for(:title, "videos") %>
 
-<div data-controller="bulk-select" data-bulk-select-max-panes-value="<%= @max_panes %>" data-bulk-select-entity-name-value="videos">
+<div data-controller="bulk-select" data-bulk-select-max-panes-value="<%= @max_panes %>" data-bulk-select-entity-name-value="videos" data-bulk-select-panes-path-value="/videos/panes" data-bulk-select-delete-type-value="video">
   <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
     <h1>videos</h1>
     <span data-bulk-select-target="bulkToggle">
@@ -14,8 +14,7 @@
         <span data-bulk-select-target="openHint"></span>
         <span data-bulk-select-target="openAction" hidden></span>
         <span data-bulk-select-target="count" hidden></span>
-        &middot;
-        <a href="#" class="bracketed text-danger">[ <span class="bl">delete</span> ]</a>
+        <span data-bulk-select-target="deleteAction" hidden></span>
         &middot;
         <a href="#" class="bracketed" data-action="click->bulk-select#exitBulk">[ <span class="bl">cancel</span> ]</a>
       </div>
@@ -43,7 +42,7 @@
           <% @videos.each do |video| %>
             <tr>
               <td class="col-action" data-bulk-select-target="bulkCol" hidden>
-                <input type="checkbox" value="<%= video.youtube_video_id %>" data-bulk-select-target="checkbox" data-action="change->bulk-select#toggle">
+                <input type="checkbox" value="<%= video.id %>" data-bulk-select-target="checkbox" data-action="change->bulk-select#toggle">
               </td>
               <td class="col-action" data-bulk-select-target="actionCol"><a href="#" class="bracketed">[ <span class="bl">open</span> ]</a></td>
               <td style="max-width: 280px; overflow: hidden; text-overflow: ellipsis;"><%= video.title %></td>

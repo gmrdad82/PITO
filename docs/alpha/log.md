@@ -253,3 +253,43 @@
 - Merged step 22 (videos bulk mode) into step 20
 - Phase reorder: workspaces (phase 5) now come before action screens (phase 6)
 - 45 specs, 0 failures
+
+---
+
+**Step 26: Channels workspace** — completed
+
+- `/channels/:id` show page with channel metadata table + video list
+- `/channels/panes?ids=1,2,3` multi-pane workspace with side-by-side channels
+- Pane reorder arrows (◀ ▶), `[ focus ]` to single view, `[ − ]` to remove pane
+- `[ + ]` opens `<dialog>` modal to add channels from available pool
+- Comma-separated IDs in URLs (parser accepts commas, spaces, plus signs)
+- URL-based sorting via hash fragments with `replaceState` — per-pane sort keys, no back-button pollution
+- `data-sort-value` attribute for correct trend (signed %) and watch time sorting
+- Watch time formatted as `Xh Ym` instead of raw minutes
+- Stacked filled sort arrows (▲▼) for unsorted state, single arrow for active sort
+- Pane dividers with breathing room, breadcrumb truncation with Unicode ellipsis (…)
+- `pane_title_length` AppSetting with ENV fallback, exposed in settings screen
+- Settings screen: responsive 2-column layout (workspaces left, YouTube OAuth right)
+- Monospace font (system), bold links, all links consistently blue
+- 150 specs, 0 failures
+
+---
+
+**Step 23–25, 32–33 (combined): Action screen framework + delete flow** — completed
+
+- Shared `_action_screen.html.erb` partial: sticky footer with submit/cancel, supports destructive (red) and normal (blue) buttons
+- `DeletionsController`: GET preview page + POST creates BulkOperation and renders progress in-place (no redirect)
+- Preview page matches picker columns exactly: channels (title, connected, subscribers, videos, views), videos (title, channel, views, trend, likes, comments, watch time, privacy, published, duration)
+- Empty first column as placeholder for status indicators
+- `BulkDeleteJob`: processes all items in a single transaction, broadcasts per-item progress + terminal progress bar via Turbo Streams
+- Polymorphic `BulkOperationItem` (target_type + target_id) — supports both Channel and Video targets
+- Terminal-style progress bar: `[######.............] 3/7` with `#` filled, `.` empty
+- Bounce loader animation: `=---` / `-=--` / `--=-` / `---=` per-item status indicator
+- Item completion: green "done" or red "fail" replaces loader
+- ActionCable configured with Redis adapter for cross-process Sidekiq→browser broadcasts
+- `bulk_select_controller.js`: dynamic `[ delete N ]` links with `ref` param preserving current URL + hash for cancel navigation
+- `BulkOperation` model: added `bulk_delete` kind, Turbo::Broadcastable, helper methods (target_count, succeeded_count, progress_percent)
+- Migration: polymorphic target columns on bulk_operation_items, backfill from video_id
+- Buttons: blue by default (#0000cc), `.btn-danger` for destructive red (#cc0000)
+- CSS: `.action-screen-footer` sticky bottom, `.dot-loader` bounce animation, `.dot-done` / `.dot-fail` status colors
+- 180 specs, 0 failures

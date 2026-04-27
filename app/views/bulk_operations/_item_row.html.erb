@@ -1,0 +1,9 @@
+<td class="col-action" id="item_status_<%= item_id %>">
+  <% if status == "succeeded" %>
+    <span class="dot-done">done</span>
+  <% elsif status == "failed" %>
+    <span class="dot-fail">fail</span>
+  <% else %>
+    <span class="dot-loader"></span>
+  <% end %>
+</td>

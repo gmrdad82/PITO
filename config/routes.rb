@@ -19,6 +19,12 @@ Rails.application.routes.draw do
     end
   end
   resources :videos, only: [ :index ]
+  resource :deletions, only: [ :show, :create ]
+  resources :bulk_operations, only: [ :show ] do
+    member do
+      get :status
+    end
+  end
   get "settings", to: "settings#index"
   patch "settings", to: "settings#update"
 

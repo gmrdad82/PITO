@@ -1,0 +1,47 @@
+<% content_for(:title, "#{@operation.kind.humanize} — #{@operation.status}") %>
+<% breadcrumb(@operation.kind.humanize) %>
+
+<%= turbo_stream_from "bulk_operation_#{@operation.id}" %>
+
+<div style="margin-bottom: 12px;">
+  <h1><%= @operation.kind.humanize %></h1>
+  <%= render "bulk_operations/status", operation: @operation, status: @operation.status %>
+</div>
+
+<%= render "bulk_operations/progress",
+  current: @operation.succeeded_count + @operation.failed_count,
+  total: @operation.target_count,
+  status: @operation.status %>
+
+<table style="margin-top: 8px;">
+  <thead>
+    <tr>
+      <th>item</th>
+      <th>type</th>
+      <th>status</th>
+      <th>error</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @items.each do |item| %>
+      <tr id="item_<%= item.id %>">
+        <td><%= item.target&.try(:title) || "(deleted)" %></td>
+        <td><%= item.target_type %></td>
+        <td>
+          <% if item.status_succeeded? %>
+            <span class="indicator-up">succeeded</span>
+          <% elsif item.status_failed? %>
+            <span class="indicator-down">failed</span>
+          <% else %>
+            <span class="text-muted">pending</span>
+          <% end %>
+        </td>
+        <td class="text-muted"><%= item.error_message %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div style="margin-top: 12px;">
+  <%= link_to root_path, class: "bracketed" do %>[ <span class="bl">home</span> ]<% end %>
+</div>

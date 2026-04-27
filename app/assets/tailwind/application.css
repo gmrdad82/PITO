@@ -181,11 +181,19 @@ button[type="submit"] {
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
-  color: #1a1a1a;
+  color: #0000cc;
 }
 input[type="submit"]:hover,
 button[type="submit"]:hover {
-  color: #0000cc;
+  color: #0000ff;
+}
+input[type="submit"].btn-danger,
+button[type="submit"].btn-danger {
+  color: #cc0000;
+}
+input[type="submit"].btn-danger:hover,
+button[type="submit"].btn-danger:hover {
+  color: #990000;
 }
 
 /* Flash notices */
@@ -253,6 +261,36 @@ dialog.pane-dialog {
   max-width: 600px;
   padding: 0;
 }
+
+/* Action screen sticky footer */
+.action-screen-footer {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  border-top: 1px solid #dddddd;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Bounce loader animation */
+@keyframes bounce-bar {
+  0%   { content: "=---"; }
+  25%  { content: "-=--"; }
+  50%  { content: "--=-"; }
+  75%  { content: "---="; }
+  100% { content: "=---"; }
+}
+.dot-loader::after {
+  content: "=---";
+  animation: bounce-bar 0.8s infinite steps(1);
+  animation-delay: var(--loader-delay, 0s);
+  font-family: monospace;
+  letter-spacing: -1px;
+}
+.dot-done { color: #2e7d32; }
+.dot-fail { color: #cc0000; }
 
 /* Hairline borders */
 .border-hairline { border: 1px solid #dddddd; }

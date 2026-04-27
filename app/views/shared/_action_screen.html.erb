@@ -1,0 +1,26 @@
+<%# Shared action screen footer — submit + cancel
+  Required locals:
+    submit_label: String — submit button text (e.g. "[ delete ]")
+    cancel_path:  String — URL for cancel link
+    form_url:     String — form action URL
+  Optional locals:
+    destructive:  Boolean — red submit button (default: false)
+    form_method:  Symbol — HTTP method (default: :post)
+%>
+
+<% destructive = local_assigns.fetch(:destructive, false) %>
+<% form_method = local_assigns.fetch(:form_method, :post) %>
+
+<%= form_with url: form_url, method: form_method, data: { turbo: false } do |f| %>
+  <% if content_for?(:action_screen_params) %>
+    <div style="margin-bottom: 12px;">
+      <%= yield :action_screen_params %>
+    </div>
+  <% end %>
+
+  <div class="action-screen-footer">
+    <button type="submit" class="<%= destructive ? 'btn-danger' : '' %>"><%= submit_label %></button>
+    <span class="text-muted">&middot;</span>
+    <%= link_to cancel_path, class: "bracketed" do %>[ <span class="bl">cancel</span> ]<% end %>
+  </div>
+<% end %>

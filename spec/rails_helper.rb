@@ -4,6 +4,8 @@ require_relative "../config/environment"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 require "webmock/rspec"
+require "sidekiq/testing"
+Sidekiq::Testing.fake!
 
 Rails.root.glob("spec/support/**/*.rb").sort_by(&:to_s).each { |f| require f }
 
@@ -20,6 +22,9 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
 
   config.include FactoryBot::Syntax::Methods
+  config.include ActiveJob::TestHelper
+
+  config.before(:each) { Sidekiq::Worker.clear_all }
 end
 
 Shoulda::Matchers.configure do |config|
