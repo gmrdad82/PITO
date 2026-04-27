@@ -364,3 +364,14 @@
 - Updated CLAUDE.md to reference design doc
 - 4 new theme endpoint specs (dark, light, auto, invalid)
 - 285 specs, 0 failures
+
+---
+
+**Step 40: Plan update, housekeeping** — completed
+
+- Confirmed max_panes is already fully implemented (AppSetting + settings UI + controllers + ENV fallback)
+- Deferred max_concurrent_uploads to upload phase (Phase 13)
+- Added `.claude/settings.json` to git (project-scoped Claude Code config)
+- Marked Phases 10–13 as deferred (YouTube integration later)
+- Added "Pre-Phase 14 — Bigger Seed Data" step to plan
+- Reordered plan: bigger seed → search (Phase 14) → finalize (Phase 15) → MCP (Phase 16)

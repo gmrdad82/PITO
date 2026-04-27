@@ -56,14 +56,14 @@
 
 - [x] **Step 40 (combined):** Dark mode with Dracula-inspired dark theme, CSS custom properties for all colors, theme toggle `[ dark ]` / `[ light ]` in navbar, AppSetting persistence (light/dark/auto), Stimulus theme controller with localStorage + server sync, flash prevention `<script>` in `<head>`, Chart.js theme-aware recoloring (`recolorCharts()`), synced crosshair plugin across dashboard charts, `docs/design.md` comprehensive design system document, page width constraints (channels 900px, videos 1400px), Sidekiq testing API update, bold chart legend labels, theme endpoint specs
 
-## Phase 10 — Settings + OAuth (local data only until this point)
+## Phase 10 — Settings + OAuth (deferred — YouTube integration later)
 
-- [ ] **Step 40:** Settings page expansion — max_panes (default 5), max_concurrent_uploads (default 2) in AppSetting, form sections
+- [x] **Step 40:** Settings page — max_panes already implemented (AppSetting + settings UI + ENV fallback). max_concurrent_uploads deferred to upload phase.
 - [ ] **Step 41:** OAuth service objects — Youtube::OauthClient for token exchange/refresh, WebMock-stubbed specs
 - [ ] **Step 42:** Channel OAuth connect — `/channels/:id/oauth/connect` with breadcrumb, initiates OAuth flow, stores tokens, sets connected=true
 - [ ] **Step 43:** Channel OAuth disconnect — action screen, dry-run preview, revokes tokens, sets connected=false
 
-## Phase 11 — Sync
+## Phase 11 — Sync (deferred — YouTube integration later)
 
 - [ ] **Step 44:** Youtube::ChannelFetcher service — fetch channel metadata via Data API, WebMock specs
 - [ ] **Step 45:** Youtube::VideoFetcher service — fetch video list + metadata for a channel, WebMock specs
@@ -73,7 +73,7 @@
 - [ ] **Step 49:** SyncVideoStatsJob — daily stats sync (last 30 days, idempotent), job specs
 - [ ] **Step 50:** SyncPlaylistsJob — playlist + items sync, job specs
 
-## Phase 12 — Video Management Action Screens
+## Phase 12 — Video Management Action Screens (deferred — YouTube integration later)
 
 - [ ] **Step 51:** Youtube::VideoUpdater service — update title/description/tags/category/privacy/schedule via Data API, WebMock specs
 - [ ] **Step 52:** Youtube::ThumbnailUpdater service — set custom thumbnail, WebMock specs
@@ -83,7 +83,7 @@
 - [ ] **Step 56:** ThumbnailChangesController — action screen for changing thumbnails
 - [ ] **Step 57:** PlaylistAdditionsController — action screen for adding videos to playlists
 
-## Phase 13 — Video Upload (client-side direct to YouTube)
+## Phase 13 — Video Upload (deferred — YouTube integration later)
 
 Upload architecture: browser uploads directly to YouTube API via resumable upload. Backend never touches file bytes — only provides the resumable URI (using channel's OAuth token) and tracks upload status. Each connected channel also gets a direct YouTube Studio link as fallback.
 
@@ -92,6 +92,10 @@ Upload architecture: browser uploads directly to YouTube API via resumable uploa
 - [ ] **Step 60:** Client-side upload Stimulus controller — browser streams file directly to YouTube via resumable URI, chunked with progress bar
 - [ ] **Step 61:** Upload status tracking — VideoUpload record updated via Turbo Stream, completion links to synced Video
 - [ ] **Step 62:** YouTube Studio links — per-channel `[ YouTube Studio ]` link on channel detail (studio.youtube.com/channel/{id})
+
+## Pre-Phase 14 — Bigger Seed Data
+
+- [ ] **Step (new):** Expand seed data — more channels (8-10), more videos (200+), varied categories/languages/privacy states, richer stat distributions. Enough data to stress-test search, tables, and panes.
 
 ## Phase 14 — Search (Meilisearch)
 
