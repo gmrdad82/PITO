@@ -1,5 +1,6 @@
 require "mcp"
 require "mcp/server/transports/streamable_http_transport"
+require_relative "pito_server"
 
 module Mcp
   # Rack app wrapping the MCP StreamableHTTPTransport.
