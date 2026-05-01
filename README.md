@@ -7,7 +7,7 @@ Single-tenant, runs locally.
 ## Stack
 
 - Ruby 3.4.9, Rails 8.1 with Hotwire (Turbo + Stimulus), ERB, Tailwind CSS
-- MySQL 8 (Docker) — primary datastore
+- Postgres 17 (Docker, `pgvector/pgvector:pg17`) — primary datastore
 - Redis 7 (Docker) — Sidekiq queue + cache
 - Meilisearch v1.13 (Docker) — full-text search
 - Sidekiq + sidekiq-cron — background jobs
@@ -34,14 +34,14 @@ EDITOR=vim bin/rails credentials:edit
 ```
 
 ```yaml
-mysql:
+postgres:
   development:
     database: pito_development
-    username: root
+    username: pito
     password: ""
   test:
     database: pito_test
-    username: root
+    username: pito
     password: ""
 sidekiq:
   development:
@@ -64,7 +64,7 @@ bin/rails db:seed
 bin/dev
 ```
 
-Starts Docker services (MySQL, Redis, Meilisearch), Puma, Sidekiq, and Tailwind watcher.
+Starts Docker services (Postgres, Redis, Meilisearch), Puma, Sidekiq, and Tailwind watcher.
 
 Open http://localhost:3000
 

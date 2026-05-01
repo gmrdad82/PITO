@@ -31,10 +31,11 @@ bundle exec rubocop # Lint
 ## Rules
 
 - Never modify files outside this repository folder.
-- Commit with meaningful 1-line messages. No Co-Authored-By, no multi-line bodies, no AI authoring mentions.
-- Always push immediately after committing. Always pull with --rebase.
+- Commit directly to `main` with one-line meaningful messages.
+- No branches, no PRs in early stages.
+- The architect commits and pushes after the user validates a manual playbook.
+- No Co-Authored-By, no multi-line bodies, no AI authoring mentions.
 - Do NOT commit until user has tested and validated the changes.
-- Git workflow: feature branches (step-XX) → PR into main. No direct work on main.
 - After each build step: update `docs/plan.md` (mark done), append to `docs/log.md`.
 - Every step must include RSpec specs. Provide manual testing instructions in conversation, not in files.
 
@@ -50,9 +51,9 @@ Future phases (e.g. `docs/beta/`) will follow the same structure.
 
 ## Configuration Strategy
 
-- `.env.development` / `.env.test` — per-environment infrastructure connection info ONLY (host/port for Postgres, Redis URL). No secrets. Gitignored. `MYSQL_*` keys are still present during the Phase 2 cutover window and are removed in the post-verification cleanup pass.
+- `.env.development` / `.env.test` — per-environment infrastructure connection info ONLY (host/port for Postgres, Redis URL). No secrets. Gitignored.
 - `.env.example` — template for the above. Committed.
-- `rails credentials:edit` — Postgres database/username/password per environment, Sidekiq web auth, Active Record Encryption keys. The legacy `:mysql` block stays alongside `:postgres` until the Phase 2 cleanup pass.
+- `rails credentials:edit` — Postgres database/username/password per environment, Sidekiq web auth, Active Record Encryption keys.
 - `config/master.key` — on disk, gitignored. Never in .env.
 - CI uses its own env vars defined in `.github/workflows/ci.yml` (no master key needed).
 - `AppSetting` table — YouTube OAuth config (client_id, client_secret, redirect_uri), max_panes, max_concurrent_uploads. Managed via web UI.

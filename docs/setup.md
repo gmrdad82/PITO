@@ -31,7 +31,7 @@ Expected: `pito-postgres-1`, `pito-redis-1`, `pito-meilisearch-1` all `(healthy)
 
 ## 3. Configure credentials
 
-Postgres username/password/database live in Rails encrypted credentials. Open the editor and add a `:postgres` block alongside the existing `:mysql` block:
+Postgres username/password/database live in Rails encrypted credentials. Open the editor and add a `:postgres` block:
 
 ```bash
 EDITOR=vim bin/rails credentials:edit
@@ -50,8 +50,6 @@ postgres:
     username: pito
     password: "Pass123#"
 ```
-
-The legacy `:mysql` block is retained until the Phase 2 cleanup pass and may be removed once the migration is verified.
 
 ## 4. Configure environment
 

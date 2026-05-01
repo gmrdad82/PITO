@@ -26,7 +26,7 @@ The Rails app pins both `config.time_zone = "UTC"` and `config.active_record.def
 
 ### Credentials
 
-Postgres credentials live in Rails encrypted credentials under the `:postgres` block (`development` and `test` sub-keys). Values are copied verbatim from the legacy `:mysql` block to minimise surprise during the cutover. The `:mysql` block is retained until the post-verification cleanup pass per spec section 4b.
+Postgres credentials live in Rails encrypted credentials under the `:postgres` block (`development` and `test` sub-keys).
 
 `.env.development` / `.env.test` carry connection metadata only (`POSTGRES_HOST`, `POSTGRES_PORT`). Database name, username, and password live exclusively in Rails encrypted credentials. No secrets in env files.
 
