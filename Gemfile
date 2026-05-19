@@ -62,7 +62,7 @@ gem "ruby-vips", "~> 2.2", require: false
 # aasm: state machines for Timeline (editing/exported/uploaded) and Video.
 gem "aasm", "~> 5.5"
 # commonmarker: GFM markdown rendering for note bodies (Phase B helper).
-gem "commonmarker", "~> 2.4"
+gem "commonmarker", "~> 2.8"
 # neighbor: Active Record bridge for pgvector cosine queries on notes.embedding.
 gem "neighbor", "~> 0.6"
 
@@ -91,7 +91,7 @@ group :development do
   gem "web-console"
 end
 
-gem "view_component", "~> 4.9"
+gem "view_component", "~> 4.11"
 
 gem "capybara", "~> 3.40", group: :test
 
