@@ -802,6 +802,71 @@ button.bracketed .bl {
   gap: 0;
 }
 
+/* Home screen layout (locked 2026-05-23) — Phase 2D C3 + masonry row 3.
+   3-row CSS Grid:
+     Row 1 = 3 cols even (channels overview | latest videos | games releasing)
+     Row 2 = 60/40 (calendar | notifications feed)
+     Row 3 = 60/40 (stack | right column flex-stack: notifications settings
+                    on top, security on bottom)
+   Hard rule: full-width rows are NEVER allowed — no panel ever spans an
+   entire row alone. Equal-thirds row heights for visual rhythm; the
+   row-3 right column is a vertical flex stack with content-driven
+   heights (notifications settings sits on top of security).
+
+   `.home-grid` overrides the default `.pito-workspace`
+   `repeat(auto-fit, minmax(60ch, 1fr))` width-tiling grid by retargeting
+   `grid-template-columns` -> the home shell is a 3-row vertical stack of
+   nested grids (`.home-row`), not the global width-tiling auto-fit. */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr 1fr;       /* equal thirds; user may revisit */
+  gap: 12px;
+  padding: 12px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;                          /* let grid clamp */
+  box-sizing: border-box;
+}
+
+.home-row {
+  display: grid;
+  gap: 12px;
+  min-height: 0;                          /* let row clamp */
+}
+
+.home-row--3col   { grid-template-columns: 1fr 1fr 1fr; }
+.home-row--50-50  { grid-template-columns: 1fr 1fr; }
+.home-row--60-40  { grid-template-columns: 6fr 4fr; }
+.home-row--4col   { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+/* Row 3 right column — vertical flex stack with content-driven heights.
+   Notifications settings sits on top of Security; each takes whatever
+   height it needs. */
+.home-row-3-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* Every Pito panel inside the home grid fills its cell so the framed
+   chrome reaches the cell edges and inner content can scroll on overflow. */
+.home-grid .pito-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The Stack panel ships `.pito-pane--full` so it would span the full
+   workspace width via `grid-column: 1 / -1` on the legacy auto-fit
+   tiling. Inside the home-row 60/40 grid that override defeats the
+   row's column split — reset it so the panel honors its row cell. */
+.home-row .pito-pane--full {
+  grid-column: auto;
+  width: auto;
+}
+
 .pito-pane {
   /* FB-48-IMPL (2026-05-20) — V4 corner-flush panel title in top border.
      `position: relative` anchors the absolutely-positioned
