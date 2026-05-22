@@ -4,6 +4,14 @@ require "rails_helper"
 require "json"
 
 RSpec.describe Tui::SidekiqStatsComponent, type: :component do
+  # Helper to extract the segments-hash-by-name from the rendered host
+  # element. Most assertions below use this to keep the spec readable
+  # and decoupled from positional ordering of the segments array.
+  def segments_by_name
+    host = page.find("span.tui-sidekiq-stats")
+    JSON.parse(host["data-tui-transition-segments-value"]).index_by { |s| s["name"] }
+  end
+
   describe "structure" do
     subject(:component) { described_class.new(busy: 3, enqueued: 5, retry_count: 2, dead: 1) }
 
@@ -54,41 +62,125 @@ RSpec.describe Tui::SidekiqStatsComponent, type: :component do
       expect(host["data-tui-transition-color-value"]).to eq("muted")
     end
 
-    it "marks every segment inactive in the segments JSON" do
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      expect(segments.size).to eq(4)
+    it "uses the new `color` field (not `active`) on every segment" do
+      segments = JSON.parse(page.find("span.tui-sidekiq-stats")["data-tui-transition-segments-value"])
+      expect(segments).to all(have_key("color"))
       expect(segments.map { |s| s["name"] }).to eq(%w[busy enqueued retry dead])
-      expect(segments.map { |s| s["active"] }).to all(be false)
+      # All zeros → every segment muted.
+      expect(segments.map { |s| s["color"] }).to all(eq("muted"))
     end
   end
 
-  describe "value-driven activation" do
+  describe "concurrency-aware tier coverage" do
+    # ─── busy tier ──────────────────────────────────────────────────
+    it "busy=0 → muted" do
+      render_inline(described_class.new(busy: 0, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("muted")
+    end
+
+    it "busy=5/10 (50% — ratio <= 0.8) → success" do
+      render_inline(described_class.new(busy: 5, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("success")
+    end
+
+    it "busy=8/10 (80% — ratio == 0.8 boundary) → success" do
+      render_inline(described_class.new(busy: 8, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("success")
+    end
+
+    it "busy=9/10 (90% — 0.8 < ratio < 1.0) → warn" do
+      render_inline(described_class.new(busy: 9, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("warn")
+    end
+
+    it "busy=10/10 (100% saturated, enqueued=0) → warn" do
+      render_inline(described_class.new(busy: 10, enqueued: 0, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("warn")
+    end
+
+    it "busy=10/10 (100% saturated, enqueued>0 — backpressure) → danger" do
+      render_inline(described_class.new(busy: 10, enqueued: 5, concurrency: 10))
+      expect(segments_by_name["busy"]["color"]).to eq("danger")
+    end
+
+    # ─── enqueued tier ──────────────────────────────────────────────
+    it "enqueued=0 → muted" do
+      render_inline(described_class.new(enqueued: 0, concurrency: 10))
+      expect(segments_by_name["enqueued"]["color"]).to eq("muted")
+    end
+
+    it "enqueued=10/10 (1× mult) → success" do
+      render_inline(described_class.new(enqueued: 10, concurrency: 10))
+      expect(segments_by_name["enqueued"]["color"]).to eq("success")
+    end
+
+    it "enqueued=15/10 (1.5× mult — 1 < mult <= 2) → warn" do
+      render_inline(described_class.new(enqueued: 15, concurrency: 10))
+      expect(segments_by_name["enqueued"]["color"]).to eq("warn")
+    end
+
+    it "enqueued=20/10 (2× mult — boundary) → warn" do
+      render_inline(described_class.new(enqueued: 20, concurrency: 10))
+      expect(segments_by_name["enqueued"]["color"]).to eq("warn")
+    end
+
+    it "enqueued=25/10 (2.5× mult — mult > 2) → danger" do
+      render_inline(described_class.new(enqueued: 25, concurrency: 10))
+      expect(segments_by_name["enqueued"]["color"]).to eq("danger")
+    end
+
+    # ─── retry tier (flat) ──────────────────────────────────────────
+    it "retry_count=0 → muted" do
+      render_inline(described_class.new(retry_count: 0))
+      expect(segments_by_name["retry"]["color"]).to eq("muted")
+    end
+
+    it "retry_count=1 → danger (flat)" do
+      render_inline(described_class.new(retry_count: 1))
+      expect(segments_by_name["retry"]["color"]).to eq("danger")
+    end
+
+    it "retry_count=999 → danger (flat — any retry is danger)" do
+      render_inline(described_class.new(retry_count: 999))
+      expect(segments_by_name["retry"]["color"]).to eq("danger")
+    end
+
+    # ─── dead tier (flat) ───────────────────────────────────────────
+    it "dead=0 → muted" do
+      render_inline(described_class.new(dead: 0))
+      expect(segments_by_name["dead"]["color"]).to eq("muted")
+    end
+
+    it "dead=1 → fatal (flat)" do
+      render_inline(described_class.new(dead: 1))
+      expect(segments_by_name["dead"]["color"]).to eq("fatal")
+    end
+
+    it "dead=5000 → fatal (flat — short-formatted as d5k)" do
+      render_inline(described_class.new(dead: 5000))
+      expect(segments_by_name["dead"]["color"]).to eq("fatal")
+      expect(page).to have_css("span.tui-sidekiq-stats", text: "Sidekiq b0 e0 r0 d5k")
+    end
+  end
+
+  describe "concurrency coercion safety" do
+    it "coerces concurrency=0 to 1 (avoids div-by-zero) — busy=1 reads as ratio=1.0" do
+      render_inline(described_class.new(busy: 1, enqueued: 0, concurrency: 0))
+      # ratio = 1/1 = 1.0, enqueued = 0 → saturated/no-queue → warn
+      expect(segments_by_name["busy"]["color"]).to eq("warn")
+    end
+
+    it "coerces a negative concurrency to 1" do
+      render_inline(described_class.new(busy: 0, concurrency: -5))
+      expect(segments_by_name["busy"]["color"]).to eq("muted")
+    end
+  end
+
+  describe "range encoding" do
     before { render_inline(described_class.new(busy: 3, enqueued: 0, retry_count: 2, dead: 1)) }
 
-    it "renders the expected formatted string" do
-      expect(page).to have_css("span.tui-sidekiq-stats", text: "Sidekiq b3 e0 r2 d1")
-    end
-
-    it "seeds tui-transition's value to match" do
-      host = page.find("span.tui-sidekiq-stats")
-      expect(host["data-tui-transition-value-value"]).to eq("Sidekiq b3 e0 r2 d1")
-    end
-
-    it "marks busy + retry + dead active and enqueued inactive in the segments JSON" do
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      by_name = segments.index_by { |s| s["name"] }
-      expect(by_name["busy"]["active"]).to eq(true)
-      expect(by_name["enqueued"]["active"]).to eq(false)
-      expect(by_name["retry"]["active"]).to eq(true)
-      expect(by_name["dead"]["active"]).to eq(true)
-    end
-
     it "encodes contiguous ranges across the formatted string" do
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      by_name = segments.index_by { |s| s["name"] }
+      by_name = segments_by_name
       # "Sidekiq b3 e0 r2 d1"  (PREFIX = "Sidekiq" + space = 8-char offset)
       # busy: [8, 10)   → "b3"
       # enq:  [11, 13)  → "e0"
@@ -98,31 +190,6 @@ RSpec.describe Tui::SidekiqStatsComponent, type: :component do
       expect(by_name["enqueued"]["range"]).to eq([ 11, 13 ])
       expect(by_name["retry"]["range"]).to eq([ 14, 16 ])
       expect(by_name["dead"]["range"]).to eq([ 17, 19 ])
-    end
-  end
-
-  describe "dead segment isolation" do
-    it "marks ONLY dead active when busy/enqueued/retry are zero" do
-      render_inline(described_class.new(busy: 0, enqueued: 0, retry_count: 0, dead: 4))
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      by_name = segments.index_by { |s| s["name"] }
-      expect(by_name["busy"]["active"]).to eq(false)
-      expect(by_name["enqueued"]["active"]).to eq(false)
-      expect(by_name["retry"]["active"]).to eq(false)
-      expect(by_name["dead"]["active"]).to eq(true)
-      expect(page).to have_css("span.tui-sidekiq-stats", text: "Sidekiq b0 e0 r0 d4")
-    end
-
-    it "short-formats large dead counts (5000 → d5k)" do
-      render_inline(described_class.new(dead: 5000))
-      expect(page).to have_css("span.tui-sidekiq-stats", text: "Sidekiq b0 e0 r0 d5k")
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      by_name = segments.index_by { |s| s["name"] }
-      # "Sidekiq b0 e0 r0 d5k"  (8-char PREFIX offset)
-      # dead: [17, 20)
-      expect(by_name["dead"]["range"]).to eq([ 17, 20 ])
     end
   end
 
@@ -136,9 +203,7 @@ RSpec.describe Tui::SidekiqStatsComponent, type: :component do
 
     it "adjusts segment ranges to the short-formatted length" do
       render_inline(described_class.new(busy: 1500))
-      host = page.find("span.tui-sidekiq-stats")
-      segments = JSON.parse(host["data-tui-transition-segments-value"])
-      by_name = segments.index_by { |s| s["name"] }
+      by_name = segments_by_name
       # "Sidekiq b1k e0 r0 d0"  (8-char PREFIX offset)
       # busy: [8, 11)   → "b1k"
       # enq:  [12, 14)  → "e0"
@@ -163,6 +228,8 @@ RSpec.describe Tui::SidekiqStatsComponent, type: :component do
     it "still accepts retry: instead of retry_count:" do
       render_inline(described_class.new(busy: 0, enqueued: 0, retry: 7))
       expect(page).to have_css("span.tui-sidekiq-stats", text: "Sidekiq b0 e0 r7 d0")
+      # And the flat tier still applies — retry > 0 → danger.
+      expect(segments_by_name["retry"]["color"]).to eq("danger")
     end
   end
 end

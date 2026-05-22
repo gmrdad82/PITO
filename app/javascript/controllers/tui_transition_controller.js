@@ -212,19 +212,27 @@ export default class extends Controller {
     try { segments = JSON.parse(this.segmentsValue) } catch (_) { return }
     if (!Array.isArray(segments)) return
     const cells = Array.from(this.element.querySelectorAll(".tt-char"))
-    // Clear any previous segment classes on every cell
+    // Clear any previous segment + color classes on every cell. The
+    // `is-*` namespace is shared with applyColorClass, but the latter
+    // operates on the host element (this.element) — not its `.tt-char`
+    // children — so stripping `is-*` from cells here cannot collide
+    // with host-level color classes (.is-notif/.is-muted/.is-pink/etc.).
     cells.forEach(cell => {
       Array.from(cell.classList).forEach(cls => {
-        if (cls.startsWith("tt-seg-")) cell.classList.remove(cls)
+        if (cls.startsWith("tt-seg-") || cls.startsWith("is-")) cell.classList.remove(cls)
       })
-      cell.classList.remove("is-active", "is-inactive")
     })
-    segments.forEach(({ name, range, active }) => {
+    segments.forEach(({ name, range, color, active }) => {
       if (!name || !Array.isArray(range)) return
       const [start, end] = range
+      // Backward-compat: if `color` is missing but `active` is present
+      // (legacy shape), map active=true → "active", active=false →
+      // "inactive". New consumers emit `color` directly (muted /
+      // success / warn / danger / fatal).
+      const resolved = color || (active === true ? "active" : (active === false ? "inactive" : null))
       for (let i = start; i < end && i < cells.length; i++) {
         cells[i].classList.add(`tt-seg-${name}`)
-        cells[i].classList.add(active ? "is-active" : "is-inactive")
+        if (resolved) cells[i].classList.add(`is-${resolved}`)
       }
     })
   }

@@ -19,19 +19,38 @@ module Tui
   #   - dead:        integer (default 0). Dead set — jobs that exhausted
   #                  all retry attempts. Terminal failures, surfaced as
   #                  the `d<N>` segment with Dracula red when > 0.
+  #   - concurrency: integer (default 10). Sidekiq's configured concurrency;
+  #                  controls the busy/enqueued tier thresholds. Coerced
+  #                  to >= 1 to avoid div-by-zero.
   #
   # The `scheduled` count is intentionally NOT rendered here — a future
   # stack sub-panel surfaces it.
   #
-  # Segment colors (locked 2026-05-22):
+  # Concurrency-aware segment colors (locked 2026-05-22):
   #
-  #   busy     → base :muted, active :success (green)
-  #   enqueued → base :muted, active :warn    (orange)
-  #   retry    → base :muted, active :danger  (pink)
-  #   dead     → base :muted, active :fatal   (Dracula red #ff5555)
+  #   busy
+  #     b == 0                          → muted
+  #     ratio = busy/concurrency
+  #     ratio <= 0.8                    → success
+  #     0.8 < ratio < 1.0               → warn
+  #     ratio == 1.0 AND enqueued > 0   → danger   (backpressure)
+  #     ratio == 1.0 AND enqueued == 0  → warn     (saturated, no queue)
   #
-  # Active = the segment value is > 0. Color is driven by the
-  # `.tt-char.tt-seg-<name>.is-active` CSS rules on the host.
+  #   enqueued
+  #     e == 0                          → muted
+  #     mult = enqueued/concurrency
+  #     mult <= 1.0                     → success
+  #     1.0 < mult <= 2.0               → warn
+  #     mult > 2.0                      → danger
+  #
+  #   retry    → r == 0 muted; r > 0 danger (flat)
+  #   dead     → d == 0 muted; d > 0 fatal  (flat)
+  #
+  # Segments JSON entries carry `color: <name>` (replaces the old
+  # `active: bool` shape). The tui_transition controller's
+  # applySegments() reads the color field and applies `is-<color>`
+  # classes per cell. The CSS exposes per-color rules:
+  #   .tui-sidekiq-stats .tt-char.is-muted/.is-success/.is-warn/.is-danger/.is-fatal
   #
   # @contract see app/services/pito/formatter/short_number.rb
   # @contract see app/components/tui/transitionable.rb
@@ -45,13 +64,21 @@ module Tui
     # leaves it untouched — only segment cells scramble.
     PREFIX = "Sidekiq"
 
-    def initialize(busy: 0, enqueued: 0, retry_count: 0, dead: 0, **legacy)
+    # Default Sidekiq concurrency used when no `concurrency:` kwarg is
+    # given (SSR safety). The middleware broadcast carries the real
+    # value; the JS controller mirrors this default.
+    DEFAULT_CONCURRENCY = 10
+
+    def initialize(busy: 0, enqueued: 0, retry_count: 0, dead: 0, concurrency: DEFAULT_CONCURRENCY, **legacy)
       # `retry:` is accepted as a legacy kwarg for callers that still pass
       # it under the Ruby keyword form. New callers should use `retry_count:`.
       @busy        = busy.to_i
       @enqueued    = enqueued.to_i
       @retry_count = (legacy[:retry] || retry_count).to_i
       @dead        = dead.to_i
+      # Coerce concurrency to a positive integer; avoid div-by-zero in
+      # the tier methods. A misconfigured zero collapses to 1.
+      @concurrency = [ concurrency.to_i, 1 ].max
     end
 
     # The full single-string value rendered into the span.
@@ -60,7 +87,7 @@ module Tui
     end
 
     # Segments descriptor consumed by `tui-transition`'s segmentsValue.
-    # Each entry: { name, range: [start, endExclusive], active }.
+    # Each entry: { name, range: [start, endExclusive], color: <name> }.
     def segments_json
       busy_str = "b#{short(@busy)}"
       enq_str  = "e#{short(@enqueued)}"
@@ -76,10 +103,10 @@ module Tui
       ds = re + 1
       de = ds + dead_str.length
       [
-        { name: "busy",     range: [ bs, be ], active: @busy > 0 },
-        { name: "enqueued", range: [ es, ee ], active: @enqueued > 0 },
-        { name: "retry",    range: [ rs, re ], active: @retry_count > 0 },
-        { name: "dead",     range: [ ds, de ], active: @dead > 0 }
+        { name: "busy",     range: [ bs, be ], color: busy_color },
+        { name: "enqueued", range: [ es, ee ], color: enqueued_color },
+        { name: "retry",    range: [ rs, re ], color: retry_color },
+        { name: "dead",     range: [ ds, de ], color: dead_color }
       ].to_json
     end
 
@@ -95,6 +122,36 @@ module Tui
 
     def short(value)
       Pito::Formatter::ShortNumber.call(value)
+    end
+
+    # Tier the busy segment by utilization against configured concurrency.
+    # See class-level docblock for the truth table.
+    def busy_color
+      return "muted" if @busy.zero?
+      ratio = @busy.to_f / @concurrency
+      return "success" if ratio <= 0.8
+      return "warn"    if ratio < 1.0
+      @enqueued.positive? ? "danger" : "warn"
+    end
+
+    # Tier the enqueued segment by how many concurrency-windows of work
+    # are parked behind the active set.
+    def enqueued_color
+      return "muted" if @enqueued.zero?
+      mult = @enqueued.to_f / @concurrency
+      return "success" if mult <= 1.0
+      return "warn"    if mult <= 2.0
+      "danger"
+    end
+
+    # Retry is flat: any retry is a problem signal.
+    def retry_color
+      @retry_count.positive? ? "danger" : "muted"
+    end
+
+    # Dead is flat + the most severe: any terminal failure is fatal.
+    def dead_color
+      @dead.positive? ? "fatal" : "muted"
     end
   end
 end

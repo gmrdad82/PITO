@@ -89,6 +89,14 @@ class StatusBarBroadcastMiddleware
         # Sidekiq cell with Dracula red (`--color-fatal`) when > 0.
         # Excluded from `tui-sync-indicator`'s `sidekiqActive` check.
         dead: stats.dead_size,
+        # FB-concurrency (2026-05-22). Carry Sidekiq's configured
+        # concurrency on every status-bar push so the BST Sidekiq cell
+        # can tier busy/enqueued segments against actual capacity:
+        # busy ratio = busy/concurrency, enqueued multiple =
+        # enqueued/concurrency. `Sidekiq.default_configuration[:concurrency]`
+        # is the Sidekiq 7+ canonical source; fall back to 10 if the
+        # config block hasn't loaded yet (boot ordering safety).
+        concurrency: sidekiq_concurrency,
         # FB-153 (2026-05-21). Carry the shared reindex lock on every
         # status-bar push so the TST's sync indicator (●/◐ + word)
         # tracks reindex job state. `kind: "data"` payloads now also
@@ -107,6 +115,18 @@ class StatusBarBroadcastMiddleware
     AppSetting.reindex_running?
   rescue StandardError
     false
+  end
+
+  # FB-concurrency (2026-05-22). Resolve Sidekiq's configured concurrency
+  # so the BST Sidekiq cell can tier busy/enqueued by capacity. Sidekiq
+  # 7+ canonical source is `Sidekiq.default_configuration[:concurrency]`.
+  # Falls back to 10 if config isn't initialized yet (boot ordering /
+  # rescue path on misconfigured deploys).
+  def sidekiq_concurrency
+    value = Sidekiq.default_configuration[:concurrency]
+    Integer(value)
+  rescue StandardError
+    10
   end
 
   # FB-138 (2026-05-21). The in-`ensure` broadcast above still counts

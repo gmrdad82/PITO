@@ -34,9 +34,9 @@ RSpec.describe Tui::BottomStatusBarComponent, type: :component do
   end
 
   it "renders three pipe separators from i18n" do
-    # Phase 2 (2026-05-22) — pipe count rose from 2 to 3 when
-    # Tui::SidekiqStatsComponent moved into the BST after ScreensList.
-    # Layout: mode | screens | sidekiq | hints
+    # Phase 2 follow-up (2026-05-22) — Sidekiq moved LEFT, immediately
+    # after the Mode lozenge. Layout: mode | Sidekiq | screens | hints.
+    # Pipe count stays 3.
     render_inline(component)
     expect(page).to have_css("span.bsb-pipe", count: 3)
     expect(page).to have_css("span.bsb-pipe", text: I18n.t("tui.bst.pipe"))
@@ -50,18 +50,19 @@ RSpec.describe Tui::BottomStatusBarComponent, type: :component do
     expect(page).to have_css("span.tui-sidekiq-stats", count: 1)
   end
 
-  it "positions Tui::SidekiqStatsComponent AFTER the ScreensList pipe" do
-    # Lock the BST ordering: mode | screens | sidekiq | hints. The
-    # sidekiq span must appear after the second pipe (the one closing
-    # the screens list) and before the third pipe (the one opening the
-    # hints group).
+  it "positions Tui::SidekiqStatsComponent BETWEEN the mode lozenge and the ScreensList" do
+    # Lock the BST ordering: mode | Sidekiq | screens | hints. Sidekiq
+    # must appear AFTER the mode lozenge and BEFORE the screens list,
+    # which itself sits before the hints group.
     render_inline(component)
     html = page.native.to_html
-    screens_idx = html.index("bsb-sections")
+    mode_idx    = html.index("bsb-mode")
     sidekiq_idx = html.index("tui-sidekiq-stats")
+    screens_idx = html.index("bsb-sections")
     hints_idx   = html.index("bsb-hints")
-    expect(screens_idx).to be < sidekiq_idx
-    expect(sidekiq_idx).to be < hints_idx
+    expect(mode_idx).to be < sidekiq_idx
+    expect(sidekiq_idx).to be < screens_idx
+    expect(screens_idx).to be < hints_idx
   end
 
   it "forwards current_section to the screens list" do

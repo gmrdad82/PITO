@@ -8,10 +8,31 @@ import { Controller } from "@hotwired/stimulus"
  * Format: "b<short(busy)> e<short(enqueued)> r<short(retry)> d<short(dead)>"
  *
  * Segments JSON (consumed by tui-transition's segmentsValue):
- *   [{ name: "busy",     range: [start, endExclusive], active: busy > 0 },
- *    { name: "enqueued", range: [start, endExclusive], active: enqueued > 0 },
- *    { name: "retry",    range: [start, endExclusive], active: retry > 0 },
- *    { name: "dead",     range: [start, endExclusive], active: dead > 0 }]
+ *   [{ name: "busy",     range: [start, endExclusive], color: <name> },
+ *    { name: "enqueued", range: [start, endExclusive], color: <name> },
+ *    { name: "retry",    range: [start, endExclusive], color: <name> },
+ *    { name: "dead",     range: [start, endExclusive], color: <name> }]
+ *
+ * Concurrency-aware tiering (mirrors Tui::SidekiqStatsComponent — keep
+ * the two in sync if either side changes):
+ *
+ *   busy
+ *     b == 0                          → muted
+ *     ratio = busy/concurrency
+ *     ratio <= 0.8                    → success
+ *     0.8 < ratio < 1.0               → warn
+ *     ratio == 1.0 AND enqueued > 0   → danger  (backpressure)
+ *     ratio == 1.0 AND enqueued == 0  → warn    (saturated, no queue)
+ *
+ *   enqueued
+ *     e == 0                          → muted
+ *     mult = enqueued/concurrency
+ *     mult <= 1.0                     → success
+ *     1.0 < mult <= 2.0               → warn
+ *     mult > 2.0                      → danger
+ *
+ *   retry → r > 0 danger else muted   (flat)
+ *   dead  → d > 0 fatal  else muted   (flat)
  *
  * `dead` reflects Sidekiq's dead set — jobs that exhausted all retry
  * attempts. Surfaced with Dracula red (`--color-fatal`) when > 0;
@@ -47,6 +68,10 @@ export default class extends Controller {
   // = 8-char offset before the first segment starts.
   static PREFIX = "Sidekiq"
 
+  // Mirrors Tui::SidekiqStatsComponent::DEFAULT_CONCURRENCY. Used when
+  // the cable payload omits concurrency (boot-ordering or partial mock).
+  static DEFAULT_CONCURRENCY = 10
+
   connect() {
     this._boundChanged = this.onSidekiqChanged.bind(this)
     document.addEventListener("tui:sidekiq-changed", this._boundChanged)
@@ -62,10 +87,14 @@ export default class extends Controller {
   onSidekiqChanged(event) {
     if (!this.hasTuiTransitionOutlet) return
     const detail = event?.detail || {}
-    const busy     = detail.busy ?? 0
-    const enqueued = detail.enqueued ?? 0
-    const retry    = detail.retry ?? 0
-    const dead     = detail.dead ?? 0
+    const busy     = this.toInt(detail.busy)
+    const enqueued = this.toInt(detail.enqueued)
+    const retry    = this.toInt(detail.retry)
+    const dead     = this.toInt(detail.dead)
+    const concurrency = Math.max(
+      this.toInt(detail.concurrency, this.constructor.DEFAULT_CONCURRENCY),
+      1
+    )
 
     const ctor = this.constructor
     const bs = "b" + this.shortFormat(busy)
@@ -85,10 +114,10 @@ export default class extends Controller {
     const dEnd   = dStart + ds.length
 
     const segments = [
-      { name: "busy",     range: [bStart, bEnd], active: this.toInt(busy) > 0 },
-      { name: "enqueued", range: [eStart, eEnd], active: this.toInt(enqueued) > 0 },
-      { name: "retry",    range: [rStart, rEnd], active: this.toInt(retry) > 0 },
-      { name: "dead",     range: [dStart, dEnd], active: this.toInt(dead) > 0 }
+      { name: "busy",     range: [bStart, bEnd], color: this.busyColor(busy, enqueued, concurrency) },
+      { name: "enqueued", range: [eStart, eEnd], color: this.enqueuedColor(enqueued, concurrency) },
+      { name: "retry",    range: [rStart, rEnd], color: this.retryColor(retry) },
+      { name: "dead",     range: [dStart, dEnd], color: this.deadColor(dead) }
     ]
 
     // Push the segments descriptor first so tui-transition's
@@ -102,9 +131,31 @@ export default class extends Controller {
     this.tuiTransitionOutlet.setValue(value)
   }
 
-  toInt(n) {
+  // ─── tier methods (mirror Ruby — keep in sync) ──────────────────────
+  busyColor(busy, enqueued, concurrency) {
+    if (busy === 0) return "muted"
+    const ratio = busy / concurrency
+    if (ratio <= 0.8) return "success"
+    if (ratio < 1.0)  return "warn"
+    return enqueued > 0 ? "danger" : "warn"
+  }
+
+  enqueuedColor(enqueued, concurrency) {
+    if (enqueued === 0) return "muted"
+    const mult = enqueued / concurrency
+    if (mult <= 1.0) return "success"
+    if (mult <= 2.0) return "warn"
+    return "danger"
+  }
+
+  retryColor(retry) { return retry > 0 ? "danger" : "muted" }
+  deadColor(dead)   { return dead > 0  ? "fatal"  : "muted" }
+
+  // ─── helpers ────────────────────────────────────────────────────────
+  toInt(n, fallback = 0) {
+    if (n === null || n === undefined) return fallback
     const parsed = parseInt(n, 10)
-    return Number.isFinite(parsed) ? parsed : 0
+    return Number.isFinite(parsed) ? parsed : fallback
   }
 
   shortFormat(n) {
