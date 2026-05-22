@@ -24,14 +24,23 @@ RSpec.describe Tui::TopStatusBarComponent, type: :component do
     expect(page).to have_css("span.sb-section")
   end
 
-  it "renders Tui::SyncIndicatorComponent (sb-sync span)" do
+  # Wave 2A (2026-05-22) — SyncIndicator went glyph-free + word-only; root
+  # class is `.tui-sync-word`. Legacy `.sb-sync` / `.sb-sync-dot` span
+  # markers no longer render.
+  it "renders Tui::SyncIndicatorComponent (tui-sync-word span)" do
     render_inline(component)
-    expect(page).to have_css("span.sb-sync")
+    expect(page).to have_css("span.tui-sync-word")
   end
 
-  it "renders Tui::SidekiqStatsComponent (sb-sidekiq span)" do
+  # Wave 2B (2026-05-22) — SidekiqStats rebuilt with `.tui-sidekiq-row`
+  # parent + `.tui-sidekiq-cell` children. Legacy `.sb-sk-cell.sk-r`
+  # class no longer exists; per-cell color is now driven by the
+  # colocated tui-transition outlet's `is-busy/is-enqueued/is-retry`
+  # variants (toggled live by the JS controller).
+  it "renders Tui::SidekiqStatsComponent (tui-sidekiq-row span)" do
     render_inline(component)
-    expect(page).to have_css("span.sb-sidekiq")
+    expect(page).to have_css("span.tui-sidekiq-row")
+    expect(page).to have_css("span.tui-sidekiq-cell", count: 3)
   end
 
   it "renders Tui::DateTimeComponent (sb-clock span)" do
@@ -60,18 +69,30 @@ RSpec.describe Tui::TopStatusBarComponent, type: :component do
   end
 
   describe "sync state delegation" do
-    it "passes :disconnected state to the SyncIndicatorComponent" do
+    # Wave 2A (2026-05-22) — the disconnected red indicator is now driven
+    # by the tui-transition outlet's `.is-pink` class (toggled live by
+    # tui_sync_indicator_controller). On initial SSR the VC renders the
+    # base `.tui-sync-word` span; the JS controller flips classes after
+    # `connect()`. So at SSR time we lock the root span + the data
+    # values that seed the controller, not a static class.
+    it "renders the tui-sync-word span when SSR is given a sync_state kwarg" do
       bar = described_class.new(section: "settings", sync_state: :disconnected)
       render_inline(bar)
-      expect(page).to have_css(".sb-sync-dot--red")
+      expect(page).to have_css("span.tui-sync-word")
     end
   end
 
   describe "sidekiq stats delegation" do
-    it "passes non-zero retry count to SidekiqStatsComponent (sk-r class)" do
+    # Wave 2B (2026-05-22) — retry cell color is no longer a static class
+    # on the SSR markup. The VC renders three `.tui-sidekiq-cell` cells
+    # with `data-tui-sidekiq-stats-cell-name-value="retry"` markers so
+    # the JS controller (tui-sidekiq-stats) can flip the colocated
+    # tui-transition outlet's color class (`.is-retry`) on cable events.
+    it "renders three tui-sidekiq-cell cells including a retry cell marker" do
       bar = described_class.new(section: "settings", sidekiq_stats: { busy: 0, enqueued: 0, retry: 3 })
       render_inline(bar)
-      expect(page).to have_css(".sb-sk-cell.sk-r")
+      expect(page).to have_css("span.tui-sidekiq-cell", count: 3)
+      expect(page).to have_css("[data-tui-sidekiq-stats-cell-name-value='retry']")
     end
   end
 
@@ -149,7 +170,11 @@ RSpec.describe Tui::TopStatusBarComponent, type: :component do
       end
 
       it "re-arms the pulse timer on every activity event" do
-        expect(js_source).to match(/clearTimeout\(this\.pulseTimer\)[\s\S]+?setTimeout/)
+        # 2026-05-22 (Phase 3 drift fix) — actual var is `_pulseTimer`
+        # (underscore-prefixed); spec regex updated to match the lived
+        # source. The pattern still locks the contract: clearTimeout on
+        # the existing timer immediately followed by a new setTimeout.
+        expect(js_source).to match(/clearTimeout\(this\._pulseTimer\)[\s\S]+?setTimeout/)
       end
     end
   end

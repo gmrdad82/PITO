@@ -5821,7 +5821,12 @@ main > .settings-modal-wrapper {
 /* 2026-05-20 (FB-chrome-weight) — bold dropped from BSB section links
    (both inactive + current). Per design.md Typography "bold has to be
    earned, not attributed": the muted/accent color contrast carries
-   hierarchy alone; weight 400 across the board. */
+   hierarchy alone; weight 400 across the board.
+
+   2026-05-22 (Wave 3) — color crossfade transition added so that Turbo
+   morph between screens crossfades the previously-current section and
+   the newly-current section instead of snapping. The duration + easing
+   come from `Pito::Transitions::Tokens` (exported into _theme.css). */
 .bsb-section,
 a.bsb-section,
 a.bsb-section:visited {
@@ -5829,6 +5834,7 @@ a.bsb-section:visited {
   text-decoration: none;
   text-transform: lowercase;
   font-weight: 400;
+  transition: color var(--tui-trn-color-crossfade-duration-ms, 300ms) var(--tui-trn-color-crossfade-easing, ease-out);
 }
 
 /* FB-67 (2026-05-20) — no hover color swap on Bottom Status Bar sections. */
