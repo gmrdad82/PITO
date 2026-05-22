@@ -194,6 +194,13 @@ export default class extends Controller {
   }
 
   // ─── helpers ──────────────────────────────────────────────────────
+  // `dead` is intentionally NOT included here. Jobs in Sidekiq's dead
+  // set have exhausted all retry attempts — they are TERMINAL failures,
+  // not active work. The sync indicator should reflect ongoing work
+  // (busy / enqueued / retry); a dead-set count is surfaced separately
+  // by the `d<N>` segment on tui-sidekiq-stats (Dracula red when > 0)
+  // so the failure stays visible without putting the indicator into
+  // a permanent "syncing" state after every dead-letter accumulation.
   sidekiqActive(payload) {
     if (!payload || typeof payload !== "object") return false
     const b = parseInt(payload.busy || 0, 10) || 0

@@ -83,6 +83,12 @@ class StatusBarBroadcastMiddleware
         enqueued: stats.enqueued,
         retry: stats.retry_size,
         scheduled: stats.scheduled_size,
+        # FB-dead (2026-05-22). `dead` reflects Sidekiq's dead set — jobs
+        # that exhausted all retry attempts. Terminal failures, NOT
+        # active work; surfaced as the `d<N>` segment in the TST
+        # Sidekiq cell with Dracula red (`--color-fatal`) when > 0.
+        # Excluded from `tui-sync-indicator`'s `sidekiqActive` check.
+        dead: stats.dead_size,
         # FB-153 (2026-05-21). Carry the shared reindex lock on every
         # status-bar push so the TST's sync indicator (●/◐ + word)
         # tracks reindex job state. `kind: "data"` payloads now also

@@ -1,9 +1,9 @@
 # FB-test-infra (2026-05-22). Lock the dev/test broadcast rake task
 # contract. Two surfaces:
 #
-#   pito:test:broadcast_sidekiq[busy,enqueued,retry_count]
+#   pito:test:broadcast_sidekiq[busy,enqueued,retry_count,dead]
 #     → Pito::CableBroadcaster.broadcast_status_bar(
-#         { busy:, enqueued:, retry: }, kind: :sidekiq)
+#         { busy:, enqueued:, retry:, dead: }, kind: :sidekiq)
 #
 #   pito:test:broadcast_notifications[future_count]
 #     → Pito::CableBroadcaster.broadcast_status_bar(
@@ -46,24 +46,24 @@ RSpec.describe "lib/tasks/pito_test_broadcast.rake" do
 
     it "broadcasts via Pito::CableBroadcaster with kind: :sidekiq + the canonical payload keys" do
       expect(Pito::CableBroadcaster).to receive(:broadcast_status_bar)
-        .with({ busy: 3, enqueued: 5, retry: 2 }, kind: :sidekiq)
+        .with({ busy: 3, enqueued: 5, retry: 2, dead: 1 }, kind: :sidekiq)
 
       silence_stream($stdout) do
         task.execute(Rake::TaskArguments.new(
-          %i[busy enqueued retry_count],
-          [ "3", "5", "2" ]
+          %i[busy enqueued retry_count dead],
+          [ "3", "5", "2", "1" ]
         ))
       end
     end
 
-    it "coerces missing args to 0 (busy/enqueued/retry default to integer 0)" do
+    it "coerces missing args to 0 (busy/enqueued/retry/dead default to integer 0)" do
       expect(Pito::CableBroadcaster).to receive(:broadcast_status_bar)
-        .with({ busy: 0, enqueued: 0, retry: 0 }, kind: :sidekiq)
+        .with({ busy: 0, enqueued: 0, retry: 0, dead: 0 }, kind: :sidekiq)
 
       silence_stream($stdout) do
         task.execute(Rake::TaskArguments.new(
-          %i[busy enqueued retry_count],
-          [ nil, nil, nil ]
+          %i[busy enqueued retry_count dead],
+          [ nil, nil, nil, nil ]
         ))
       end
     end

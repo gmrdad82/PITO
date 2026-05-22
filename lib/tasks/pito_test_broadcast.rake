@@ -21,15 +21,16 @@
 # the only path that flips the indicator to `disconnected`.
 namespace :pito do
   namespace :test do
-    desc "broadcast a synthetic sidekiq stats payload (busy, enqueued, retry_count)"
-    task :broadcast_sidekiq, [ :busy, :enqueued, :retry_count ] => :environment do |_, args|
+    desc "broadcast a synthetic sidekiq stats payload (busy, enqueued, retry_count, dead)"
+    task :broadcast_sidekiq, [ :busy, :enqueued, :retry_count, :dead ] => :environment do |_, args|
       payload = {
         busy: (args[:busy] || 0).to_i,
         enqueued: (args[:enqueued] || 0).to_i,
-        retry: (args[:retry_count] || 0).to_i
+        retry: (args[:retry_count] || 0).to_i,
+        dead: (args[:dead] || 0).to_i
       }
       Pito::CableBroadcaster.broadcast_status_bar(payload, kind: :sidekiq)
-      puts "broadcasted sidekiq b=#{payload[:busy]} e=#{payload[:enqueued]} r=#{payload[:retry]}"
+      puts "broadcasted sidekiq b=#{payload[:busy]} e=#{payload[:enqueued]} r=#{payload[:retry]} d=#{payload[:dead]}"
     end
 
     desc "broadcast a synthetic notifications payload (future_count)"

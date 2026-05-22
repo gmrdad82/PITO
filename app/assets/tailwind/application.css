@@ -6757,6 +6757,7 @@ body.keyboard-only * {
 .tui-sidekiq-stats .tt-char.tt-seg-busy.is-active     { color: var(--color-success); }
 .tui-sidekiq-stats .tt-char.tt-seg-enqueued.is-active { color: var(--color-warn); }
 .tui-sidekiq-stats .tt-char.tt-seg-retry.is-active    { color: var(--color-danger); }
+.tui-sidekiq-stats .tt-char.tt-seg-dead.is-active     { color: var(--color-fatal); }
 /* inactive segments inherit muted from the host */
 
 /* per-char/digit slot */

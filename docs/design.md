@@ -408,7 +408,7 @@ Use these nouns; never the alternatives:
 ## Brand capitalization
 
 Slack, Discord, YouTube, Voyage AI, Meilisearch, PostgreSQL, Redis,
-Chrome, Firefox, Safari, Linux, macOS, Windows, Android, iOS.
+Sidekiq, Chrome, Firefox, Safari, Linux, macOS, Windows, Android, iOS.
 
 Non-brand words stay lowercase. All copy via i18n
 (`config/locales/**.yml`).

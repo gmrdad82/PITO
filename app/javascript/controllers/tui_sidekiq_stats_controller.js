@@ -5,12 +5,18 @@ import { Controller } from "@hotwired/stimulus"
  * updates the colocated tui-transition outlet with the formatted
  * single-string value + per-segment colors.
  *
- * Format: "b<short(busy)> e<short(enqueued)> r<short(retry)>"
+ * Format: "b<short(busy)> e<short(enqueued)> r<short(retry)> d<short(dead)>"
  *
  * Segments JSON (consumed by tui-transition's segmentsValue):
  *   [{ name: "busy",     range: [start, endExclusive], active: busy > 0 },
  *    { name: "enqueued", range: [start, endExclusive], active: enqueued > 0 },
- *    { name: "retry",    range: [start, endExclusive], active: retry > 0 }]
+ *    { name: "retry",    range: [start, endExclusive], active: retry > 0 },
+ *    { name: "dead",     range: [start, endExclusive], active: dead > 0 }]
+ *
+ * `dead` reflects Sidekiq's dead set — jobs that exhausted all retry
+ * attempts. Surfaced with Dracula red (`--color-fatal`) when > 0;
+ * deliberately NOT included in tui-sync-indicator's activity check
+ * (terminal failures are not active work).
  *
  * Cascade behavior: length changes in any segment ripple-scramble
  * downstream segments via tui-transition's diff-only animateDiff path.
@@ -37,6 +43,10 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static outlets = ["tui-transition"]
 
+  // Mirrors Tui::SidekiqStatsComponent::PREFIX exactly. 7 chars + 1 space
+  // = 8-char offset before the first segment starts.
+  static PREFIX = "Sidekiq"
+
   connect() {
     this._boundChanged = this.onSidekiqChanged.bind(this)
     document.addEventListener("tui:sidekiq-changed", this._boundChanged)
@@ -55,23 +65,30 @@ export default class extends Controller {
     const busy     = detail.busy ?? 0
     const enqueued = detail.enqueued ?? 0
     const retry    = detail.retry ?? 0
+    const dead     = detail.dead ?? 0
 
+    const ctor = this.constructor
     const bs = "b" + this.shortFormat(busy)
     const es = "e" + this.shortFormat(enqueued)
     const rs = "r" + this.shortFormat(retry)
-    const value = `${bs} ${es} ${rs}`
+    const ds = "d" + this.shortFormat(dead)
+    const value = `${ctor.PREFIX} ${bs} ${es} ${rs} ${ds}`
 
-    const bStart = 0
-    const bEnd   = bs.length
+    const offset = ctor.PREFIX.length + 1 // 8 — chars before the first segment starts
+    const bStart = offset
+    const bEnd   = bStart + bs.length
     const eStart = bEnd + 1
     const eEnd   = eStart + es.length
     const rStart = eEnd + 1
     const rEnd   = rStart + rs.length
+    const dStart = rEnd + 1
+    const dEnd   = dStart + ds.length
 
     const segments = [
       { name: "busy",     range: [bStart, bEnd], active: this.toInt(busy) > 0 },
       { name: "enqueued", range: [eStart, eEnd], active: this.toInt(enqueued) > 0 },
-      { name: "retry",    range: [rStart, rEnd], active: this.toInt(retry) > 0 }
+      { name: "retry",    range: [rStart, rEnd], active: this.toInt(retry) > 0 },
+      { name: "dead",     range: [dStart, dEnd], active: this.toInt(dead) > 0 }
     ]
 
     // Push the segments descriptor first so tui-transition's

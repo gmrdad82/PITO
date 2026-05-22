@@ -108,6 +108,11 @@ export default class extends Controller {
     this.applyColorClass(this.computeColorName())
     this.applyShimmer()
     this.render(this.valueValue)
+    // Sync the JS-cached value to the SSR initial state so the first
+    // valueValueChanged callback sees a real `oldValue` instead of
+    // `undefined` — which would otherwise be stringified to "undefined"
+    // (10 chars) and trigger a phantom length-mismatch scramble.
+    this.value = this.valueValue
   }
 
   disconnect() {
@@ -130,6 +135,7 @@ export default class extends Controller {
   // ─── Stimulus value-changed callbacks ──────────────────────────────
   valueValueChanged(newValue, oldValue) {
     if (typeof oldValue === "undefined") return // initial paint handled in connect
+    if (newValue === oldValue) return // identical setValue calls are no-ops
     this.queueAnimate(newValue)
   }
 
