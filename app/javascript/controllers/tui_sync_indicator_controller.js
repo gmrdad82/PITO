@@ -9,18 +9,31 @@ import { Controller } from "@hotwired/stimulus"
  * This controller's only job is event translation: cable lifecycle +
  * activity events on document → setState calls on the outlet.
  *
- * Event contracts:
+ * State model (2026-05-22 revision — busy-aware, no momentary pulse):
  *
- *   tui:cable-activity (every cable message)
- *     → flip to "syncing" for PULSE_MS, then back to "synced".
- *       Re-arms the timer on every subsequent activity event so a
- *       burst of traffic keeps the cell purple until the burst quiets.
+ *   The sync indicator reflects ACTUAL ongoing work, not transient
+ *   cable noise. The state is derived from the cable payload, NOT
+ *   from the mere fact of receiving a broadcast.
  *
- *   tui:sync-changed
- *     detail: { state: "synced" | "syncing" | "disconnected" }
- *     → explicit state override. `disconnected` cancels any in-flight
- *       activity pulse; `synced` / `syncing` also pass through but are
- *       normally owned by the activity-pulse path.
+ *   Sidekiq stats (kind="sidekiq" or "data" alias):
+ *     - busy > 0 OR enqueued > 0 OR retry > 0  →  setSyncing (sticky)
+ *     - all zeros                              →  setSynced
+ *
+ *   tui:sync-changed (explicit state from cable lifecycle):
+ *     detail.state ∈ { "synced" | "syncing" | "disconnected" }
+ *     - disconnected → setDisconnected (overrides Sidekiq-derived state)
+ *     - synced / syncing → respective setter
+ *
+ *   Other cable kinds (notifications, idle, indeterminate, progress,
+ *   complete, error) are NOT (yet) wired to drive sync state. They fire
+ *   tui:cable-activity but the sync controller ignores them. The current
+ *   sync state is preserved across these events.
+ *
+ *   Rationale: the user-locked behavior is "when Sidekiq has work, sync
+ *   is syncing; when Sidekiq is quiet, sync is synced". A timed pulse
+ *   was flashing the indicator on every broadcast regardless of payload
+ *   — including the welcome broadcast on page reload — which read as
+ *   constant churn. Stats-derived state cleanly tracks real work.
  *
  * Canonical color lock (matches Tui::SyncIndicatorComponent#color_for):
  *   synced       → "muted"   // idle / calm
@@ -30,29 +43,28 @@ import { Controller } from "@hotwired/stimulus"
  * Sequencing rule (shimmer ↔ scramble, never overlap):
  *
  *   forward (synced → syncing):
- *     1. setShimmer(false)          // clear stale shimmer
- *     2. setColor("accent")
- *     3. setValue(word)             // scramble starts
- *     4. on tui-transition:settled → setShimmer(true)  // via _shimmerOnSettle flag
+ *     1. _shimmerOnSettle = true    // arm deferred shimmer-on
+ *     2. setShimmer(false)          // clear stale shimmer
+ *     3. setColor("accent")
+ *     4. setValue(word)             // scramble starts
+ *     5. on tui-transition:settled  // flag still true → setShimmer(true)
  *
  *   reverse (anything → synced / disconnected):
- *     1. _shimmerOnSettle = false   // disarm the deferred shimmer-on
+ *     1. _shimmerOnSettle = false   // disarm BEFORE scramble starts
  *     2. setShimmer(false)          // shimmer off FIRST
  *     3. setColor("muted" | "danger")
- *     4. setValue(word)             // scramble back
+ *     4. setValue(word)             // scramble back; settled fires but flag is off
  *
- * Idempotency: setSyncing / setSynced / setDisconnected check the current
- * outlet value first. If already in the target state, they only re-arm the
- * flag (no setShimmer(false) → no flicker, no re-scramble of an
- * already-correct value). This prevents constant churn during continuous
- * cable activity bursts (e.g. a long-running Sidekiq job firing middleware
- * broadcasts on every lifecycle tick).
+ * Idempotency: each setter checks the current outlet value. If already
+ * in the target state, the methods short-circuit — no re-color, no
+ * re-value, no scramble trigger. Multiple Sidekiq broadcasts at the same
+ * state (e.g. 5 lifecycle ticks during a single long-running job) leave
+ * the visible state stable.
  *
  * Settled listener strategy: ONE permanent listener (`_boundSettled`)
  * attached to the outlet element on first attach. Gated by the
- * `_shimmerOnSettle` boolean so setSynced/setDisconnected can disarm the
- * deferred shimmer-on between scramble passes. Avoids stale
- * `{ once: true }` arrow listeners firing during the LATER reverse-scramble.
+ * `_shimmerOnSettle` boolean. Avoids stale `{ once: true }` arrow
+ * listeners firing during the LATER reverse-scramble.
  *
  * Word labels come from data-* values seeded by the VC (sourced from
  * `config/locales/tui/en.yml` `tui.tst.sync.*`) so this JS layer never
@@ -66,15 +78,18 @@ export default class extends Controller {
     disconnected: String
   }
 
-  // Activity pulse duration in milliseconds. Every `tui:cable-activity`
-  // event re-arms this timer; the indicator returns to "synced" only
-  // after PULSE_MS of quiet.
-  static PULSE_MS = 400
+  // Debounce-off cool-down. busy>0 broadcasts flip to syncing immediately
+  // (no cool-down). busy=0 broadcasts arm a COOL_DOWN_MS timer; if another
+  // busy>0 arrives during cool-down, the timer is cancelled and sync
+  // stays in syncing. After COOL_DOWN_MS of all-zero broadcasts → setSynced.
+  // Bridges rapid Sidekiq job cycles (small back-to-back jobs that pulse
+  // busy=1/busy=0 in tight succession) without visible flicker.
+  static COOL_DOWN_MS = 1000
 
   connect() {
-    this._pulseTimer = null
     this._shimmerOnSettle = false
     this._settledAttachedTo = null
+    this._coolDownTimer = null
     this._boundExplicit = this.onExplicitState.bind(this)
     this._boundActivity = this.onActivity.bind(this)
     this._boundSettled = this.onTransitionSettled.bind(this)
@@ -89,9 +104,9 @@ export default class extends Controller {
       this._settledAttachedTo.removeEventListener("tui-transition:settled", this._boundSettled)
       this._settledAttachedTo = null
     }
-    if (this._pulseTimer) {
-      clearTimeout(this._pulseTimer)
-      this._pulseTimer = null
+    if (this._coolDownTimer) {
+      clearTimeout(this._coolDownTimer)
+      this._coolDownTimer = null
     }
   }
 
@@ -100,29 +115,38 @@ export default class extends Controller {
     const state = event?.detail?.state
     if (!state) return
     if (state === "disconnected") {
-      if (this._pulseTimer) {
-        clearTimeout(this._pulseTimer)
-        this._pulseTimer = null
-      }
       this.setDisconnected()
     } else if (state === "syncing") {
       this.setSyncing()
     } else if (state === "synced") {
-      if (this._pulseTimer) {
-        clearTimeout(this._pulseTimer)
-        this._pulseTimer = null
-      }
       this.setSynced()
     }
   }
 
-  onActivity() {
-    this.setSyncing()
-    if (this._pulseTimer) clearTimeout(this._pulseTimer)
-    this._pulseTimer = setTimeout(() => {
-      this.setSynced()
-      this._pulseTimer = null
-    }, this.constructor.PULSE_MS)
+  // Sidekiq-aware activity handler. Only Sidekiq stats currently drive
+  // the syncing/synced state. Other kinds are ignored here (they still
+  // fire their own kind-specific events for kind-targeted VCs).
+  //
+  // Debounce-off: busy>0 → setSyncing immediately + cancel any pending
+  // cool-down. busy=0 → arm a COOL_DOWN_MS timer; only setSynced after
+  // the timer expires with no intervening busy>0.
+  onActivity(event) {
+    const detail = event?.detail || {}
+    const { kind, payload } = detail
+    if (kind !== "sidekiq" && kind !== "data") return  // not a sync-driving kind
+    if (this.sidekiqActive(payload)) {
+      if (this._coolDownTimer) {
+        clearTimeout(this._coolDownTimer)
+        this._coolDownTimer = null
+      }
+      this.setSyncing()
+    } else {
+      if (this._coolDownTimer) clearTimeout(this._coolDownTimer)
+      this._coolDownTimer = setTimeout(() => {
+        this.setSynced()
+        this._coolDownTimer = null
+      }, this.constructor.COOL_DOWN_MS)
+    }
   }
 
   onTransitionSettled() {
@@ -137,12 +161,7 @@ export default class extends Controller {
     if (!c) return
     this.ensureSettledListenerAttached()
     this._shimmerOnSettle = true
-    // Idempotent: if already in syncing state, leave shimmer/scramble alone.
-    // Subsequent cable-activity events during the same pulse just re-arm
-    // the PULSE_MS timer in onActivity — the visible state doesn't churn.
-    if (this.currentValue() === this.wordFor("syncing")) return
-    // Forward path: shimmer off first, color/value drive the scramble,
-    // shimmer flips on once the scramble settles (via _shimmerOnSettle flag).
+    if (this.currentValue() === this.wordFor("syncing")) return  // idempotent
     c.setShimmer(false)
     c.setColor("accent")
     c.setValue(this.wordFor("syncing"))
@@ -151,11 +170,7 @@ export default class extends Controller {
   setSynced() {
     const c = this.transitionController()
     if (!c) return
-    // Disarm the deferred shimmer-on BEFORE the reverse scramble starts.
-    // Without this, a stale settled event from a prior setSyncing would
-    // turn shimmer back on right after the syncing→synced scramble finishes.
     this._shimmerOnSettle = false
-    // Idempotent: if already in synced state, just ensure shimmer is off.
     if (this.currentValue() === this.wordFor("synced")) {
       c.setShimmer(false)
       return
@@ -179,6 +194,14 @@ export default class extends Controller {
   }
 
   // ─── helpers ──────────────────────────────────────────────────────
+  sidekiqActive(payload) {
+    if (!payload || typeof payload !== "object") return false
+    const b = parseInt(payload.busy || 0, 10) || 0
+    const e = parseInt(payload.enqueued || 0, 10) || 0
+    const r = parseInt(payload.retry || 0, 10) || 0
+    return b > 0 || e > 0 || r > 0
+  }
+
   transitionController() {
     if (this.hasTuiTransitionOutlet) return this.tuiTransitionOutlet
     return null
