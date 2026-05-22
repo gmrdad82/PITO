@@ -78,11 +78,19 @@ module Pito
       "color-bg"               => DRACULA.fetch(:bg),
       "color-text"             => DRACULA.fetch(:fg),
       "color-muted"            => DRACULA.fetch(:comment),
+      # 2026-05-23 — Wave 2E refinement. Washed-out home-accent purple,
+      # distinct from --color-muted (Dracula comment blue-gray, owned by
+      # AppVersion). Used by Tui::BreadcrumbComponent's idle + host
+      # colors so the breadcrumb stays "soft brand-family" against the
+      # focused panel's accent without competing with AppVersion's muted
+      # gray.
+      "color-accent-pale"      => "color-mix(in srgb, var(--section-accent-home) 55%, var(--color-bg))",
       "color-border"           => DRACULA.fetch(:current_line),
       "color-danger"           => DRACULA.fetch(:pink),
       "color-danger-hover"     => "color-mix(in srgb, #{DRACULA.fetch(:pink)} 80%, #{DRACULA.fetch(:bg)})",
       "color-success"          => DRACULA.fetch(:green),
       "color-warn"             => DRACULA.fetch(:orange),
+      "color-fatal"            => DRACULA.fetch(:red),
       "color-link"             => "var(--section-accent)",
       "color-rating-bad"       => DRACULA.fetch(:red),
       "color-rating-fair"      => DRACULA.fetch(:yellow),

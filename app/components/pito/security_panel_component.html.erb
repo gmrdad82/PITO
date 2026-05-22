@@ -1,5 +1,15 @@
-<div class="pane pito-pane" data-tui-cursor-target="panel" data-panel-title="<%= t("settings.security.heading") %>">
-  <span class="pito-pane__title"><%= t("settings.security.heading") %></span>
+<%# Pito::SecurityPanelComponent — home-screen security panel.
+
+    Phase 2C (2026-05-23) — root element now flows through
+    `Tui::PanelBase#panel_root_data` so the panel registers as a
+    tui-cursor target and a tui-panel-cable subscriber (canonical
+    Stimulus + cable wiring). Title sourced from
+    `tui.home.panels.security.title` so the future Ratatui client reads
+    the same YAML. %>
+<%= content_tag :section,
+      class: "pane pito-pane pito-panel pito-panel--security",
+      **panel_data do %>
+  <span class="pito-pane__title"><%= title %></span>
   <%= render Tui::PanelFieldsetComponent.new(data: { controller: "sessions-bulk-revoke" }) do %>
     <%= render(Sessions::TableComponent.new(
       sessions: sessions,
@@ -53,4 +63,4 @@
       ) %>
     <% end %>
   <% end %>
-</div>
+<% end %>

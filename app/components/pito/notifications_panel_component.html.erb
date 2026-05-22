@@ -1,8 +1,17 @@
 <%# Pito::NotificationsPanelComponent
     Extracted from app/views/settings/_notifications_pane.html.erb.
-    See component class for documentation. %>
-<div class="pane pito-pane" data-tui-cursor-target="panel" data-panel-title="<%= t("settings.notifications.heading") %>">
-  <span class="pito-pane__title"><%= t("settings.notifications.heading") %></span>
+    See component class for documentation.
+
+    Phase 2C (2026-05-23) — root element now flows through
+    `Tui::PanelBase#panel_root_data` so the panel registers as a
+    tui-cursor target and a tui-panel-cable subscriber (canonical
+    Stimulus + cable wiring). Title sourced from
+    `tui.home.panels.notifications.title` ("notifications settings") so
+    the future Ratatui client reads the same YAML. %>
+<%= content_tag :section,
+      class: "pane pito-pane pito-panel pito-panel--notifications",
+      **panel_data do %>
+  <span class="pito-pane__title"><%= title %></span>
   <%= render Tui::PanelFieldsetComponent.new do %>
     <%# Shared toggles. Each lives in its own tiny form so the
         auto-submit Stimulus controller can fire `requestSubmit()`
@@ -42,7 +51,7 @@
                    data-leader-toggle="notification_all"
                    data-tui-toggle-feedback-target="checkbox"
                    data-action="change->auto-submit#submit"
-                   <%= "checked" if shared_routing_flag_on?(:all) %>>
+                   <%= "checked" if helpers.shared_routing_flag_on?(:all) %>>
             <span class="md-check-indicator" data-tui-toggle-feedback-target="glyph"></span>
             <span class="md-check-spinner" data-tui-toggle-feedback-target="spinner" hidden>[<%= render Tui::IndicatorComponent.new(variant: :braille, mode: :indeterminate, start_offset: 0) %>]</span>
             <span class="md-check-label"><%= t("settings.notification_toggle.everything") %></span>
@@ -62,7 +71,7 @@
                    data-leader-toggle="notification_daily_digest"
                    data-tui-toggle-feedback-target="checkbox"
                    data-action="change->auto-submit#submit"
-                   <%= "checked" if shared_routing_flag_on?(:daily_digest) %>>
+                   <%= "checked" if helpers.shared_routing_flag_on?(:daily_digest) %>>
             <span class="md-check-indicator" data-tui-toggle-feedback-target="glyph"></span>
             <span class="md-check-spinner" data-tui-toggle-feedback-target="spinner" hidden>[<%= render Tui::IndicatorComponent.new(variant: :braille, mode: :indeterminate, start_offset: 3) %>]</span>
             <span class="md-check-label"><%= t("settings.notification_toggle.daily_digest") %></span>
@@ -88,7 +97,7 @@
                         name: "discord_webhook_url",
                         id: "discord_webhook_url",
                         value: "",
-                        placeholder: (discord_webhook&.webhook_url.present? ? webhook_url_mask(:discord) : nil),
+                        placeholder: (discord_webhook&.webhook_url.present? ? helpers.webhook_url_mask(:discord) : nil),
                         autocomplete: "off",
                         data: { tui_focusable: "discord_webhook",
                                 tui_focusable_style: _nf["discord_webhook"] } %>
@@ -126,7 +135,7 @@
                         name: "slack_webhook_url",
                         id: "slack_webhook_url",
                         value: "",
-                        placeholder: (slack_webhook&.webhook_url.present? ? webhook_url_mask(:slack) : nil),
+                        placeholder: (slack_webhook&.webhook_url.present? ? helpers.webhook_url_mask(:slack) : nil),
                         autocomplete: "off",
                         data: { tui_focusable: "slack_webhook",
                                 tui_focusable_style: _nf["slack_webhook"] } %>
@@ -151,4 +160,4 @@
       <% end %>
     </div>
   <% end %>
-</div>
+<% end %>

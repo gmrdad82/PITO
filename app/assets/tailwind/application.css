@@ -270,6 +270,17 @@ body {
      `application.html.erb`), the canvas still paints the raw
      `--dracula-bg` atom rather than going transparent. */
   background: var(--dracula-bg);
+  /* 2026-05-23 — Phase 2A min-size lock. pito is a TUI-flavoured app
+     with fixed-rhythm panes; below 1280×800 the multi-panel grids
+     collapse into illegible stacks. The `Tui::SizeGuardDialog`
+     Stimulus controller listens to window resize events and pops a
+     dialog when the viewport is below threshold; this CSS pair adds
+     defense-in-depth so the page chrome never scrolls under the
+     guard. `overflow: hidden` keeps the page body from scrolling —
+     individual panels manage their own scroll regions. */
+  min-width: 1280px;
+  min-height: 800px;
+  overflow: hidden;
 }
 
 /* Headings — single-font-size TUI hierarchy (ADR 0016).
@@ -5516,6 +5527,12 @@ body > header {
    keeps the section accent color from above. Mirrors the breadcrumb entry
    in tui_transition_controller.js COLOR_CLASS. */
 .sb-section.is-muted { color: var(--color-muted); }
+/* 2026-05-23 — Wave 2E refinement. Breadcrumb "accent-pale" host color:
+   washed-out home-accent purple, distinct from --color-muted (which is
+   Dracula comment blue-gray and is owned by AppVersion). Used in the
+   idle state ("home") + as the host color of the panel:(sub-panel)
+   state, so segments override only the sub-panel range to accent. */
+.sb-section.is-accent-pale { color: var(--color-accent-pale); }
 
 .sb-page-tail {
   color: inherit;
@@ -6793,6 +6810,13 @@ body.keyboard-only * {
 .tt-char.is-scrambling { opacity: 0.85; }
 .tt-char.is-entering   { animation: tt-fade-in 200ms ease both; }
 .tt-char.is-leaving    { animation: tt-fade-out 200ms ease both; }
+/* 2026-05-23 — Generic per-segment color hooks for tt-char cells. The
+   segments JSON's `color` field is written as `is-<color>` per cell by
+   applySegments(). New "accent-pale" color tier (washed-out home-accent
+   purple) used by Tui::BreadcrumbComponent's panel_title segment so the
+   panel name reads "soft brand-family" against the un-segmented ":(" / ")"
+   delimiters that inherit the host accent-pale color. */
+.tt-char.is-accent-pale { color: var(--color-accent-pale); }
 @keyframes tt-fade-in  { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes tt-fade-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(3px); } }
 
@@ -6819,3 +6843,13 @@ body.keyboard-only * {
 .tui-scroll-indicator--top    { top: 4px; }
 .tui-scroll-indicator--bottom { bottom: 4px; }
 .tui-scroll-indicator--visible { opacity: 1; }
+
+/* Wave 2B (2026-05-23) — Pito::*PanelComponent placeholder shared by all
+   home panels (channels_overview / latest_videos / games_releasing /
+   notifications_feed / calendar) until content rounds wire real data
+   into each. Muted italic per design.md hint convention. */
+.pito-panel__placeholder {
+  color: var(--color-muted);
+  font-style: italic;
+  margin: 8px 0;
+}

@@ -36,6 +36,30 @@ en:
     size_guard:
       title: "window too small"
       message: "resize the window to at least %{min_width}×%{min_height} to continue."
+    # Phase 2C (2026-05-23) — canonical i18n namespace for home-screen panel
+    # titles. Each Pito::*PanelComponent VC reads its title via
+    # `I18n.t("tui.home.panels.<panel_name>.title")` so the same YAML
+    # feeds the future Ratatui client (parity with the panel-name keys
+    # in Pito::PanelChannel::ALLOWED_PANELS). Brand names stay
+    # capitalized; non-brand words stay lowercase per design.md.
+    home:
+      panels:
+        security:
+          title: "security"
+        notifications:
+          title: "notifications settings"
+        stack:
+          title: "stack"
+        channels_overview:
+          title: "channels overview"
+        latest_videos:
+          title: "latest videos"
+        games_releasing:
+          title: "games releasing"
+        notifications_feed:
+          title: "notifications"
+        calendar:
+          title: "calendar"
     # D5 (2026-05-22) — leader menu (rebuilt as 1-level shallow which-key
     # popup). Title renders in the Tui::DialogComponent top-border;
     # `entries.<slug>.label` keys feed each Tui::LeaderMenuEntryComponent
@@ -135,7 +159,7 @@ en:
     # Tui::SidekiqStatsComponent (Ruby) + tui_sidekiq_stats_controller.js
     # (mirrored through a Stimulus value emitted from the VC).
     sidekiq:
-      label: "Sidekiq"
+      label: "Sidekiq:"
     tst:
       sync:
         synced: "synced"

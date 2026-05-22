@@ -12,7 +12,8 @@ module Pito
   #
   # ## Cable channel
   #
-  # `pito:home:security` — broadcasts session changes (revoke, login, etc.)
+  # `pito:home:security` — derived via `cable_channel_for(PANEL_NAME)` from
+  # the `Tui::PanelBase` mixin. Broadcasts session changes (revoke, login).
   #
   # ## Focusables
   #
@@ -29,8 +30,18 @@ module Pito
   #
   # - `Sessions::TableComponent` (the sessions table)
   # - `Tui::ConfirmationDialogComponent` (bulk-revoke confirm dialog)
+  #
+  # ## Phase 2C (2026-05-23)
+  #
+  # Wired with the canonical `Tui::PanelBase` mixin. Cable channel is now
+  # derived via `cable_channel_for(PANEL_NAME)` (canonical
+  # `pito:<screen>:<panel>` grammar); the legacy `CABLE_CHANNEL` constant
+  # is gone. Title resolves from `tui.home.panels.security.title` so the
+  # future Ratatui client reads the same YAML.
   class SecurityPanelComponent < ViewComponent::Base
-    CABLE_CHANNEL = "pito:home:security".freeze
+    include Tui::PanelBase
+
+    PANEL_NAME = :security
 
     def initialize(sessions:, sessions_sort:, sessions_dir:)
       @sessions = sessions
@@ -39,6 +50,10 @@ module Pito
     end
 
     attr_reader :sessions, :sessions_sort, :sessions_dir
+
+    def title
+      I18n.t("tui.home.panels.#{PANEL_NAME}.title")
+    end
 
     def focusables
       [ { key: "select_all", style: :row } ] +
@@ -50,6 +65,17 @@ module Pito
         space_insert: I18n.t("pito.security.keybinds.toggle_checkbox", default: "toggle"),
         r: I18n.t("pito.security.keybinds.bulk_revoke", default: "bulk revoke")
       }
+    end
+
+    # Phase 2C — feed only the key strings into panel_root_data. The
+    # full hash list (with :style entries) is retained for legacy
+    # consumers that still need per-element CSS styling.
+    def focusable_keys
+      focusables.map { |f| f.is_a?(Hash) ? f[:key] : f }
+    end
+
+    def panel_data
+      panel_root_data(name: PANEL_NAME, focusables: focusable_keys, keybinds: keybinds)
     end
   end
 end

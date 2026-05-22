@@ -66,8 +66,9 @@ const COLOR_CLASS = {
     retry:    "is-retry"
   },
   breadcrumb: {
-    accent:   "",            // default on .sb-section (section accent in CSS)
-    muted:    "is-muted"
+    accent:        "",                // default on .sb-section (section accent in CSS)
+    muted:         "is-muted",
+    "accent-pale": "is-accent-pale"   // Wave 2E refinement — washed-out home-accent, distinct from --color-muted
   },
   mode: {
     muted:    "",            // default on .bsb-mode (muted in CSS)

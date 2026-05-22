@@ -52,8 +52,19 @@ module Pito
   # - `Tui::SubPanelComponent` (Redis title row only — sub-panel VCs
   #   wrap their own SubPanelComponent internally)
   # - `Tui::ConfirmationDialogComponent` (reindex confirmation dialogs)
+  #
+  # ## Phase 2C (2026-05-23)
+  #
+  # Wired with the canonical `Tui::PanelBase` mixin. Cable channel is now
+  # derived via `cable_channel_for(PANEL_NAME)` (canonical
+  # `pito:<screen>:<panel>` grammar); the legacy `CABLE_CHANNEL` constant
+  # is gone. Title resolves from `tui.home.panels.stack.title` so the
+  # future Ratatui client reads the same YAML. Sub-panel cable channels
+  # (`pito:home:stack:postgres` etc.) remain owned by each sub-panel VC.
   class StackPanelComponent < ViewComponent::Base
-    CABLE_CHANNEL = "pito:home:stack".freeze
+    include Tui::PanelBase
+
+    PANEL_NAME = :stack
 
     def initialize(
       postgres_status:,
@@ -84,6 +95,10 @@ module Pito
                 :voyage_configured, :storage_status, :assets_breakdown,
                 :sidekiq_breakdown, :redis_status
 
+    def title
+      I18n.t("tui.home.panels.#{PANEL_NAME}.title")
+    end
+
     # Aggregate focusables from each sub-panel. The stack panel itself
     # contributes nothing; the cursor traverses sub-panel focusables in
     # declaration order (Redis → Postgres → Meilisearch → Voyage →
@@ -93,6 +108,21 @@ module Pito
         meilisearch_sub_panel.focusables +
         voyage_sub_panel.focusables +
         assets_sub_panel.focusables
+    end
+
+    def keybinds
+      {}
+    end
+
+    # Phase 2C — feed only the key strings into panel_root_data. Sub-
+    # panel focusables come through as Hashes ({ key:, style: }); the
+    # data attr only needs the bare key list.
+    def focusable_keys
+      focusables.map { |f| f.is_a?(Hash) ? f[:key] : f }
+    end
+
+    def panel_data
+      panel_root_data(name: PANEL_NAME, focusables: focusable_keys, keybinds: keybinds)
     end
 
     def postgres_sub_panel

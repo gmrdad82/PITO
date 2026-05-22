@@ -366,6 +366,15 @@
           ]
         ) %>
 
+    <%# Phase 2A (2026-05-23) — viewport size-guard dialog. pito locks
+        the body to `min-width: 1280px` / `min-height: 800px` (see
+        `app/assets/tailwind/application.css`); the
+        `tui-size-guard` Stimulus controller listens to window resize
+        events and shows this dialog when the viewport falls below
+        threshold. Renders once globally so every screen shares the
+        guard. %>
+    <%= render Tui::SizeGuardDialogComponent.new %>
+
     <%# Phase 37 (2026-05-19) — "Everywhere" omnisearch modal. Opened
         by the `/` flat-key on every page (per `config/keybindings.yml`
         `flat.items`) AND by the `space /` leader path on neutral

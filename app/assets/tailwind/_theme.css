@@ -38,12 +38,13 @@
   --color-bg: #282a36;
   --color-text: #f8f8f2;
   --color-muted: #6272a4;
+  --color-accent-pale: color-mix(in srgb, var(--section-accent-home) 55%, var(--color-bg));
   --color-border: #44475a;
   --color-danger: #ff79c6;
   --color-danger-hover: color-mix(in srgb, #ff79c6 80%, #282a36);
   --color-success: #50fa7b;
   --color-warn: #ffb86c;
-  --color-fatal: #ff5555; /* Dracula red — dead set, terminal failures */
+  --color-fatal: #ff5555;
   --color-link: var(--section-accent);
   --color-rating-bad: #ff5555;
   --color-rating-fair: #f1fa8c;

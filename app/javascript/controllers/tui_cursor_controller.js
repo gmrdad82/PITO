@@ -50,11 +50,20 @@ import { Controller } from "@hotwired/stimulus"
 //
 //    NORMAL (default): keyboard navigation owns the screen.
 //      - SPACE  → leader menu (owned by leader_menu_controller, not us)
-//      - TAB / Shift-TAB / Ctrl-hjkl → panel-level nav (ALWAYS, all
-//                                     modifier-free key paths are
-//                                     evaluated BEFORE the inside-panel
-//                                     branches so they can't be hijacked
-//                                     by row/focusable handling).
+//      - TAB / Shift-TAB → sequential DOM-order panel traversal (next /
+//                          previous panel by document order).
+//      - Ctrl-h / Ctrl-j / Ctrl-k / Ctrl-l → SPATIAL neighbor navigation:
+//                          picks the nearest panel in the requested
+//                          direction by panel bounding rect (no edge
+//                          wrap). Direction-gated scoring weights
+//                          orthogonal-axis distance × 3 and primary-axis
+//                          distance × 1, so axis-aligned neighbors win.
+//                          Ratatui Layout parity: the Rust TUI mirrors
+//                          this exact formula.
+//                          TAB / Shift-TAB stay sequential — Ctrl-hjkl
+//                          is the spatial path; both are evaluated
+//                          BEFORE the inside-panel branches so they
+//                          can't be hijacked by row/focusable handling.
 //      - h/j/k/l + arrows           → INSIDE the focused panel
 //                                     (sub-panels OR focusables — never
 //                                     both at the same time).
@@ -270,16 +279,28 @@ export default class extends Controller {
     }
     if (event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
       const k = event.key.toLowerCase()
-      if (k === "h" || k === "k") {
+      if (k === "h") {
+        this.movePanelDirection("left")
         event.preventDefault()
         event.stopPropagation()
-        this.previousPanel()
         return
       }
-      if (k === "l" || k === "j") {
+      if (k === "l") {
+        this.movePanelDirection("right")
         event.preventDefault()
         event.stopPropagation()
-        this.nextPanel()
+        return
+      }
+      if (k === "k") {
+        this.movePanelDirection("up")
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
+      if (k === "j") {
+        this.movePanelDirection("down")
+        event.preventDefault()
+        event.stopPropagation()
         return
       }
     }
@@ -447,6 +468,61 @@ export default class extends Controller {
     this.subPanelIndex = 0
     this.focusableIndex = 0
     this.applyFocus()
+  }
+
+  // Spatial neighbor traversal — chooses the nearest panel in the requested
+  // direction by bounding rect (Ctrl-h/j/k/l). Direction-gated; no edge wrap.
+  // Scoring weights orthogonal-axis distance × 3 and primary-axis distance × 1,
+  // so panels aligned along the move axis win over off-axis distractions.
+  // Ratatui Layout parity (TUI): the Rust client mirrors this exact scoring
+  // formula on panel Rect positions.
+  movePanelDirection(dir) {
+    const panels = this.panelTargets
+    if (panels.length === 0) return
+    const focusedIdx = this.focusedIndex
+    if (focusedIdx < 0 || focusedIdx >= panels.length) return
+    const focused = panels[focusedIdx]
+    const focusedRect = focused.getBoundingClientRect()
+    const fCx = focusedRect.left + focusedRect.width / 2
+    const fCy = focusedRect.top + focusedRect.height / 2
+
+    let bestIdx = -1
+    let bestScore = Infinity
+    panels.forEach((panel, idx) => {
+      if (idx === focusedIdx) return
+      const r = panel.getBoundingClientRect()
+      const cx = r.left + r.width / 2
+      const cy = r.top + r.height / 2
+      const dx = cx - fCx
+      const dy = cy - fCy
+
+      // Direction gate: only consider panels in the requested direction.
+      let inDirection = false
+      let primary = 0   // distance along direction axis
+      let secondary = 0 // distance across direction axis
+      switch (dir) {
+        case "left":  inDirection = dx < -1; primary = -dx; secondary = Math.abs(dy); break
+        case "right": inDirection = dx > 1;  primary = dx;  secondary = Math.abs(dy); break
+        case "up":    inDirection = dy < -1; primary = -dy; secondary = Math.abs(dx); break
+        case "down":  inDirection = dy > 1;  primary = dy;  secondary = Math.abs(dx); break
+      }
+      if (!inDirection) return
+
+      // Score: weight secondary heavily so we prefer panels aligned on the
+      // orthogonal axis. Primary distance tiebreaks among aligned candidates.
+      const score = secondary * 3 + primary
+      if (score < bestScore) {
+        bestScore = score
+        bestIdx = idx
+      }
+    })
+
+    if (bestIdx >= 0) {
+      this.focusedIndex = bestIdx
+      this.subPanelIndex = 0
+      this.focusableIndex = 0
+      this.applyFocus()
+    }
   }
 
   applyFocus() {
