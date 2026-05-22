@@ -29,6 +29,13 @@ en:
       title: "invalid input"
       message_line_1: "mouse interaction forbidden"
       message_line_2: "type ? for help or : for command"
+    # Phase 1C (2026-05-22) — minimum-window-size guard dialog copy.
+    # Surfaces via Tui::SizeGuardDialogComponent when window.innerWidth
+    # < 1280 or window.innerHeight < 800. Min values locked per
+    # docs/design.md § Layout.
+    size_guard:
+      title: "window too small"
+      message: "resize the window to at least %{min_width}×%{min_height} to continue."
     # D5 (2026-05-22) — leader menu (rebuilt as 1-level shallow which-key
     # popup). Title renders in the Tui::DialogComponent top-border;
     # `entries.<slug>.label` keys feed each Tui::LeaderMenuEntryComponent

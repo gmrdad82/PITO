@@ -6561,6 +6561,15 @@ dialog.tui-alert-dialog::backdrop {
   background: color-mix(in srgb, var(--dracula-bg) 70%, transparent);
 }
 
+/* ===== Tui::SizeGuardDialogComponent =====
+   Phase 1C (2026-05-22). Minimum-window-size guard. Reuses the canonical
+   `.tui-dialog-frame` chrome via Tui::DialogComponent; this rule only
+   styles the message paragraph (muted body text, small top margin). */
+.tui-size-guard-dialog__message {
+  color: var(--color-muted);
+  margin: 8px 0 0;
+}
+
 /* ===== Keyboard-only mode (FB-172) =====
    When the `keyboard-only` Stimulus controller is mounted on `<body>`
    it adds the `.keyboard-only` class; the rule below hides the native
@@ -6794,3 +6803,19 @@ body.keyboard-only * {
   .tt-char.is-leaving { animation: none; }
   [data-controller~="tui-transition"] { transition: none; }
 }
+
+/* Tui::ScrollIndicatorComponent — pointer-events: none ▲/▼ overlay glyphs
+   for cursor-driven (not scrollbar-interactive) scroll affordance. */
+.tui-scroll-indicator {
+  position: absolute;
+  right: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1;
+}
+.tui-scroll-indicator--top    { top: 4px; }
+.tui-scroll-indicator--bottom { bottom: 4px; }
+.tui-scroll-indicator--visible { opacity: 1; }
