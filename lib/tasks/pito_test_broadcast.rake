@@ -70,5 +70,19 @@ namespace :pito do
       jid = Pito::Test::ScheduledJob.perform_in(seconds.seconds)
       puts "scheduled ScheduledJob jid=#{jid} fire_in=#{seconds}s"
     end
+
+    desc "clear ALL Sidekiq state — queues, retry set, dead set, scheduled set. Use to reset after testing"
+    task clear: :environment do
+      require "sidekiq/api"
+      queued = Sidekiq::Queue.all.sum(&:size)
+      Sidekiq::Queue.all.each(&:clear)
+      retried = Sidekiq::RetrySet.new.size
+      Sidekiq::RetrySet.new.clear
+      scheduled = Sidekiq::ScheduledSet.new.size
+      Sidekiq::ScheduledSet.new.clear
+      dead = Sidekiq::DeadSet.new.size
+      Sidekiq::DeadSet.new.clear
+      puts "cleared sidekiq state — queued=#{queued} retry=#{retried} scheduled=#{scheduled} dead=#{dead}"
+    end
   end
 end
