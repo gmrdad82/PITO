@@ -5,7 +5,8 @@
 <%= render Tui::DialogComponent.new(
       id: Tui::AboutDialogComponent::DIALOG_ID,
       title: t("tui.about.title"),
-      extra_classes: "tui-about-dialog"
+      extra_classes: "tui-about-dialog",
+      extra_controllers: "tui-about-dialog"
     ) do %>
   <div class="tui-about-dialog__inner">
     <%# Logo above the project name. 64px display size sourced from

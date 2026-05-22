@@ -23,8 +23,11 @@ module Tui
     DIALOG_ID = "about-dialog".freeze
     REPO_SLUG = "gmrdad82/pito".freeze
 
+    # FB-ITEM-3 (2026-05-22). `v` glyph sourced from `tui.about.version_prefix`
+    # so the About dialog has zero hardcoded English. The TUI client reads
+    # the same locale file when it derives its About screen.
     def version_string
-      "v#{app_version}"
+      "#{I18n.t('tui.about.version_prefix')}#{app_version}"
     end
 
     def version_url

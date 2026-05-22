@@ -15,20 +15,6 @@ module Pito
     # tokens (e.g. the 35%-accent pane border) can be computed and tested
     # in isolation.
     module Sections
-      # L1 atoms — hand-picked per-section page background.
-      # `settings` is user-locked 2026-05-20 to #34333b; the other sections
-      # are placeholders until the user locks per-section bgs.
-      BG = {
-        "home"          => "#2c2a36",
-        "channels"      => "#36292d",
-        "videos"        => "#36292d",
-        "games"         => "#292c33",
-        "projects"      => "#292c33",
-        "settings"      => "#34333b",
-        "notifications" => "#2c2a36",
-        "calendar"      => "#2c2a36"
-      }.freeze
-
       # L2 — section accent. Cascade source for `--section-accent` /
       # `--color-section-accent`. Values mirror the Dracula L2 tokens
       # declared in `app/assets/tailwind/application.css`.
@@ -43,6 +29,48 @@ module Pito
         "calendar"      => "#bd93f9"
       }.freeze
 
+      # 2026-05-22 — Section page bg canonical recipe lock.
+      #
+      # The canonical visual contract for every screen's page bg is
+      # `color-mix(in srgb, <section accent> 4%, <dracula bg>)`. The
+      # demo `tmp/dracula-swatches-v2.html` (§ B + § Section pane
+      # composition) is the source of truth for the 4% lock.
+      #
+      # Previously this constant held hand-picked per-section hex
+      # atoms that drifted from the recipe (e.g. home = #2c2a36,
+      # which is only ~1% purple — visibly washed-out vs the
+      # canonical #2e2e3e). The drift surfaced in the
+      # `body[data-section] style="background: <hex>;"` inline that
+      # the layout writes via `pito_section_bg`, so the live page bg
+      # diverged from the demo and from the in-CSS
+      # `--color-bg-tint = color-mix(... 4% ...)` recipe.
+      #
+      # The current set DERIVES bg from the ACCENT table via the
+      # canonical 4%/Dracula recipe. The only override is `settings`,
+      # which the user explicitly locked to `#34333b` on 2026-05-20
+      # — a slightly warmer charcoal that visually de-emphasizes the
+      # /settings screen vs the orange accent's 4% tint.
+      RECIPE_PCT  = 4
+      DRACULA_BG  = "#282a36".freeze
+      USER_LOCKED_BG = {
+        "settings" => "#34333b"
+      }.freeze
+      BG = ACCENT.each_with_object({}) do |(section, accent_hex), acc|
+        acc[section] = USER_LOCKED_BG[section] || begin
+          ar = accent_hex[1..2].to_i(16)
+          ag = accent_hex[3..4].to_i(16)
+          ab = accent_hex[5..6].to_i(16)
+          br = DRACULA_BG[1..2].to_i(16)
+          bg_val = DRACULA_BG[3..4].to_i(16)
+          bb = DRACULA_BG[5..6].to_i(16)
+          ratio = RECIPE_PCT.to_f / 100.0
+          r = (br + ((ar - br) * ratio)).round.clamp(0, 255)
+          g = (bg_val + ((ag - bg_val) * ratio)).round.clamp(0, 255)
+          b = (bb + ((ab - bb) * ratio)).round.clamp(0, 255)
+          format("#%02x%02x%02x", r, g, b)
+        end
+      end.freeze
+
       # ACCENTS — canonical alias for the 3 named screen accents referenced in
       # `tmp/dracula-swatches-v2.html` § B (Section mapping). Delegates to the
       # full ACCENT table so there is a single hex source of truth.
@@ -51,9 +79,6 @@ module Pito
         videos: ACCENT.fetch("videos"), # Dracula Red
         games:  ACCENT.fetch("games")   # Pale Cobalt
       }.freeze
-
-      # Dracula bg — base for recipe-derived CSS color-mix() tokens.
-      DRACULA_BG = "#282a36".freeze
 
       # Fallbacks when section is nil / unknown.
       DEFAULT_BG     = DRACULA_BG

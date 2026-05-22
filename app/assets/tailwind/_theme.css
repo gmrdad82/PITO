@@ -25,14 +25,14 @@
   --section-accent: var(--section-accent-home); /* default */
 
   /* L2 — per-section background atoms */
-  --bg-section-home: #2c2a36;
-  --bg-section-channels: #36292d;
-  --bg-section-videos: #36292d;
-  --bg-section-games: #292c33;
-  --bg-section-projects: #292c33;
+  --bg-section-home: #2e2e3e;
+  --bg-section-channels: #312c37;
+  --bg-section-videos: #312c37;
+  --bg-section-games: #2b303e;
+  --bg-section-projects: #2b303e;
   --bg-section-settings: #34333b;
-  --bg-section-notifications: #2c2a36;
-  --bg-section-calendar: #2c2a36;
+  --bg-section-notifications: #2e2e3e;
+  --bg-section-calendar: #2e2e3e;
 
   /* L3 — semantic tokens */
   --color-bg: #282a36;

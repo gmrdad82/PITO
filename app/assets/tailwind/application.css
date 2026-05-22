@@ -5572,6 +5572,17 @@ body > header {
   font-variant-numeric: tabular-nums;
 }
 
+/* 2026-05-22 — Future-notification awareness. When the `notifications`
+   kind broadcasts `future_count > 0`, `tui_date_time_controller.js`
+   toggles the `.dt-has-future-notif` class on the root span. The Home
+   section accent (Dracula Purple `#bd93f9`) signals that at least one
+   notification is queued for a future moment. Reading the canonical
+   variable (NOT a hex literal) keeps the color in sync with
+   `Pito::Theme::Sections`. */
+.sb-clock.dt-has-future-notif {
+  color: var(--section-accent-home);
+}
+
 /* ────────────────────────────────────────────────────────────────────
    Beta 4 — Phase F2 TUI primitives
    `TuiChipComponent` + `TuiCheckboxComponent`. Variants follow ADR 0016

@@ -61,6 +61,7 @@ en:
       app_name: "pito"
       subtitle: "best YouTube tool"
       version_label: "version"
+      version_prefix: "v"
       license_label: "license"
       license_value: "AGPL-3.0"
       source_label: "source"

@@ -239,6 +239,14 @@ export default class extends Controller {
           }
         }
         break
+      case "notifications":
+        // 2026-05-22 — Future-notification awareness. Payload:
+        //   { future_count: <int> }
+        // Fans out to `tui:notifications-changed` so the DateTime VC
+        // (and any other listener) can react. No direct DOM patching
+        // here — the listener owns its own paint contract.
+        if (payload) this.dispatchNotificationsChanged(payload)
+        break
     }
   }
 
@@ -267,6 +275,19 @@ export default class extends Controller {
           busy:     stats.busy,
           enqueued: stats.enqueued,
           retry:    stats.retry
+        }
+      })
+    )
+  }
+
+  // 2026-05-22 — Fans out the `notifications` kind to any listener
+  // (currently the DateTime VC). Payload shape per the locked envelope:
+  //   { future_count: <int> }
+  dispatchNotificationsChanged(payload) {
+    document.dispatchEvent(
+      new CustomEvent("tui:notifications-changed", {
+        detail: {
+          future_count: payload.future_count
         }
       })
     )

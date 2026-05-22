@@ -103,4 +103,37 @@ RSpec.describe Tui::LeaderMenuComponent, type: :component do
       expect(component.title).to eq(I18n.t("tui.leader.title"))
     end
   end
+
+  # FB-ITEM-3 (2026-05-22) — regression: `a` entry must carry the
+  # dispatch_method `open_about` so SPACE+a fires `pito:leader:open_about`
+  # which the `tui-about-dialog` controller listens for.
+  describe "SPACE+a dispatch wiring" do
+    before { render_inline(component) }
+
+    it "marks the `a` entry with data-leader-dispatch-method='open_about'" do
+      expect(page).to have_css("[data-leader-key='a'][data-leader-dispatch-method='open_about']")
+    end
+  end
+
+  # FB-ITEM-3 (2026-05-22) — regression: `?` entry must carry the
+  # dispatch_method `open_help` so SPACE+? fires `pito:leader:open_help`
+  # which the `tui-help-dialog` controller listens for.
+  describe "SPACE+? dispatch wiring" do
+    before { render_inline(component) }
+
+    it "marks the `?` entry with data-leader-dispatch-method='open_help'" do
+      expect(page).to have_css("[data-leader-key='?'][data-leader-dispatch-method='open_help']")
+    end
+  end
+
+  # FB-ITEM-4 (2026-05-22) — regression: `:` entry must carry the
+  # dispatch_method `open_command` so SPACE+: fires `pito:leader:open_command`
+  # which the `tui-command-palette` controller listens for.
+  describe "SPACE+: dispatch wiring" do
+    before { render_inline(component) }
+
+    it "marks the `:` entry with data-leader-dispatch-method='open_command'" do
+      expect(page).to have_css("[data-leader-key=':'][data-leader-dispatch-method='open_command']")
+    end
+  end
 end

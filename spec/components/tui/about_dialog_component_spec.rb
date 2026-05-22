@@ -136,4 +136,50 @@ RSpec.describe Tui::AboutDialogComponent, type: :component do
       expect(component.env).to eq(Rails.env)
     end
   end
+
+  # FB-ITEM-3 (2026-05-22) — wiring + i18n regression coverage.
+  describe "Stimulus wiring (SPACE+a + :about open path)" do
+    it "mounts the tui-about-dialog controller on the dialog root" do
+      render_inline(component)
+      expect(page).to have_css("dialog[data-controller~='tui-about-dialog']")
+    end
+  end
+
+  describe "i18n compliance (no hardcoded English)" do
+    around do |example|
+      example.run
+    ensure
+      I18n.backend.reload!
+      I18n.backend.send(:init_translations) if I18n.backend.respond_to?(:init_translations, true)
+    end
+
+    it "sources the license value from tui.about.license_value (not hardcoded)" do
+      I18n.backend.store_translations(:en, tui: { about: { license_value: "CUSTOM_LICENSE_PROBE" } })
+      render_inline(component)
+      expect(rendered_content).to include("CUSTOM_LICENSE_PROBE")
+    end
+
+    it "sources the contact value from tui.about.contact_value (not hardcoded)" do
+      I18n.backend.store_translations(:en, tui: { about: { contact_value: "CUSTOM_CONTACT_PROBE" } })
+      render_inline(component)
+      expect(rendered_content).to include("CUSTOM_CONTACT_PROBE")
+    end
+
+    it "sources the version prefix from tui.about.version_prefix (not hardcoded 'v')" do
+      I18n.backend.store_translations(:en, tui: { about: { version_prefix: "PROBE_" } })
+      expect(component.version_string).to start_with("PROBE_")
+    end
+
+    it "template source contains no bare hardcoded license string" do
+      template = Rails.root.join("app/components/tui/about_dialog_component.html.erb").read
+      expect(template).not_to include("\"AGPL-3.0\"")
+      expect(template).not_to include("'AGPL-3.0'")
+    end
+
+    it "template source contains no bare hardcoded contact string" do
+      template = Rails.root.join("app/components/tui/about_dialog_component.html.erb").read
+      expect(template).not_to include("\"gmrdad82 [at] gmail [dot] com\"")
+      expect(template).not_to include("'gmrdad82 [at] gmail [dot] com'")
+    end
+  end
 end

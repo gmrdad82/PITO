@@ -37,11 +37,31 @@ RSpec.describe Pito::Theme::Sections do
   end
 
   describe ".bg" do
-    it "returns the section background hex string" do
-      expect(described_class.bg(:home)).to eq("#2c2a36")
+    # 2026-05-22 — bg now derives from the canonical 4%-accent-over-
+    # Dracula-bg recipe (matching `tmp/dracula-swatches-v2.html` §
+    # Section pane composition). The only override is `settings`,
+    # which the user locked to #34333b on 2026-05-20.
+
+    it "returns the 4% recipe bg for home (Dracula Purple over Dracula bg)" do
+      expect(described_class.bg(:home)).to eq("#2e2e3e")
     end
 
-    it "returns the settings bg #34333b" do
+    it "returns the 4% recipe bg for channels + videos (Dracula Red)" do
+      expect(described_class.bg(:channels)).to eq("#312c37")
+      expect(described_class.bg(:videos)).to eq("#312c37")
+    end
+
+    it "returns the 4% recipe bg for games + projects (Pale Cobalt)" do
+      expect(described_class.bg(:games)).to eq("#2b303e")
+      expect(described_class.bg(:projects)).to eq("#2b303e")
+    end
+
+    it "returns the 4% recipe bg for notifications + calendar (Dracula Purple)" do
+      expect(described_class.bg(:notifications)).to eq("#2e2e3e")
+      expect(described_class.bg(:calendar)).to eq("#2e2e3e")
+    end
+
+    it "returns the user-locked bg for settings (#34333b — overrides recipe)" do
       expect(described_class.bg("settings")).to eq("#34333b")
     end
 
@@ -78,12 +98,20 @@ RSpec.describe Pito::Theme::Sections do
   end
 
   describe "BG table" do
-    it "defines settings bg as #34333b (user-locked)" do
+    it "defines settings bg as #34333b (user-locked, overrides recipe)" do
       expect(described_class::BG["settings"]).to eq("#34333b")
     end
 
-    it "defines home bg" do
-      expect(described_class::BG["home"]).to eq("#2c2a36")
+    it "defines home bg as the canonical 4% recipe (#2e2e3e)" do
+      expect(described_class::BG["home"]).to eq("#2e2e3e")
+    end
+
+    it "derives every non-settings section bg from the 4% recipe" do
+      %w[home channels videos games projects notifications calendar].each do |section|
+        expected = described_class.mix(described_class.accent(section), 4, "#282a36")
+        expect(described_class::BG[section]).to eq(expected),
+          "expected #{section} BG to match 4%% recipe (#{expected}), got #{described_class::BG[section]}"
+      end
     end
   end
 

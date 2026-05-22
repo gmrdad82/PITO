@@ -21,10 +21,17 @@ module Pito
 
     STATUS_BAR_CHANNEL = "pito:status_bar".freeze
 
-    def broadcast_status_bar(payload)
+    # `kind:` is optional and defaults to `"data"` so the existing
+    # Sidekiq middleware + StackStatsBroadcastJob keep their original
+    # call shape (`broadcast_status_bar(payload)`). FB-test-infra
+    # (2026-05-22) added the `kind:` kwarg so the dev/test rake +
+    # `window.Pito.testBroadcast` surfaces can broadcast synthetic
+    # envelopes with arbitrary kinds (`sync`, `sidekiq`,
+    # `notifications`, …) without inventing a sibling broadcaster.
+    def broadcast_status_bar(payload, kind: "data")
       ActionCable.server.broadcast(
         STATUS_BAR_CHANNEL,
-        kind: "data",
+        kind: kind.to_s,
         payload: payload,
         ts: Time.current.iso8601
       )

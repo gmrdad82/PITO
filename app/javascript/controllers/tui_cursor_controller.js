@@ -358,6 +358,21 @@ export default class extends Controller {
     let handled = false
     const k = event.key
 
+    // FB (2026-05-22) — `i` is a MODE-LEVEL key, not a focusable-level
+    // key. It flips NORMAL→INSERT regardless of whether the screen has
+    // any focusables (empty home, dialog-less screens, layout-only
+    // pages). Evaluated FIRST so the mode lozenge always responds to
+    // `i`. When focusables ARE present, refocusForFocusable() still
+    // anchors native focus on the current focusable so SPACE / typing
+    // lands somewhere meaningful — but absent focusables it's a no-op.
+    if (k === "i" && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      this.enterInsertMode()
+      this.refocusForFocusable()
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+
     if (k === "Escape") {
       handled = true
     } else if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
@@ -404,15 +419,9 @@ export default class extends Controller {
         }
       }
 
-      // `i` flips mode to INSERT. We DO auto-focus the currently
-      // focused focusable so the user lands somewhere actionable
-      // (a checkbox / button / input) — but the cursor list cursor
-      // doesn't jump. The user already picked the focusable via j/k.
-      if (!handled && k === "i") {
-        this.enterInsertMode()
-        this.refocusForFocusable()
-        handled = true
-      }
+      // `i` handler relocated to the top of handleNormalKey — it
+      // fires regardless of focusables so empty screens (no panels,
+      // no dialog) still flip the lozenge.
     }
 
     if (handled) {

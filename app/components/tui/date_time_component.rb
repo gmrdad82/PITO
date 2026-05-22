@@ -19,10 +19,12 @@ module Tui
   # `tui_status_bar_controller.js#updateClock` patches it in place.
   #
   # 2026-05-22 — Now also carries the `tui-date-time` Stimulus controller
-  # which ticks once per second and applies a ~500ms digit-scramble
-  # effect at every 00:00:00 (midnight local) day rollover. The scramble
-  # picks random ASCII digits for both date + time segments, then settles
-  # on the new value. Pairs with the wall-clock tick already managed by
+  # which ticks once per second to keep the displayed wall clock
+  # current. The day rollover at 00:00:00 (local) is silent — the next
+  # tick simply renders the new date string. (An earlier iteration ran
+  # a ~500ms digit-scramble effect at every midnight rollover; that
+  # animation was removed 2026-05-22 — the clock simply advances.)
+  # Pairs with the wall-clock tick already managed by
   # `tui_status_bar_controller.js#updateClock` — both controllers may
   # coexist during the F1 transition; the child controller is
   # authoritative once it connects.

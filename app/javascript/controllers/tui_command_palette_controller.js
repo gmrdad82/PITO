@@ -34,11 +34,16 @@ export default class extends Controller {
     this.selectedIndex = 0
     this.filtered = this.commandsValue.slice()
     this.boundOpen = this.handleOpenKey.bind(this)
+    this.boundOpenEvent = this.open.bind(this)
     document.addEventListener("keydown", this.boundOpen, true)
+    document.addEventListener("pito:leader:open_command", this.boundOpenEvent)
+    document.addEventListener("pito:action:open_command", this.boundOpenEvent)
   }
 
   disconnect() {
     document.removeEventListener("keydown", this.boundOpen, true)
+    document.removeEventListener("pito:leader:open_command", this.boundOpenEvent)
+    document.removeEventListener("pito:action:open_command", this.boundOpenEvent)
   }
 
   // Document-level `:` listener — opens the palette when no input is
@@ -176,15 +181,17 @@ export default class extends Controller {
       return
     }
     if (cmd.action === "open_help") {
-      // D9 (2026-05-22) — id retargeted to the new Tui::HelpDialogComponent.
-      const dialog = document.getElementById("tui-help-dialog")
-      if (dialog && typeof dialog.showModal === "function") dialog.showModal()
+      // FB-ITEM-3 (2026-05-22) — converge on the `pito:action:open_help`
+      // event so the `tui-help-dialog` controller handles open from both
+      // leader menu (`pito:leader:open_help`) and palette paths.
+      document.dispatchEvent(new CustomEvent("pito:action:open_help", { bubbles: false }))
       return
     }
     if (cmd.action === "open_about") {
-      // D9 (2026-05-22) — id retargeted to the new Tui::AboutDialogComponent.
-      const dialog = document.getElementById("about-dialog")
-      if (dialog && typeof dialog.showModal === "function") dialog.showModal()
+      // FB-ITEM-3 (2026-05-22) — converge on the `pito:action:open_about`
+      // event so the `tui-about-dialog` controller handles open from both
+      // leader menu (`pito:leader:open_about`) and palette paths.
+      document.dispatchEvent(new CustomEvent("pito:action:open_about", { bubbles: false }))
       return
     }
     if (cmd.action === "click" && cmd.target) {

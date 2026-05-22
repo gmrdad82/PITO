@@ -60,6 +60,13 @@ Three screens, three accents (canonical picks from
 - Panel title + action color: pure accent hex
 - Focus tint on rows / actions: `color-mix(in srgb, <accent> 18%, transparent)`
 
+**Section background recipe (canonical):** every screen's background is
+`color-mix(in srgb, <section accent hex> 4%, #282a36)`, with the focused
+border at 35% and the focus tint at 18% of the same accent. Exported by
+`Pito::Theme::Sections` into `_theme.css` and the Rust client's
+`extras/cli/src/theme.rs`. The `settings` value is a frozen historical
+override (`#34333b`) preserved via `USER_LOCKED_BG`.
+
 Exact values: `Pito::Theme::Sections.accent(:home | :videos | :games)`.
 
 **Note on red:** `#ff5555` is the videos screen accent AND looks similar

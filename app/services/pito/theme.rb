@@ -61,19 +61,15 @@ module Pito
       "calendar"      => DRACULA.fetch(:purple)
     }.freeze
 
-    # L2 — per-section page backgrounds (hand-picked atoms, NOT derived).
-    # See `Pito::Theme::Sections::BG` for the canonical lock dates per
-    # section.
-    SECTION_BGS = {
-      "home"          => "#2c2a36",
-      "channels"      => "#36292d",
-      "videos"        => "#36292d",
-      "games"         => "#292c33",
-      "projects"      => "#292c33",
-      "settings"      => "#34333b",
-      "notifications" => "#2c2a36",
-      "calendar"      => "#2c2a36"
-    }.freeze
+    # L2 — per-section page backgrounds.
+    #
+    # 2026-05-22 — Delegated to `Pito::Theme::Sections::BG` to keep a
+    # single source of truth. The Sections table derives bg from the
+    # canonical 4%-accent-over-Dracula-bg recipe (with `settings` as a
+    # user-locked override at `#34333b`). Previously this constant
+    # duplicated hand-picked atoms that drifted from the recipe —
+    # delegation eliminates the drift.
+    SECTION_BGS = Pito::Theme::Sections::BG
 
     # L3 — semantic tokens. Most reference L1 atoms; `color-link`
     # references the section-aware `--section-accent` CSS variable so

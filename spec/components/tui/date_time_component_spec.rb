@@ -24,6 +24,28 @@ RSpec.describe Tui::DateTimeComponent, type: :component do
       render_inline(component)
       expect(page).to have_css("[data-tui-status-bar-target='clock']")
     end
+
+    # 2026-05-22 — Regression: ensures the Stimulus action wiring for
+    # `tui:notifications-changed` stays in place. If this attr is ever
+    # dropped, the DateTime VC stops flipping to purple when a future
+    # notification arrives. The exact handler name is
+    # `onNotificationsChanged` (camelCase per Stimulus convention).
+    it "subscribes to tui:notifications-changed via data-action" do
+      render_inline(component)
+      expect(page).to have_css(
+        "[data-action='tui:notifications-changed@document->tui-date-time#onNotificationsChanged']"
+      )
+    end
+
+    # 2026-05-22 — Regression: confirms the midnight digit-scramble was
+    # removed. The legacy controller carried `scramble`-keyed data
+    # attributes / targets; the slimmed controller carries none. If
+    # this assertion ever flips, somebody re-introduced the scramble.
+    it "renders no scramble-related data attributes" do
+      render_inline(component)
+      html = page.native.to_html
+      expect(html).not_to match(/scramble/i)
+    end
   end
 
   describe "with a time passed" do
