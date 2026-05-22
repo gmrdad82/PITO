@@ -310,7 +310,7 @@
         active section bolded and accented via the `--section-accent`
         cascade), and the `?` help / `:` command keybinding hints. The
         copyright + version metadata still lives in
-        `AboutModalComponent` (opened via the `?` keybind / `space ?`
+        `Tui::AboutDialogComponent` (opened via `space a` / `:about` command
         leader path), so removing the footer copyright did not orphan
         that information.
         Wired here unconditionally — the bar shows on every page that
@@ -338,18 +338,15 @@
         footer on 2026-05-18 — plus SPACE keypress); the `?`
         keybinding and the `KeyboardShortcutsModalComponent` are gone. %>
 
-    <%# Beta 4 — Phase F1 (2026-05-20). TUI help overlay
-        (`Tui::HelpOverlayComponent`) — a `<dialog>`-backed which-key
-        style modal listing every top-level pito keybinding (global
-        flat keys, section nav under SPACE, panel nav, session).
-        Opened by the `?` flat-key (the `tui-help-overlay` Stimulus
-        controller intercepts `?` at document level) and closed by
-        ESC or another `?` toggle. Mounted FIRST in the modal pile so
-        document order mirrors usage frequency (help is the surface a
-        new user opens before everything else). The overlay sits in
-        the browser top layer via `showModal()` so it lays cleanly
-        above any pre-existing dialog. %>
-    <%= render Tui::HelpOverlayComponent.new %>
+    <%# D9 (2026-05-22). TUI help dialog (`Tui::HelpDialogComponent`) —
+        a `<dialog>`-backed which-key style dialog listing every top-level
+        pito keybinding (global flat keys, section nav, panel nav, mode,
+        session). Opened by the `?` flat-key (the `tui-help-dialog`
+        Stimulus controller intercepts `?` at document level) and closed
+        by Esc or another `?` toggle. Mounted FIRST in the dialog pile so
+        document order mirrors usage frequency. Replaces the retired
+        `Tui::HelpOverlayComponent`. %>
+    <%= render Tui::HelpDialogComponent.new %>
 
     <%# FB-172 (2026-05-21) — keyboard-only mode alert dialog. The
         `keyboard-only` Stimulus controller (mounted on `<body>`)
@@ -386,14 +383,14 @@
           current_path: request.path
         ) %>
 
-    <%# 2026-05-19 — layout-level "about" modal. Dialog id `about-modal`
-        matches the `?` flat-key target in `config/keybindings.yml` and the
-        `space ?` leader path. The modal renders the version string from
-        the VERSION file (canonical version source — the SHA / revision
-        row was dropped 2026-05-20). The footer is simplified to a single
-        centered copyright line, so the about modal is the canonical
-        surface for that metadata. %>
-    <%= render AboutModalComponent.new %>
+    <%# D9 (2026-05-22) — layout-level about dialog
+        (`Tui::AboutDialogComponent`). Dialog id `about-dialog` matches
+        the `space a` leader path target in `config/keybindings.yml` and
+        the `:about` command target in `Tui::CommandRegistry`. Renders
+        the identity card (name + version + license + source + commit +
+        contact + env + copyright). Replaces the retired
+        `AboutModalComponent`. %>
+    <%= render Tui::AboutDialogComponent.new %>
 
     <%# Global IGDB-search modal — opened by the `[+]` bracketed link
         in the `/games` chrome (2026-05-17 the global `i` keybind was

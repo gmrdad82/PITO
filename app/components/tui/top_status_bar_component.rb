@@ -11,6 +11,23 @@ module Tui
   #              + sync indicator (●/✗ + word + optional target) + `|`
   #              + Sidekiq cells (b/e/r) + `|` + live clock.
   #
+  # 2026-05-22 — F1 split into 5 child ViewComponents per "ViewComponents
+  # are kings":
+  #
+  #   - Tui::AppVersionComponent  — leading link to GitHub release tag
+  #   - Tui::BreadcrumbComponent  — section + panel + sub-panel
+  #   - Tui::SyncIndicatorComponent — ●/✗ + word + optional target
+  #   - Tui::SidekiqStatsComponent  — b/e/r cells
+  #   - Tui::DateTimeComponent      — wall clock + day-rollover scramble
+  #
+  # The parent still owns the single ActionCable subscription to
+  # `pito:status_bar` (via `tui_status_bar_controller.js`). On each
+  # payload the parent controller dispatches `tui:sync-changed` and
+  # `tui:sidekiq-changed` custom DOM events; each child VC's own
+  # Stimulus controller listens for its event and patches its slot.
+  # Breadcrumb listens for `tui:panel-focus-changed` (existing event
+  # from `tui_cursor_controller.js`).
+  #
   # Subscribes to `pito:status_bar` (see ADR 0017 + Lane A's
   # `StatusBarChannel` + `StatusBarBroadcastMiddleware`) for live
   # Sidekiq queue depth + sync state pushes; Lane C's

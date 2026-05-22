@@ -21,6 +21,20 @@ module Tui
   # Cells carry `data-tui-status-bar-target="sidekiqBusy"` etc. so
   # `tui_status_bar_controller.js` can patch them in place when the
   # `pito:status_bar` cable pushes new counts.
+  #
+  # 2026-05-22 — Now also carries the `tui-sidekiq-stats` Stimulus
+  # controller which listens for `tui:sidekiq-changed` custom DOM
+  # events (dispatched by the parent `tui-top-status-bar` controller on
+  # every `data` payload). Color rules locked here:
+  #
+  #   busy > 0      → .sk-b (var(--color-success), green)
+  #   enqueued > 0  → .sk-e (var(--color-muted),  muted) — orange historically
+  #   retry > 0     → .sk-r (var(--color-danger), pink)
+  #   any count 0   → .sk-zero (muted)
+  #
+  # Letter prefixes (`b` / `e` / `r`) come from i18n keys
+  # `tui.tst.sidekiq.busy_prefix` etc. so the JS layer can rebuild
+  # `b<N>` / `e<N>` / `r<N>` without inlining English literals.
   class SidekiqStatsComponent < ViewComponent::Base
     def initialize(**kwargs)
       @counts = {
@@ -48,6 +62,14 @@ module Tui
       when "b" then "sidekiqBusy"
       when "e" then "sidekiqEnqueued"
       when "r" then "sidekiqRetry"
+      end
+    end
+
+    def prefix_for(letter)
+      case letter.to_s
+      when "b" then I18n.t("tui.tst.sidekiq.busy_prefix")
+      when "e" then I18n.t("tui.tst.sidekiq.enqueued_prefix")
+      when "r" then I18n.t("tui.tst.sidekiq.retry_prefix")
       end
     end
 

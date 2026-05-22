@@ -13,7 +13,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Mounted by adding `tui-dialog-frame` to a dialog's `data-controller` list.
 // Composes cleanly with sibling controllers (e.g. `confirm-modal`,
-// `webhook-help-modal`, `tui-help-overlay`) because Stimulus runs each
+// `webhook-help-modal`, `tui-dialog`) because Stimulus runs each
 // controller independently. The intercept happens at the capture phase so it
 // fires before the sibling controllers' `clickOutside` actions and stops the
 // event from reaching them.

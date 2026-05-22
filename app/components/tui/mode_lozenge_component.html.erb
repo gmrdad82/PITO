@@ -1,0 +1,4 @@
+<%# Beta 4 — Phase F1. Mode lozenge. Renders the current mode string with
+    a BEM modifier for color theming. The data-target wires the Stimulus
+    controller on the parent footer to swap the mode class on the fly. %>
+<span class="bsb-mode bsb-mode--<%= mode %>" data-tui-bottom-status-bar-target="mode"><%= mode_label %></span>

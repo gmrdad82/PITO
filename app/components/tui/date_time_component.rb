@@ -17,6 +17,15 @@ module Tui
   #
   # The root span carries `data-tui-status-bar-target="clock"` so
   # `tui_status_bar_controller.js#updateClock` patches it in place.
+  #
+  # 2026-05-22 — Now also carries the `tui-date-time` Stimulus controller
+  # which ticks once per second and applies a ~500ms digit-scramble
+  # effect at every 00:00:00 (midnight local) day rollover. The scramble
+  # picks random ASCII digits for both date + time segments, then settles
+  # on the new value. Pairs with the wall-clock tick already managed by
+  # `tui_status_bar_controller.js#updateClock` — both controllers may
+  # coexist during the F1 transition; the child controller is
+  # authoritative once it connects.
   class DateTimeComponent < ViewComponent::Base
     WEEKDAYS = %w[Sun Mon Tue Wed Thu Fri Sat].freeze
     MONTHS   = %w[Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec].freeze

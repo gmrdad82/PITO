@@ -909,9 +909,10 @@ export default class extends Controller {
     }
     // Generic `open_modal { modal_id: <dom-id> }` — resolves the
     // `<dialog id={modal_id}>` and opens it. Added 2026-05-19 for the
-    // `?` keybind in `menus.root` (about-modal). Matches the flat
-    // controller's `open_modal` handler so leader + flat dispatch the
-    // same shape consistently.
+    // `space a` keybind in `menus.root` (about-dialog, retargeted from
+    // about-modal in D9 2026-05-22). Matches the flat controller's
+    // `open_modal` handler so leader + flat dispatch the same shape
+    // consistently.
     if (action.type === "open_modal" && action.modal_id) {
       this.openModalById(action.modal_id)
       return

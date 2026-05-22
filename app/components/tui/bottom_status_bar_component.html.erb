@@ -1,23 +1,19 @@
 <%#
-  Beta 4 — Phase F1. Bottom status bar template. Sticky-bottom counterpart
-  to `Tui::TopStatusBarComponent`. Renders the mode lozenge, the 8-section
-  nav row, and the `?` / `:` hint markers. A separate dispatch will wire
-  the `tui-bottom-status-bar` Stimulus controller; the data-controller
-  attribute is mounted here so the JS dispatch only needs to drop the
-  controller file in.
+  Beta 4 — Phase F1. Bottom status bar template. Composes the four
+  sub-VCs: ModeLozengeComponent (left), ScreensListComponent (center),
+  HelpHintComponent + CommandHintComponent (right). A separate dispatch
+  wires the `tui-bottom-status-bar` Stimulus controller; the
+  data-controller attribute is mounted here so the JS dispatch only needs
+  to drop the controller file in.
 %>
 <footer class="bsb-bar" data-controller="tui-bottom-status-bar">
-  <span class="bsb-mode bsb-mode--<%= mode %>" data-tui-bottom-status-bar-target="mode"><%= mode %></span>
-  <span class="bsb-pipe">|</span>
-  <span class="bsb-sections">
-    <% SECTIONS.each do |section| %>
-      <a href="<%= section_path(section) %>" class="<%= section_classes(section) %>"><%= section_label(section) %></a>
-    <% end %>
-  </span>
-  <span class="bsb-pipe">|</span>
+  <%= render Tui::ModeLozengeComponent.new(mode: mode) %>
+  <span class="bsb-pipe"><%= pipe_label %></span>
+  <%= render Tui::ScreensListComponent.new(current_section: current_section) %>
+  <span class="bsb-pipe"><%= pipe_label %></span>
   <span class="bsb-hints">
-    <span class="bsb-hint-key">?</span><span class="bsb-hint-label"> help</span>
+    <%= render Tui::HelpHintComponent.new %>
     <span class="bsb-hint-spacer"></span>
-    <span class="bsb-hint-key">:</span><span class="bsb-hint-label"> command</span>
+    <%= render Tui::CommandHintComponent.new %>
   </span>
 </footer>

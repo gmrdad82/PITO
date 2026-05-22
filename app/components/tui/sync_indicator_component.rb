@@ -24,6 +24,14 @@ module Tui
   # Stimulus controller subscribes to — this VC is a drop-in render
   # inside `Tui::TopStatusBarComponent` and does not break the live
   # update contract.
+  #
+  # 2026-05-22 — Now also carries the `tui-sync-indicator` Stimulus
+  # controller which listens for `tui:sync-changed` custom DOM events
+  # (dispatched by the parent `tui-top-status-bar` controller on every
+  # cable payload). The child controller patches the dot glyph + class
+  # + word text/class in place. Word text flows through I18n keys
+  # `tui.tst.sync.synced` / `.syncing` / `.disconnected` so the SSR +
+  # JS layers share the same string source.
   class SyncIndicatorComponent < ViewComponent::Base
     STATES = %i[idle syncing syncing_with_target disconnected].freeze
 
@@ -48,10 +56,25 @@ module Tui
 
     def word
       case @state
-      when :idle              then "synced"
-      when :syncing, :syncing_with_target then "syncing"
-      when :disconnected      then "disconnected"
+      when :idle              then I18n.t("tui.tst.sync.synced")
+      when :syncing, :syncing_with_target then I18n.t("tui.tst.sync.syncing")
+      when :disconnected      then I18n.t("tui.tst.sync.disconnected")
       end
+    end
+
+    # i18n strings exposed to the Stimulus controller as data-* attrs
+    # so the JS layer doesn't reach back into the server for label text
+    # on every cable push.
+    def word_synced
+      I18n.t("tui.tst.sync.synced")
+    end
+
+    def word_syncing
+      I18n.t("tui.tst.sync.syncing")
+    end
+
+    def word_disconnected
+      I18n.t("tui.tst.sync.disconnected")
     end
 
     def word_class

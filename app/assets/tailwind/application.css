@@ -6038,7 +6038,8 @@ a.bsb-section.bsb-section--current:visited {
    Backdrop dims the page via `color-mix` on `--dracula-bg`; the
    panel sits centered with a Dracula-flavored chrome.
    ──────────────────────────────────────────────────────────────────── */
-.tui-help-overlay {
+.tui-help-overlay,
+.tui-help-dialog {
   /* Remove fixed positioning — let browser center the <dialog> naturally */
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -6050,30 +6051,35 @@ a.bsb-section.bsb-section--current:visited {
   max-height: fit-content;
 }
 
-.tui-help-overlay__panel {
+.tui-help-overlay__panel,
+.tui-help-dialog__panel {
   /* No additional bg/border — outer dialog handles those */
   padding: 0;
 }
 
 /* FB-13 / FB-25 / FB-26 (2026-05-20). Drop all bold weight inside the
-   help overlay; visual contrast comes from color signal only — keys
+   help dialog; visual contrast comes from color signal only — keys
    paint in the section accent, labels paint in the body color, group
    titles paint muted with a tiny letter-spacing for small-caps feel.
    Defensive sweep: the dialog itself sets font-weight: 400 so every
    descendant inherits normal weight, and the descendant class rules
-   below are element-boosted (h3.tui-help-overlay__group-title etc.)
+   below are element-boosted (h3.tui-help-dialog__group-title etc.)
    so they decisively beat any future rule that might cascade bold
    onto these tags via element selectors. */
 .tui-help-overlay,
-.tui-help-overlay * { font-weight: 400; }
+.tui-help-overlay *,
+.tui-help-dialog,
+.tui-help-dialog * { font-weight: 400; }
 
-.tui-help-overlay__groups {
+.tui-help-overlay__groups,
+.tui-help-dialog__groups {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px 24px; /* compact row gap, decent column gap */
 }
 
-h3.tui-help-overlay__group-title {
+h3.tui-help-overlay__group-title,
+h3.tui-help-dialog__group-title {
   color: var(--color-muted);
   font-weight: 400;
   font-size: 13px;
@@ -6081,26 +6087,30 @@ h3.tui-help-overlay__group-title {
   margin: 0 0 2px 0;
 }
 
-.tui-help-overlay__keys {
+.tui-help-overlay__keys,
+.tui-help-dialog__keys {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0 8px; /* zero row gap — rows are flush */
   margin: 0;
 }
 
-dt.tui-help-overlay__key {
+dt.tui-help-overlay__key,
+dt.tui-help-dialog__key {
   color: var(--section-accent);
   font-weight: 400;
   margin: 0;
 }
 
-dd.tui-help-overlay__label {
+dd.tui-help-overlay__label,
+dd.tui-help-dialog__label {
   color: var(--color-text);
   font-weight: 400;
   margin: 0;
 }
 
-.tui-help-overlay::backdrop {
+.tui-help-overlay::backdrop,
+.tui-help-dialog::backdrop {
   background: color-mix(in srgb, var(--dracula-bg) 70%, transparent);
 }
 
@@ -6190,8 +6200,52 @@ dialog#about-modal.tui-dialog-frame {
    help overlay backdrop (`color-mix(in srgb, var(--dracula-bg) 70%,
    transparent)`) is the user-locked reference. Higher specificity (id +
    class) wins over `dialog.confirm-modal::backdrop`. */
-dialog#about-modal::backdrop {
+dialog#about-modal::backdrop,
+dialog#about-dialog::backdrop {
   background: color-mix(in srgb, var(--dracula-bg) 70%, transparent);
+}
+
+/* D9 (2026-05-22). Tui::AboutDialogComponent identity card. Replaces the
+   inline styles that lived on the legacy AboutModalComponent template.
+   The outer `<dialog>` carries .tui-dialog-frame chrome (canonical
+   title-in-border) plus .tui-about-dialog for the breathing-room override
+   below, modeled on the previous `#about-modal` rules. */
+dialog#about-dialog.tui-dialog-frame {
+  /* Match #about-modal padding-top/bottom override for the identity-card
+     vertical breathing room (logo top + copyright bottom). */
+  padding-top: 24px;
+  padding-bottom: 20px;
+}
+.tui-about-dialog__inner {
+  /* No inner padding — outer dialog handles it via .tui-dialog-frame. */
+  padding: 0;
+}
+.tui-about-dialog__logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
+  display: block;
+  margin: 0 auto;
+}
+.tui-about-dialog__identity {
+  margin-top: 10px;
+  text-align: center;
+}
+.tui-about-dialog__kv {
+  /* Centered KV grid; labels right-flush, values left-flush so the gap
+     sits visually centered under the "pito" word above. */
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 8px;
+  row-gap: 4px;
+  margin: 10px 0 0;
+  justify-content: center;
+}
+.tui-about-dialog__kv dt { text-align: right; margin: 0; }
+.tui-about-dialog__kv dd { text-align: left;  margin: 0; }
+.tui-about-dialog__copyright {
+  margin-top: 10px;
+  text-align: center;
 }
 
 /* FB-102 (2026-05-20). Webhook help dialog backdrop matches the help
@@ -6467,6 +6521,7 @@ body.keyboard-only * {
   left: 0;
   right: 0;
   bottom: 22px; /* sits ABOVE the BST (22px tall, fixed bottom) */
+  width: 100vw;  /* D4 contract: full viewport width */
   z-index: 200; /* above panel chrome, below dialog top-layer */
   background: var(--color-bg);
   color: var(--color-text);
@@ -6524,10 +6579,15 @@ body.keyboard-only * {
 
 .tui-command-palette__foot {
   display: flex;
-  gap: 2ch;
+  align-items: center;
+  gap: 0;
   padding: 2px 12px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
+  color: var(--color-muted);
+}
+
+.tui-command-palette__sep {
   color: var(--color-muted);
 }
 

@@ -3,6 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="tui-command-palette"
 //
 // FB-170 (2026-05-21) — V6 `:command` palette controller.
+// FB-D4  (2026-05-22) — i18n empty value + mode dispatch + hint filter.
 //
 // Listens for `:` at document level when no input has focus and no
 // dialog is open; opens the palette, focuses the input, and lets the
@@ -18,12 +19,16 @@ import { Controller } from "@hotwired/stimulus"
 //   Enter      — execute selected command
 //   Backspace  — native (handled by the input element)
 //
-// Filtering: case-insensitive substring match against `name`. Empty
-// query shows the full catalog. Selection is clamped to the filtered
-// list bounds.
+// Filtering: case-insensitive substring match against `name` OR `hint`.
+// Empty query shows the full catalog. Selection is clamped to the
+// filtered list bounds.
+//
+// Mode integration: dispatches `tui:mode-changed` with `{mode:"command"}`
+// on open and `{mode:"normal"}` on close so the BST mode lozenge tracks
+// palette state (ADR 0017 cable-first + BST mode contract).
 export default class extends Controller {
   static targets = ["input", "list"]
-  static values = { commands: Array }
+  static values = { commands: Array, empty: String }
 
   connect() {
     this.selectedIndex = 0
@@ -62,6 +67,8 @@ export default class extends Controller {
     this.filtered = this.commandsValue.slice()
     this.selectedIndex = 0
     this.render()
+    // Notify BST mode lozenge: palette open → command mode.
+    this.dispatchMode("command")
     // Defer focus to next tick so the `:` keydown isn't captured by
     // the input itself.
     setTimeout(() => {
@@ -72,16 +79,30 @@ export default class extends Controller {
   close() {
     this.element.setAttribute("hidden", "")
     this.inputTarget.value = ""
+    // Notify BST mode lozenge: palette closed → back to normal mode.
+    this.dispatchMode("normal")
+  }
+
+  // Broadcast tui:mode-changed so BST mode lozenge + any other listener
+  // reflects the current mode without direct coupling to this controller.
+  dispatchMode(mode) {
+    document.dispatchEvent(
+      new CustomEvent("tui:mode-changed", { detail: { mode }, bubbles: false })
+    )
   }
 
   // input -> filter
+  // D4 contract: substring match against `name` OR `hint` (case-insensitive).
   filter() {
     const q = (this.inputTarget.value || "").toLowerCase().trim()
     const all = this.commandsValue
     if (q === "") {
       this.filtered = all.slice()
     } else {
-      this.filtered = all.filter((c) => (c.name || "").toLowerCase().includes(q))
+      this.filtered = all.filter((c) =>
+        (c.name || "").toLowerCase().includes(q) ||
+        (c.hint || "").toLowerCase().includes(q)
+      )
     }
     this.selectedIndex = 0
     this.render()
@@ -155,12 +176,14 @@ export default class extends Controller {
       return
     }
     if (cmd.action === "open_help") {
-      const dialog = document.getElementById("tui-help-overlay")
+      // D9 (2026-05-22) — id retargeted to the new Tui::HelpDialogComponent.
+      const dialog = document.getElementById("tui-help-dialog")
       if (dialog && typeof dialog.showModal === "function") dialog.showModal()
       return
     }
     if (cmd.action === "open_about") {
-      const dialog = document.getElementById("about-modal")
+      // D9 (2026-05-22) — id retargeted to the new Tui::AboutDialogComponent.
+      const dialog = document.getElementById("about-dialog")
       if (dialog && typeof dialog.showModal === "function") dialog.showModal()
       return
     }
@@ -226,7 +249,8 @@ export default class extends Controller {
     if (this.filtered.length === 0) {
       const empty = document.createElement("div")
       empty.className = "tui-command-palette__empty"
-      empty.textContent = "no matches"
+      // Use the i18n string from the data attribute (set by the Ruby component).
+      empty.textContent = this.hasEmptyValue ? this.emptyValue : "no matches"
       list.appendChild(empty)
       return
     }

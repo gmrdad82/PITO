@@ -434,5 +434,5 @@ menus:
       - { key: q,  label_i18n: keybindings.menus.root.quit,     action: { type: quit }, surfaces: [tui] }
       - divider: true
       - { key: qQ, label_i18n: keybindings.menus.root.logout,   action: { type: logout } }
-      - { key: a,  label_i18n: keybindings.menus.root.about,    action: { type: open_modal, modal_id: about-modal } }
+      - { key: a,  label_i18n: keybindings.menus.root.about,    action: { type: open_modal, modal_id: about-dialog } }
 

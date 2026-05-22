@@ -1,15 +1,20 @@
 # Help overlay i18n (FB-71, 2026-05-20).
 #
-# Owned by `Tui::HelpOverlayComponent`. Strings live under
-# `help.overlay.*` so the surface can evolve independently of
-# `common.*` and area locales. The `keys` block in
+# Owned by `Tui::HelpDialogComponent` (renamed from
+# `Tui::HelpOverlayComponent` in D9 2026-05-22; the i18n key namespace
+# `help.overlay.*` was kept to avoid churning every existing key on the
+# rename). Strings live under `help.overlay.*` so the surface can evolve
+# independently of `common.*` and area locales. The `keys` block in
 # `config/locales/keybindings/en.yml` is the canonical key-label
 # source (TAB, Esc, Space, Ctrl, etc.); this file only carries the
-# help-overlay-specific copy (title, group titles, action labels,
-# and the trailing "to close" suffix in the title bar).
+# help-dialog-specific copy (title, group titles, action labels).
+#
+# The dialog chrome's `Esc to close` hint now flows from
+# `tui.dialog.esc_to_close` (the canonical Tui::DialogComponent hint key)
+# — the legacy `help.overlay.esc_close_suffix` key is no longer rendered.
 #
 # Group / item ordering mirrors `GROUPS` in
-# `app/components/tui/help_overlay_component.rb`. When the GROUPS
+# `app/components/tui/help_dialog_component.rb`. When the GROUPS
 # constant gains or loses an item, the matching key here must be
 # added or removed in lockstep.
 en:
@@ -29,12 +34,8 @@ en:
           title: "section nav"
           items:
             home: "home"
-            calendar: "calendar"
-            channels: "channels"
             videos: "videos"
             games: "games"
-            notifications: "notifications"
-            settings: "settings"
         panel_nav:
           title: "panel nav"
           items:

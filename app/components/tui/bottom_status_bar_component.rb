@@ -1,20 +1,23 @@
 module Tui
   # Beta 4 — Phase F1. Bottom status bar. Sticky-bottom counterpart to
-  # `Tui::TopStatusBarComponent`. Provides the 3-screen nav (home /
-  # videos / games), current mode lozenge, and `?` / `:` keybinding
-  # hints, vim/TUI status-line style.
+  # `Tui::TopStatusBarComponent`. Provides the 3-screen nav, current mode
+  # lozenge, and `?` / `:` keybinding hints, vim/TUI status-line style.
   #
   # Layout:
   #
   #   <mode> | home videos games | ? help  : command
   #
-  # LEFT:    mode lozenge (lowercase). One of `:normal`, `:command`,
-  #          `:search`. Color cycles per mode (cyan / purple / green).
-  # CENTER:  3 screen links, lowercase. Current screen bolded and
-  #          colored with the section accent (CSS cascade from
-  #          `body[data-section]`).
-  # RIGHT:   `? help` + `: command` hint markers (lowercase, muted with
-  #          the key letter in foreground weight).
+  # Children (all composed via `render` in the template):
+  #   - `Tui::ModeLozengeComponent`  — mode lozenge (left)
+  #   - `Tui::ScreensListComponent`  — screen nav row (center)
+  #   - `Tui::HelpHintComponent`     — `? help` hint (right)
+  #   - `Tui::CommandHintComponent`  — `: command` hint (right)
+  #
+  # Kwargs:
+  #   current_section: (String) — "home", "videos", or "games". Forwarded
+  #                    to `Tui::ScreensListComponent`.
+  #   mode:            (Symbol) — :normal, :command, or :search. Forwarded
+  #                    to `Tui::ModeLozengeComponent`. Defaults to :normal.
   #
   # C18 (2026-05-21): settings consolidated into / (home). The sections
   # list was trimmed from 8 entries to 3 (home / videos / games).
@@ -25,9 +28,10 @@ module Tui
   # `ApplicationHelper`), so the bar inherits the right color
   # automatically — no per-render section-to-color lookup needed.
   class BottomStatusBarComponent < ViewComponent::Base
-    SECTIONS = %i[home videos games].freeze
     MODES = %i[normal command search].freeze
 
+    # @param current_section [String] active screen slug — "home", "videos", "games"
+    # @param mode            [Symbol] editor mode — :normal, :command, :search
     def initialize(current_section:, mode: :normal)
       @current_section = current_section.to_s
       @mode = MODES.include?(mode.to_sym) ? mode.to_sym : :normal
@@ -35,23 +39,8 @@ module Tui
 
     attr_reader :current_section, :mode
 
-    def section_classes(section)
-      classes = [ "bsb-section" ]
-      classes << "bsb-section--current" if section.to_s == current_section
-      classes.join(" ")
-    end
-
-    def section_label(section)
-      section.to_s
-    end
-
-    def section_path(section)
-      case section.to_s
-      when "home"   then "/"
-      when "videos" then "/videos"
-      when "games"  then "/games"
-      else "/"
-      end
+    def pipe_label
+      t("tui.bst.pipe")
     end
   end
 end

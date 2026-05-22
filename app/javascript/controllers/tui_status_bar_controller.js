@@ -242,6 +242,36 @@ export default class extends Controller {
     }
   }
 
+  // ---------- F1 child-VC event dispatch (2026-05-22) ----------
+  //
+  // Phase F1 splits the bar into 5 ViewComponents (AppVersion,
+  // Breadcrumb, SyncIndicator, SidekiqStats, DateTime). Each child has
+  // its own Stimulus controller listening for a custom DOM event.
+  // `dispatchSyncChanged` / `dispatchSidekiqChanged` mirror the legacy
+  // direct-target patches so the bar updates twice: once via the legacy
+  // target swap (still wired for backward compat), and once via the
+  // event flow (the new authoritative path). The two converge on the
+  // same DOM so there's no visible double-paint.
+  dispatchSyncChanged(state, target = null) {
+    document.dispatchEvent(
+      new CustomEvent("tui:sync-changed", {
+        detail: { state, target }
+      })
+    )
+  }
+
+  dispatchSidekiqChanged(stats) {
+    document.dispatchEvent(
+      new CustomEvent("tui:sidekiq-changed", {
+        detail: {
+          busy:     stats.busy,
+          enqueued: stats.enqueued,
+          retry:    stats.retry
+        }
+      })
+    )
+  }
+
   // ---------- Sync state ----------
 
   // `state` is the LOCAL three-state taxonomy used by the controller:
@@ -303,6 +333,11 @@ export default class extends Controller {
       // Show / clear the optional `syncing channels`-style label.
       this.syncTargetTarget.textContent = (state === "syncing" && target) ? target : ""
     }
+
+    // F1: also dispatch the event so the child `tui-sync-indicator`
+    // controller can patch its slot (legacy target patches above stay
+    // in place for backward compat during the F1 transition).
+    this.dispatchSyncChanged(state, target)
   }
 
   // ---------- Progress bar ----------
@@ -366,6 +401,11 @@ export default class extends Controller {
     if (stats.retry !== undefined && this.hasSidekiqRetryTarget) {
       this.updateSidekiqCell(this.sidekiqRetryTarget, "r", stats.retry, "sk-r")
     }
+
+    // F1: also dispatch the event so the child `tui-sidekiq-stats`
+    // controller can patch its slot (legacy target patches above stay
+    // in place for backward compat during the F1 transition).
+    this.dispatchSidekiqChanged(stats)
   }
 
   updateSidekiqCell(el, letter, value, nonZeroClass) {
