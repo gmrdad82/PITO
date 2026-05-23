@@ -1,52 +1,40 @@
 class DashboardController < ApplicationController
   # Home (/) — Phase 2D (2026-05-23). Layout shell wired with the 3-row
   # C3 + masonry row 3 grid (see `app/views/dashboard/index.html.erb`).
-  # Most panels render blank in this round; the ex-settings panels
-  # (Security, Notifications, Stack) need ivars to satisfy their
-  # ViewComponent constructors — fed here with minimum stub data so the
-  # render is green. Real data wiring (live probes, current_user
-  # sessions, webhook records) lands in subsequent content rounds.
+  #
+  # C19f follow-up (2026-05-23). The three rescued ex-settings panels
+  # (Security, Notifications, Stack) need real data — the prior stub
+  # path fed `false`/`nil`/`[]` and the panels rendered empty (no
+  # session rows, no Stack subsystem rows, etc.). Data fetching now
+  # lives in `Concerns::HomePanelData`, mixed in below; each rescued
+  # panel has its own `set_*_panel_data` method run via before_action
+  # so DashboardController stays readable.
+  #
+  # The remaining home-native panels (Aggregator, Calendar, PersonalStats,
+  # ApiQuota, NotificationsFeed) still render blank in this round; their
+  # real data wiring lands in subsequent content rounds, each via its
+  # own panel-scoped controller action + cable broadcast.
   #
   # JSON branch retained as the CLI's canonical `get_dashboard` envelope
   # so `pito` deserializes cleanly. Shape: video_count + channel_count +
   # footage_count.
+  include HomePanelData
+
+  before_action :set_security_panel_data,      only: :index, if: :html_request?
+  before_action :set_notifications_panel_data, only: :index, if: :html_request?
+  before_action :set_stack_panel_data,         only: :index, if: :html_request?
 
   def index
     respond_to do |format|
-      format.html { set_panel_stub_ivars }
+      format.html
       format.json { render json: dashboard_json }
     end
   end
 
   private
 
-  # Phase 2D — stub data for the layout-shell render. Each ivar matches
-  # the keyword arg one of the rescued ex-settings ViewComponents
-  # demands. When the content rounds wire live data per panel, the
-  # corresponding stub assignment here gets replaced with a real lookup
-  # (probe service, current_user.sessions scope, etc.) — never invent
-  # values; values come from the canonical source.
-  def set_panel_stub_ivars
-    # Pito::SecurityPanelComponent kwargs.
-    @sessions      = Session.none
-    @sessions_sort = "last_seen"
-    @sessions_dir  = "desc"
-
-    # Pito::NotificationsPanelComponent kwargs.
-    @discord_webhook = nil
-    @slack_webhook   = nil
-
-    # Pito::StackPanelComponent kwargs.
-    @postgres_status          = { connected: false }
-    @postgres_table_breakdown = []
-    @search_healthy           = false
-    @search_stats             = {}
-    @search_per_index_stats   = []
-    @voyage_configured        = false
-    @storage_status           = { present: false, writable: false }
-    @assets_breakdown         = []
-    @sidekiq_breakdown        = []
-    @redis_status             = { connected: false }
+  def html_request?
+    request.format.html?
   end
 
   def dashboard_json

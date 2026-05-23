@@ -187,6 +187,18 @@ export default class extends Controller {
     })
 
     this.applyFocus()
+    // 2026-05-23 — re-emit the focus-changed event on the next microtask
+    // so subscribers that mount after this controller's `connect()` (the
+    // breadcrumb / TST controllers) pick up the first panel's title
+    // on initial paint. Without this, the first emit fires before
+    // those controllers register their listeners and the breadcrumb
+    // stays blank until the user moves the cursor.
+    queueMicrotask(() => this.emitFocusChange())
+    // Belt-and-suspenders: also re-emit after the next macrotask, which
+    // covers the case where Stimulus mounts subscribers via a later
+    // turn of the event loop (e.g. Turbo's `turbo:load` happens after
+    // `DOMContentLoaded`).
+    setTimeout(() => this.emitFocusChange(), 0)
   }
 
   disconnect() {

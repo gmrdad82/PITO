@@ -1,9 +1,8 @@
 <%= content_tag :section,
-      class: "pito-panel pito-panel--calendar",
+      class: "pane pito-pane pito-panel pito-panel--calendar",
       **panel_data do %>
-  <%= render Tui::FramedPanelComponent.new(title: title) do |panel| %>
-    <% panel.with_body do %>
-      <p class="pito-panel__placeholder">[ panel content TBD ]</p>
-    <% end %>
+  <span class="pito-pane__title"><%= title %></span>
+  <%= render Tui::PanelFieldsetComponent.new do %>
+    <p class="pito-panel__placeholder">[ panel content TBD ]</p>
   <% end %>
 <% end %>

@@ -10,8 +10,9 @@ import { Controller } from "@hotwired/stimulus"
  * viewport is still too small, so a sub-minimum window cannot escape
  * the guard.
  *
- * Min values locked at 2026-05-22 per docs/design.md § Layout:
- *   width  = 1280px (half of a 2560-wide 1440p display)
+ * Min values locked at 2026-05-23 per docs/design.md § Layout:
+ *   width  = 1200px (half of a 2560-wide 1440p display, minus slack
+ *                    for browser chrome / sidebar)
  *   height =  800px
  *
  * Pattern parity with the keyboard-only mouse guard
@@ -23,7 +24,7 @@ import { Controller } from "@hotwired/stimulus"
  * this.element is the <dialog> we call showModal() / close() on.
  */
 export default class extends Controller {
-  static MIN_WIDTH = 1280
+  static MIN_WIDTH = 1200
   static MIN_HEIGHT = 800
   static DEBOUNCE_MS = 80
 

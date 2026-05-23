@@ -11,7 +11,9 @@ module Tui
   # for `resize` events on `window` and calls `showModal()` /
   # `close()` as the viewport crosses the locked minimum:
   #
-  #   * MIN_WIDTH_PX  = 1280 (half of a 2560-wide 1440p display)
+  #   * MIN_WIDTH_PX  = 1200 (half of a 2560-wide 1440p display, minus
+  #                           slack for browser chrome / sidebar; dropped
+  #                           1280→1200 on 2026-05-23)
   #   * MIN_HEIGHT_PX =  800
   #
   # `[Esc]` dismisses the dialog locally, but the controller re-opens
@@ -22,7 +24,7 @@ module Tui
   # so the future Rust TUI client can share the same copy.
   class SizeGuardDialogComponent < ViewComponent::Base
     DIALOG_ID = "size-guard-dialog".freeze
-    MIN_WIDTH_PX = 1280
+    MIN_WIDTH_PX = 1200
     MIN_HEIGHT_PX = 800
 
     def title

@@ -5,8 +5,8 @@ RSpec.describe Tui::SizeGuardDialogComponent, type: :component do
   subject(:component) { described_class.new }
 
   describe "constants" do
-    it "locks MIN_WIDTH_PX at 1280" do
-      expect(described_class::MIN_WIDTH_PX).to eq(1280)
+    it "locks MIN_WIDTH_PX at 1200" do
+      expect(described_class::MIN_WIDTH_PX).to eq(1200)
     end
 
     it "locks MIN_HEIGHT_PX at 800" do
@@ -55,7 +55,7 @@ RSpec.describe Tui::SizeGuardDialogComponent, type: :component do
     it "renders the message paragraph with the interpolated minimums" do
       expect(page).to have_css(
         ".tui-size-guard-dialog__message",
-        text: "resize the window to at least 1280×800 to continue."
+        text: "resize the window to at least 1200×800 to continue."
       )
     end
   end
@@ -68,7 +68,7 @@ RSpec.describe Tui::SizeGuardDialogComponent, type: :component do
 
   describe "#message" do
     it "interpolates MIN_WIDTH_PX and MIN_HEIGHT_PX into the i18n message" do
-      expect(component.message).to include("1280")
+      expect(component.message).to include("1200")
       expect(component.message).to include("800")
     end
   end

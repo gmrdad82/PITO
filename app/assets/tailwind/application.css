@@ -271,14 +271,17 @@ body {
      `--dracula-bg` atom rather than going transparent. */
   background: var(--dracula-bg);
   /* 2026-05-23 — Phase 2A min-size lock. pito is a TUI-flavoured app
-     with fixed-rhythm panes; below 1280×800 the multi-panel grids
+     with fixed-rhythm panes; below 1200×800 the multi-panel grids
      collapse into illegible stacks. The `Tui::SizeGuardDialog`
      Stimulus controller listens to window resize events and pops a
      dialog when the viewport is below threshold; this CSS pair adds
      defense-in-depth so the page chrome never scrolls under the
      guard. `overflow: hidden` keeps the page body from scrolling —
-     individual panels manage their own scroll regions. */
-  min-width: 1280px;
+     individual panels manage their own scroll regions.
+     Width dropped 1280→1200 on 2026-05-23 — the half-tile width on
+     a 2560 display (1280) loses a few pixels to the browser chrome
+     so the guard was firing on legitimate half-screen tiles. */
+  min-width: 1200px;
   min-height: 800px;
   overflow: hidden;
 }
@@ -852,11 +855,28 @@ button.bracketed .bl {
 }
 
 /* Every Pito panel inside the home grid fills its cell so the framed
-   chrome reaches the cell edges and inner content can scroll on overflow. */
-.home-grid .pito-panel {
-  min-height: 0;
+   chrome reaches the cell edges and inner content can scroll on overflow.
+   2026-05-23 — scope-bumped to `.home-grid .pito-pane` so the rescued
+   chrome (`.pane.pito-pane.pito-panel`) wins specificity over the base
+   `.pito-pane` rule's `width: auto` / `flex: initial`. The 5 new home
+   panels (channels-overview / latest-videos / games-releasing /
+   notifications-feed / calendar) and the rescued panels (security /
+   notifications / stack) all use the same `.pito-pane` chrome inside
+   `.home-grid`, so flex-fill the panel AND its inner
+   `tui-panel-fieldset` so the framed chrome reaches the cell edges. */
+.home-grid .pito-panel,
+.home-grid .pito-pane {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.home-grid .pito-pane .tui-panel-fieldset {
+  flex: 1;
+  min-height: 0;
 }
 
 /* The Stack panel ships `.pito-pane--full` so it would span the full

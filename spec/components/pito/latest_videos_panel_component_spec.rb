@@ -11,10 +11,12 @@ RSpec.describe Pito::LatestVideosPanelComponent, type: :component do
     expect(root["class"]).to include("pito-panel--latest-videos")
   end
 
-  it "renders the Tui::FramedPanelComponent chrome with the i18n title" do
+  it "renders the rescued pito-pane chrome with the i18n title" do
     title = I18n.t("tui.home.panels.latest_videos.title")
     expect(title).to eq("latest videos")
-    header = rendered.css(".tui-framed-panel__title").first
+    expect(root["class"]).to include("pane")
+    expect(root["class"]).to include("pito-pane")
+    header = rendered.css(".pito-pane__title").first
     expect(header).to be_present
     expect(header.text.strip).to eq(title)
   end
@@ -37,8 +39,8 @@ RSpec.describe Pito::LatestVideosPanelComponent, type: :component do
     expect(root["data-tui-panel-keybinds-value"]).to eq("{}")
   end
 
-  it "renders the placeholder body inside the framed panel" do
-    placeholder = rendered.css(".pito-panel__placeholder").first
+  it "renders the placeholder body inside the panel fieldset" do
+    placeholder = rendered.css(".tui-panel-fieldset .pito-panel__placeholder").first
     expect(placeholder).to be_present
     expect(placeholder.text.strip).to eq("[ panel content TBD ]")
   end

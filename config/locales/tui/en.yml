@@ -31,8 +31,8 @@ en:
       message_line_2: "type ? for help or : for command"
     # Phase 1C (2026-05-22) — minimum-window-size guard dialog copy.
     # Surfaces via Tui::SizeGuardDialogComponent when window.innerWidth
-    # < 1280 or window.innerHeight < 800. Min values locked per
-    # docs/design.md § Layout.
+    # < 1200 or window.innerHeight < 800. Min values locked per
+    # docs/design.md § Layout. Width dropped 1280→1200 on 2026-05-23.
     size_guard:
       title: "window too small"
       message: "resize the window to at least %{min_width}×%{min_height} to continue."
