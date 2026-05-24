@@ -1591,8 +1591,10 @@ tr[data-tui-focusable-focused="yes"] > th {
      work — the scroll wrapper owns its own coordinate system, so the
      outer `.pito-pane`'s padding-top can't help with title clipping.
      Dropping the outer top padding kills the redundant gap between
-     the stack panel title and the first sub-panel. */
-  padding: 0 8px 12px;
+     the stack panel title and the first sub-panel.
+     2026-05-24 — bottom 12px -> 2px so Postgres + Assets row sits
+     close to the stack panel's bottom border (-10px per user). */
+  padding: 0 8px 2px;
 }
 
 /* FB-92 (2026-05-20) — left column carries TOP-LEVEL stacked panels
