@@ -10,10 +10,12 @@
     .tt-char:nth-child(-n+4)` in application.css). %>
 <% if target_mode? %>
   <%= content_tag :button, display_value,
-        class: "tui-sync-word tui-sync-word--target",
+        class: "tui-sync-word tui-sync-word--target tui-sync-word--id-#{instance_outlet_id}",
         type: "button",
         aria: { label: aria_label },
         data: root_data_attrs %>
 <% else %>
-  <%= content_tag :span, display_value, class: "tui-sync-word", data: root_data_attrs %>
+  <%= content_tag :span, display_value,
+        class: "tui-sync-word tui-sync-word--id-#{instance_outlet_id}",
+        data: root_data_attrs %>
 <% end %>

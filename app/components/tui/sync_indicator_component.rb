@@ -166,7 +166,15 @@ module Tui
       attrs[:tui_sync_indicator_syncing_value]      = word_syncing
       attrs[:tui_sync_indicator_mixed_value]        = word_mixed
       attrs[:tui_sync_indicator_disconnected_value] = word_disconnected
-      attrs[:tui_sync_indicator_tui_transition_outlet] = ".tui-sync-word"
+      # 2026-05-25 — UNIQUE outlet selector per VC instance. The previous
+      # `.tui-sync-word` selector matched EVERY sync VC in the document;
+      # every panel sync controller's `this.tuiTransitionOutlet` resolved
+      # to the TST's transition controller (first match wins), so every
+      # toggle painted the TST glyph instead of the focused panel's
+      # glyph. Sanitized-target class per instance solves it.
+      instance_class = "tui-sync-word--id-#{instance_outlet_id}"
+      attrs[:class] = [ attrs[:class], instance_class ].compact.join(" ")
+      attrs[:tui_sync_indicator_tui_transition_outlet] = ".#{instance_class}"
       attrs[:tui_status_bar_target] = "sync" if tst_mode?
 
       if target_mode?
@@ -190,6 +198,14 @@ module Tui
       end
 
       attrs
+    end
+
+    # 2026-05-25 — unique outlet selector per VC instance.
+    # TST → "tst" (only one TST per page).
+    # Target mode → sanitized target (e.g. "home-stack-meilisearch").
+    def instance_outlet_id
+      return "tst" if tst_mode?
+      @target.to_s.tr(".", "-")
     end
 
     # Aria label for `:target` mode rendering. The controller swaps the
