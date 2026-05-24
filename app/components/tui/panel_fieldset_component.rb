@@ -68,11 +68,19 @@ module Tui
   #
   # ### Scroll indicator chrome
   #
-  # All three glyphs (▲ ▼ █) are positioned at `right: -14px` — outside
-  # the panel's right border. Color is `var(--section-accent)`. Background
-  # is transparent. The █ handle position is pixel-computed in JS by
-  # `tui_scroll_indicator_controller` with 20 px reserved zones at the
-  # top and bottom so █ never overlaps ▲ or ▼.
+  # All three glyphs (▲ ▼ █) are positioned at `right: -4px` against
+  # `.pito-pane` (the panel root, which carries `position: relative`)
+  # — outside the panel's right border. Color is `var(--section-accent)`.
+  # Background is transparent. The █ handle position is pixel-computed
+  # in JS by `tui_scroll_indicator_controller` with 20 px reserved
+  # zones at the top and bottom so █ never overlaps ▲ or ▼.
+  #
+  # Positioning is anchored to `.pito-pane` rather than this fieldset so
+  # every panel resolves the indicator column against the SAME element
+  # (the panel border), eliminating per-fieldset sub-pixel rounding
+  # variance that previously made the Stack panel's indicators sit
+  # 1-2 px off vs Security / Notifications (different fractional grid
+  # track widths).
   #
   # ### TUI parity
   #

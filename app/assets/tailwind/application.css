@@ -972,9 +972,16 @@ button.bracketed .bl {
      mathematically aligned with the panel's `border-top` at the
      corners. No pseudo positioning quirks, no baseline drift, no
      color drift. Padding `0 6px` keeps the text 6px clear of the
-     borders. */
-  border-left: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
+     borders.
+     2026-05-24 (pipe-chrome unify) — idle pipe color matches the panel's
+     idle border (`color-mix(section-accent 30%, transparent)`) rather
+     than the generic `--color-border`, so chrome reads as ONE unified
+     frame instead of two mismatched tones. Focused state swaps the
+     pipes to the full section accent via the rule below. */
+  border-left: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
+  border-right: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
   padding: 0 6px;
   color: var(--color-muted);
   font-weight: 400;
@@ -1082,18 +1089,42 @@ button.bracketed .bl {
 .pito-sub-panel__hint.is-warn    { color: var(--color-warn); }
 .pito-sub-panel__hint.is-danger  { color: var(--color-danger); }
 .pito-sub-panel__hint.is-muted   { color: var(--color-muted); }
-/* Pipe brackets are CHROME — keep `var(--color-border)` even when the
-   panel/sub-panel/dialog is focused and the title text swaps to the
-   section accent. The pipes are now real `border-left` / `border-right`
-   on the slot element, so we pin their colors explicitly under focused
-   states (otherwise a future `border-color` cascade on the slot could
-   bleed into them). */
+/* 2026-05-24 (pipe-chrome unify) — when a panel / sub-panel / dialog
+   is focused (or open, for dialogs), the title slot's pipe brackets
+   (real border-left / border-right on the slot element) follow the
+   same accent swap as the panel border itself. Chrome reads as ONE
+   unified frame — three previous polish rounds confirmed the pipes
+   pinned to muted `--color-border` made the focused panel look like
+   it had two different border colors. Action slot rules below.
+
+   For DIALOGS specifically, the open-state border uses
+   `var(--color-link, var(--section-accent))` per the
+   `.tui-dialog-frame[open]` rule — match the pipes to that token so
+   dialog frames stay coherent. */
 .pito-pane[data-tui-cursor-focused="yes"] .pito-pane__title,
+.pito-pane[data-tui-cursor-focused="yes"] .pito-pane__title-actions,
 .pito-sub-panel[data-tui-cursor-sub-panel-focused="yes"] .pito-sub-panel__title,
+.pito-sub-panel[data-tui-cursor-sub-panel-focused="yes"] .pito-sub-panel__actions {
+  border-left-color: var(--section-accent);
+  border-right-color: var(--section-accent);
+}
 .tui-dialog-frame[open] .tui-dialog-frame__title-left,
 .tui-dialog-frame[open] .tui-dialog-frame__title-right {
-  border-left-color: var(--color-border);
-  border-right-color: var(--color-border);
+  border-left-color: var(--color-link, var(--section-accent));
+  border-right-color: var(--color-link, var(--section-accent));
+}
+
+/* FB-NESTED-FOCUS (2026-05-24) — when a panel is focused AND contains a
+   focused sub-panel, the outer panel border drops back to muted
+   (`var(--color-border)`) so only the inner sub-panel carries the
+   accent. The outer panel's title pipes follow the same drop —
+   without this override they'd keep the full accent from the focus
+   rule above, creating the same chrome-mismatch the unified rule
+   just fixed. Tracks `.pito-pane[data-...]:has(...)` below. */
+.pito-pane[data-tui-cursor-focused="yes"]:has([data-tui-cursor-sub-panel-focused="yes"]) .pito-pane__title,
+.pito-pane[data-tui-cursor-focused="yes"]:has([data-tui-cursor-sub-panel-focused="yes"]) .pito-pane__title-actions {
+  border-left-color: color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
+  border-right-color: color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
 }
 
 .pito-pane[data-tui-cursor-focused="yes"] {
@@ -1840,6 +1871,16 @@ th.col-action, td.col-action {
   flex: 1;
   min-height: 0;
   width: 100%;
+  /* 2026-05-24 (sub-panel-title-clip fix) — the top row of sub-panels
+     (Meilisearch / Voyage AI) renders `.pito-sub-panel__title` at
+     `top: -7px` outside the sub-panel. Inside `.tui-panel-fieldset__scroll`
+     (which sets `overflow-y: auto`, clipping anything above scrollTop=0),
+     a sub-panel sitting at the very top of the scroll surface gets its
+     title clipped — visible as `ilisearch` / `yage AI` truncated at the
+     character mid-line. `padding-top: 10px` reserves enough space so the
+     -7px outset clears the scroll's top edge cleanly (3px breathing).
+     Same reasoning for `[reindex]` action chips on the same border line. */
+  padding-top: 10px;
 }
 .pito-stack-grid > .pito-sub-panel {
   min-height: 0;
@@ -6645,8 +6686,24 @@ dialog:focus-visible {
    scrollbar is suppressed below by the existing scrollbar-suppression
    rules — only the cursor-driven ▲/▼ indicator affords scroll. */
 .tui-panel-fieldset {
-  position: relative;
-  /* FB-SCROLL-FIRST-ROW (2026-05-23) — top padding bumped from 8px to
+  /* 2026-05-24 (scroll-indicator-anchor) — `position: relative` removed.
+     Previously the fieldset was the positioned ancestor for the
+     `.tui-scroll-indicator` glyphs, which meant their `right: Npx`
+     resolved against the fieldset's padding-box right edge. Because
+     the fieldset's exact computed width depends on per-cell rounding
+     when the parent home-row uses fractional grid tracks (e.g. 6fr/4fr
+     on row 3), the indicators landed at slightly different absolute
+     columns on the Stack pane (60% column) vs the Security /
+     Notifications panes (40% column) — visible 1-2px drift. Anchoring
+     instead to `.pito-pane` (which already carries `position: relative`
+     for the title-in-border chrome) means every panel's indicators
+     resolve against the SAME well-defined element (the panel border),
+     eliminating per-fieldset rounding variance. The `right` value on
+     `.tui-scroll-indicator` was retuned to `-4px` to land at the same
+     visible column the indicators previously occupied on the "good"
+     panels (3-4px past the panel's right border).
+
+     FB-SCROLL-FIRST-ROW (2026-05-23) — top padding bumped from 8px to
      14px so the first focusable row inside the scroll viewport does not
      sit flush against the `.pito-pane__title` span (positioned at
      `top: -7px` on the panel border). With overflow moved to the inner
@@ -6655,18 +6712,17 @@ dialog:focus-visible {
      edge — the extra 6px above the previous 8px keeps the first row
      visually clear of the title text overhang.
      FB-SCROLL-CLIP (2026-05-24) — overflow removed from the fieldset
-     itself so the absolutely-positioned scroll indicators at
-     `right: -7px` are not clipped. The fieldset stays `overflow: visible`
-     (default); the inner `.tui-panel-fieldset__scroll` div owns the
-     scroll surface. */
+     itself so the absolutely-positioned scroll indicators are not
+     clipped. The fieldset stays `overflow: visible` (default); the
+     inner `.tui-panel-fieldset__scroll` div owns the scroll surface. */
   padding: 14px 0 8px;
   border: none;
   margin: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  /* overflow intentionally omitted — stays 'visible' so right: -7px
-     scroll indicator glyphs are never clipped */
+  /* overflow intentionally omitted — stays 'visible' so the
+     scroll-indicator glyphs are never clipped */
 }
 .tui-panel-fieldset::-webkit-scrollbar { display: none; }
 .tui-panel-fieldset__scroll {
@@ -7007,14 +7063,23 @@ body.keyboard-only * {
   position: absolute;
   /* 2026-05-24 (outside-border round) — arrows + handle sit OUTSIDE
      the panel's right border, visually adjacent to it. All three
-     glyphs (▲ ▼ █) at `right: -14px` so they share the same vertical
-     column outside the border. Background is transparent so only the
-     glyph renders — no bg slab over the panel border. Color drives
-     off the section accent so arrows + handle read as section-tinted
-     chrome.
+     glyphs (▲ ▼ █) share the same vertical column outside the border.
+     Background is transparent so only the glyph renders — no bg slab
+     over the panel border. Color drives off the section accent so
+     arrows + handle read as section-tinted chrome.
+
+     2026-05-24 (scroll-indicator-anchor) — `right` retuned from -14px
+     to -4px because `position: relative` was removed from
+     `.tui-panel-fieldset` (see the fieldset rule for rationale). The
+     positioned ancestor is now `.pito-pane`, whose padding-edge right
+     sits 1px inside the panel's border (`border: 1px`, `padding-right:
+     10px`). To keep the glyphs at the same visible column they
+     previously occupied (3-4px past the panel's right border), the
+     value is now -4px against `.pito-pane`'s padding-box right edge.
+
      TUI parity: Ratatui can paint these Unicode glyphs (▲ ▼ █) at
      any column position with any palette color and no background. */
-  right: -14px;
+  right: -4px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 200ms ease-out;
@@ -7035,7 +7100,7 @@ body.keyboard-only * {
      longer consumed — kept the fallback removal to avoid stale
      percent-based positioning. `transform` is removed; the JS
      places `top` at the glyph's intended top-edge directly.
-     `right` inherits `-14px` from `.tui-scroll-indicator` — handle
+     `right` inherits `-4px` from `.tui-scroll-indicator` — handle
      + arrows share the same vertical column. */
   top: 0;
   color: var(--section-accent);
@@ -7073,9 +7138,14 @@ body.keyboard-only * {
   background: var(--section-bg, var(--color-bg));
   /* 2026-05-24 (real-border round) — pipe brackets are real
      `border-left` / `border-right` on the slot. Padding `0 6px` keeps
-     the action text clear of the borders. */
-  border-left: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
+     the action text clear of the borders.
+     2026-05-24 (pipe-chrome unify) — idle pipe color matches the
+     panel's idle border so chrome reads as one unified frame; focused
+     state swaps to full section accent via the unified pipe rule. */
+  border-left: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
+  border-right: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
   padding: 0 6px;
   font-size: 13px;
   line-height: 14px;
