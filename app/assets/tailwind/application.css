@@ -966,7 +966,16 @@ button.bracketed .bl {
   top: -7px;
   left: 8px;
   background: var(--section-bg, var(--color-bg));
-  padding: 0;
+  /* 2026-05-24 (real-border round) — pipe brackets are real
+     `border-left` / `border-right` on the slot element itself. The
+     browser paints these at the slot's exact bounding-box edges,
+     mathematically aligned with the panel's `border-top` at the
+     corners. No pseudo positioning quirks, no baseline drift, no
+     color drift. Padding `0 6px` keeps the text 6px clear of the
+     borders. */
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 6px;
   color: var(--color-muted);
   font-weight: 400;
   font-style: normal;
@@ -976,12 +985,6 @@ button.bracketed .bl {
   letter-spacing: 0;
   z-index: 1;
   pointer-events: none;
-  /* 2026-05-24 (mathematical-pipe round) — inline-flex with align-items
-     stretch so the ::before / ::after 1px CSS rules fill the slot's
-     14px height exactly. white-space: nowrap keeps the title from
-     wrapping when the slot is narrow (image #228 "Me[isearch]" clip). */
-  display: inline-flex;
-  align-items: stretch;
   white-space: nowrap;
 }
 
@@ -1013,7 +1016,12 @@ button.bracketed .bl {
   top: -7px;
   left: 8px;
   background: var(--section-bg, var(--color-bg));
-  padding: 0;
+  /* 2026-05-24 (real-border round) — see `.pito-pane__title` comment.
+     Real `border-left` / `border-right` replace the prior pseudo
+     pipes. */
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 6px;
   color: var(--color-muted);
   font-weight: 400;
   font-style: normal;
@@ -1023,13 +1031,6 @@ button.bracketed .bl {
   letter-spacing: 0;
   z-index: 1;
   pointer-events: none;
-  /* 2026-05-24 — same inline-flex/stretch pattern as `.pito-pane__title`
-     so 1px CSS pipe pseudo-elements fill the slot height exactly and
-     the title text gets its own flex item (no clipping). nowrap so
-     narrow sub-panel cells in the stack 2x2 grid don't wrap "Voyage
-     AI" / "Meilisearch" titles. */
-  display: inline-flex;
-  align-items: stretch;
   white-space: nowrap;
 }
 .pito-sub-panel__actions {
@@ -1037,72 +1038,36 @@ button.bracketed .bl {
   top: -7px;
   right: 8px;
   background: var(--section-bg, var(--color-bg));
-  padding: 0;
+  /* 2026-05-24 (real-border round) — pipe brackets as real borders. */
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 6px;
   font-size: 13px;
   line-height: 14px;
   height: 14px;
   z-index: 1;
   display: inline-flex;
-  align-items: stretch;
+  align-items: center;
   gap: 1ch;
 }
 .pito-sub-panel__actions > * {
   background: var(--section-bg, var(--color-bg));
 }
 
-/* btop-style pipe brackets — REAL 1px CSS lines (not text glyphs)
-   flanking title + action slots. Each slot reads `│text│` where the
-   pipes are 1px wide × 14px tall (= slot height), painted in
-   `var(--color-border)` — IDENTICAL token to the panel's `border-top`
-   so the horizontal border line and the vertical pipe render in the
-   exact same color with no font anti-aliasing drift.
+/* btop-style pipe brackets — REAL `border-left` / `border-right` on
+   the slot ELEMENT (`.pito-pane__title`, `.pito-sub-panel__title`,
+   `.pito-pane__title-actions`, `.pito-sub-panel__actions`,
+   `.tui-dialog-frame__title-left`, `.tui-dialog-frame__title-right`).
+   The browser paints those borders at the slot's exact bounding-box
+   edges, mathematically aligned with the panel's `border-top` at the
+   corners. No pseudo positioning quirks, no baseline drift, no color
+   drift between font anti-aliased glyphs and crisp CSS lines.
 
-   Geometry:
-     - Slot is `top: -7px; height: 14px;` over a 1px horizontal border
-       at y=0..1. Slot extent y=-7..+7 (7px above the border, 7px below).
-     - Pipe is `width: 1px; height: 14px;` — fills the slot vertically.
-     - Visual result: ─| title |─ where the pipe meets the horizontal
-       border line at its midpoint (pixel-precise).
-     - `align-self: stretch` + parent's `align-items: stretch` ensures
-       the pipe pseudo fills the slot height with no flexbox baseline drift.
-
-   2026-05-24 — replaces the prior `content: "│"` text glyph approach
-   (U+2502 box-drawing). Font glyphs have anti-aliasing + intrinsic
-   gaps at top/bottom of the line-height box, so they didn't visually
-   touch the panel's real 1px CSS `border-top`. Real CSS pseudo lines
-   resolve all visual drift. */
-.pito-pane__title::before,
-.pito-sub-panel__title::before,
-.pito-pane__actions::before,
-.pito-pane__title-actions::before,
-.pito-sub-panel__actions::before,
-.tui-dialog-frame__title-left::before,
-.tui-dialog-frame__title-right::before {
-  content: "";
-  display: inline-block;
-  width: 1px;
-  height: 14px;
-  background: var(--color-border);
-  flex: 0 0 auto;
-  align-self: stretch;
-  margin-right: 6px;
-}
-.pito-pane__title::after,
-.pito-sub-panel__title::after,
-.pito-pane__actions::after,
-.pito-pane__title-actions::after,
-.pito-sub-panel__actions::after,
-.tui-dialog-frame__title-left::after,
-.tui-dialog-frame__title-right::after {
-  content: "";
-  display: inline-block;
-  width: 1px;
-  height: 14px;
-  background: var(--color-border);
-  flex: 0 0 auto;
-  align-self: stretch;
-  margin-left: 6px;
-}
+   2026-05-24 (real-border round) — REPLACES the prior `::before` /
+   `::after` 1px-CSS-pseudo approach (which itself replaced an earlier
+   `content: "│"` U+2502 text-glyph approach). Both pseudo techniques
+   showed visible seams + color drift in user testing; the real-border
+   approach matches the working hand-rolled example. */
 /* Pito::Stack::*SubPanelComponent — hint line at top of body replacing
    the old title-row status chip. Whole line takes the semantic color
    per status state; no bold per user 2026-05-24. */
@@ -1117,20 +1082,18 @@ button.bracketed .bl {
 .pito-sub-panel__hint.is-warn    { color: var(--color-warn); }
 .pito-sub-panel__hint.is-danger  { color: var(--color-danger); }
 .pito-sub-panel__hint.is-muted   { color: var(--color-muted); }
-/* Pipe brackets are CHROME — keep `var(--color-border)` background even
-   when panel/sub-panel/dialog is focused and the title text swaps to
-   the section accent. The pseudos use `background` (not `color`) since
-   they're 1px CSS lines, so the focused-text-color cascade can't bleed
-   into them — but we declare the override explicitly for safety. */
-.pito-pane[data-tui-cursor-focused="yes"] .pito-pane__title::before,
-.pito-pane[data-tui-cursor-focused="yes"] .pito-pane__title::after,
-.pito-sub-panel[data-tui-cursor-sub-panel-focused="yes"] .pito-sub-panel__title::before,
-.pito-sub-panel[data-tui-cursor-sub-panel-focused="yes"] .pito-sub-panel__title::after,
-.tui-dialog-frame[open] .tui-dialog-frame__title-left::before,
-.tui-dialog-frame[open] .tui-dialog-frame__title-left::after,
-.tui-dialog-frame[open] .tui-dialog-frame__title-right::before,
-.tui-dialog-frame[open] .tui-dialog-frame__title-right::after {
-  background: var(--color-border);
+/* Pipe brackets are CHROME — keep `var(--color-border)` even when the
+   panel/sub-panel/dialog is focused and the title text swaps to the
+   section accent. The pipes are now real `border-left` / `border-right`
+   on the slot element, so we pin their colors explicitly under focused
+   states (otherwise a future `border-color` cascade on the slot could
+   bleed into them). */
+.pito-pane[data-tui-cursor-focused="yes"] .pito-pane__title,
+.pito-sub-panel[data-tui-cursor-sub-panel-focused="yes"] .pito-sub-panel__title,
+.tui-dialog-frame[open] .tui-dialog-frame__title-left,
+.tui-dialog-frame[open] .tui-dialog-frame__title-right {
+  border-left-color: var(--color-border);
+  border-right-color: var(--color-border);
 }
 
 .pito-pane[data-tui-cursor-focused="yes"] {
@@ -6390,21 +6353,22 @@ dd.tui-help-dialog__label {
      14px`, the glyph box is 14px tall, anchored at `top: -7px` so its
      vertical center sits exactly on the border (which lives at y=0..1).
      `z-index: 1` keeps the title above the border.
-     2026-05-24 — `inline-flex` + `align-items: stretch` so the 1px CSS
-     pipe pseudos fill the 14px slot height exactly. Zero padding so the
-     pipes touch the horizontal border-end with no gap. */
+     2026-05-24 (real-border round) — pipe brackets are real
+     `border-left` / `border-right` directly on the slot, replacing the
+     prior pseudo-pipe approach. Padding `0 6px` keeps the text clear
+     of the borders. */
   position: absolute;
   top: -7px;
   height: 14px;
   line-height: 14px;
   background: var(--color-bg);
-  padding: 0;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 6px;
   color: var(--color-muted);
   font-weight: 400;
   font-size: 13px;
   z-index: 1;
-  display: inline-flex;
-  align-items: stretch;
   white-space: nowrap;
 }
 /* FB-65 (2026-05-20). Insets switched from `1ch` (ambiguous across font
@@ -7041,23 +7005,28 @@ body.keyboard-only * {
    padding region where sticky-bottom can resolve correctly. */
 .tui-scroll-indicator {
   position: absolute;
-  /* 2026-05-24 — center the glyph on the panel's 1px right border.
-     Glyph box is ~10px wide; the right border lives at the panel's
-     right edge. `right: -6px` shifts the glyph so its visual center
-     lands roughly on the border line (was `right: -7px` which read
-     as floating just inside the border). */
-  right: -6px;
+  /* 2026-05-24 (outside-border round) — arrows + handle sit OUTSIDE
+     the panel's right border, visually adjacent to it. All three
+     glyphs (▲ ▼ █) at `right: -14px` so they share the same vertical
+     column outside the border. Background is transparent so only the
+     glyph renders — no bg slab over the panel border. Color drives
+     off the section accent so arrows + handle read as section-tinted
+     chrome.
+     TUI parity: Ratatui can paint these Unicode glyphs (▲ ▼ █) at
+     any column position with any palette color and no background. */
+  right: -14px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 200ms ease-out;
-  background: var(--color-bg);
-  padding: 0 2px;
+  background: transparent;
+  padding: 0;
   font-size: 13px;
   line-height: 1;
   z-index: 2;
+  color: var(--section-accent);
 }
-.tui-scroll-indicator--top    { top: 2px; color: var(--color-muted); }
-.tui-scroll-indicator--bottom { bottom: 2px; color: var(--color-muted); }
+.tui-scroll-indicator--top    { top: 2px; }
+.tui-scroll-indicator--bottom { bottom: 2px; }
 .tui-scroll-indicator--handle {
   /* 2026-05-24 — handle position is computed in pixels by the
      Stimulus controller (sets `top: <Npx>` directly) with a 20px
@@ -7065,10 +7034,12 @@ body.keyboard-only * {
      the ▲ ▼ arrow glyphs. The legacy `--handle-pct` var is no
      longer consumed — kept the fallback removal to avoid stale
      percent-based positioning. `transform` is removed; the JS
-     places `top` at the glyph's intended top-edge directly. */
+     places `top` at the glyph's intended top-edge directly.
+     `right` inherits `-14px` from `.tui-scroll-indicator` — handle
+     + arrows share the same vertical column. */
   top: 0;
   color: var(--section-accent);
-  background: var(--color-bg);
+  background: transparent;
   padding: 0;
 }
 .tui-scroll-indicator--visible { opacity: 1; }
@@ -7100,26 +7071,22 @@ body.keyboard-only * {
      rather than rendering a darker `--color-bg` slab that visually
      reads as a different surface (image #227 bug). */
   background: var(--section-bg, var(--color-bg));
-  /* zero outer padding so the leading + trailing 1px CSS pipes
-     touch the horizontal border-end with no gap. The pipe pseudos
-     own their own 6px breathing margin. */
-  padding: 0;
+  /* 2026-05-24 (real-border round) — pipe brackets are real
+     `border-left` / `border-right` on the slot. Padding `0 6px` keeps
+     the action text clear of the borders. */
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 6px;
   font-size: 13px;
   line-height: 14px;
   height: 14px;
   z-index: 1;
   display: inline-flex;
-  /* stretch so children + pseudo pipes fill the 14px slot height */
-  align-items: stretch;
+  align-items: center;
   gap: 1ch;
 }
 .pito-pane__title-actions > * {
   background: var(--section-bg, var(--color-bg));
-  /* center the action text vertically inside the stretched slot
-     (the slot stretches its children but the actual text is what
-     reads) */
-  display: inline-flex;
-  align-items: center;
 }
 
 /* Tui::ViewToggleComponent — pair of mutually-exclusive view toggles
