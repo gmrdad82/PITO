@@ -41,15 +41,38 @@ const CLIENT_ACTIONS = {
   // notice slot surfaces the visible "sync paused" / "sync resumed"
   // confirmation. Messages flow through i18n
   // (`tui.notices.sync_paused` / `tui.notices.sync_resumed`).
+  // 2026-05-25 — explicit cascade. TST toggle walks every panel +
+  // sub-panel sync VC target on the page, writes its localStorage flag
+  // to the new uniform value, fires `tui:sync-changed` per target so
+  // each VC re-paints from its own flag. No more master-lookup at
+  // read time — write propagates explicitly.
   toggle_tst_sync() {
     const key = "pito.sync.app"
     const raw = localStorage.getItem(key)
-    const currentlyEnabled = raw === "no" ? false : true // unset/"yes" => enabled
+    const currentlyEnabled = raw === "no" ? false : true
     const nextEnabled = !currentlyEnabled
-    localStorage.setItem(key, nextEnabled ? "yes" : "no")
+    const value = nextEnabled ? "yes" : "no"
+
+    localStorage.setItem(key, value)
+
+    const targetEls = document.querySelectorAll('[data-tui-sync-indicator-target-value]')
+    const targets = new Set()
+    targetEls.forEach((el) => {
+      const t = el.getAttribute("data-tui-sync-indicator-target-value")
+      if (t) targets.add(t)
+    })
+
+    targets.forEach((t) => {
+      localStorage.setItem(`pito.sync.${t}`, value)
+      document.dispatchEvent(new CustomEvent("tui:sync-changed", {
+        detail: { target: t, parentTarget: null, enabled: nextEnabled }
+      }))
+    })
+
     document.dispatchEvent(new CustomEvent("tui:sync-changed", {
       detail: { target: "app", parentTarget: null, enabled: nextEnabled }
     }))
+
     const message = readNoticeI18n(nextEnabled ? "sync_resumed" : "sync_paused")
     if (message) {
       document.dispatchEvent(new CustomEvent("tui:notice", {

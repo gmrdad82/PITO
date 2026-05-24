@@ -49,9 +49,23 @@ class Game::CoverComponent < ViewComponent::Base
   # key) instead of CSS-scaling one source asset. See the spec's
   # "Flaw" assertions: no inline `transform: scale`, no inline
   # `width: 65%` style emitted.
+  # 2026-05-25 — `:shelf_fill` variant. Unlike `:grid` / `:shelf` which
+  # render at fixed pixel dimensions, this variant lets the surrounding
+  # container drive the rendered height while a CSS `aspect-ratio: 3 / 4`
+  # rule keeps the 3:4 cover proportion intact. Used by
+  # `Pito::GamesReleasing::ShelfTileComponent` so the upcoming-games
+  # shelf cover art fills the available tile height (which the home-grid
+  # row computes dynamically per viewport) without needing the panel
+  # to know the exact pixel value.
+  #
+  # `width` / `height` HTML attrs are omitted for `:shelf_fill` (the
+  # `<img>` is sized by CSS `height: 100%; width: auto`). The IGDB
+  # source token stays `t_cover_big_2x` so the asset has enough native
+  # resolution to fill larger tile heights without softening.
   DIMENSIONS = {
     grid: { width: 150, height: 200, igdb_size: "t_cover_big", css_modifier: "grid" },
-    shelf: { width: 98, height: 130, igdb_size: "t_cover_small_2x", css_modifier: "shelf" }
+    shelf: { width: 98, height: 130, igdb_size: "t_cover_small_2x", css_modifier: "shelf" },
+    shelf_fill: { width: nil, height: nil, igdb_size: "t_cover_big_2x", css_modifier: "shelf-fill" }
   }.freeze
 
   VARIANTS = DIMENSIONS.keys.freeze
@@ -110,8 +124,14 @@ class Game::CoverComponent < ViewComponent::Base
   # Pito is single-theme (dark) — the previous dual light/dark emission
   # was removed alongside the theme system. The `_dark` suffix in the
   # asset filename is preserved as the canonical asset name.
+  #
+  # 2026-05-25 — `:shelf_fill` reuses the existing `shelf` SVG (CSS
+  # `aspect-ratio: 3 / 4` + `height: 100%` stretches it to whatever
+  # height the surrounding tile resolves to). Avoids shipping a
+  # second visually identical asset.
   def fallback_path
-    helpers.image_path("game_cover_fallback_#{@dim[:css_modifier]}_dark.svg")
+    asset_modifier = (variant == :shelf_fill) ? "shelf" : @dim[:css_modifier]
+    helpers.image_path("game_cover_fallback_#{asset_modifier}_dark.svg")
   end
 
   # Friendly-URL aware path. `Game#to_param` returns `igdb_slug` when
