@@ -45,6 +45,13 @@
   <% end %>
 
   <p class="pito-sub-panel__hint <%= hint_color_class %>"><%= hint_text %></p>
+  <%# Phase 1D gap fix (2026-05-24) — subscribe to the `reindex_status`
+      Turbo Stream so `MeilisearchReindexJob#broadcast_meilisearch_section`
+      can replace `#meilisearch_section` on completion, flipping the
+      running-state strip back to idle client-side without a manual
+      refresh. Mirrors `_voyage_section.html.erb` / `VoyageReindexJob`. %>
+  <%= helpers.turbo_stream_from "reindex_status" %>
+  <%= render "settings/meilisearch_section" %>
 
   <% if per_index_stats.any? %>
     <div data-controller="sortable-table" data-sortable-table-id-value="stack-meilisearch">

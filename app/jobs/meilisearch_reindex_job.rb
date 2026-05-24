@@ -60,6 +60,7 @@ class MeilisearchReindexJob < ApplicationJob
   ensure
     AppSetting.clear_reindex_lock!
     broadcast_voyage_section
+    broadcast_meilisearch_section
     Pito::CableBroadcaster.broadcast_panel(
       "pito:settings:stack:meilisearch",
       kind: "reindex_event",
@@ -79,6 +80,22 @@ class MeilisearchReindexJob < ApplicationJob
       "reindex_status",
       target: "voyage_section",
       partial: "settings/voyage_section"
+    )
+  rescue StandardError
+    nil
+  end
+
+  # Re-render the Meilisearch section partial so the running-state
+  # dot-loader strip in `_meilisearch_section.html.erb` disappears when
+  # the flag clears — the replace renders the idle state (empty div).
+  # Mirrors `broadcast_voyage_section` exactly; both broadcasts fire on
+  # every reindex completion (Meilisearch OR Voyage) because the two tiles
+  # share the same `AppSetting.reindex_running?` flag.
+  def broadcast_meilisearch_section
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "reindex_status",
+      target: "meilisearch_section",
+      partial: "settings/meilisearch_section"
     )
   rescue StandardError
     nil

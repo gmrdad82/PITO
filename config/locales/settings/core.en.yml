@@ -35,6 +35,8 @@ en:
       embeddings_suffix: "embeddings"
       reindexing_html: "reindexing... started %{time_ago}"
       reindex_action: "reindex"
+    meilisearch:
+      reindexing_html: "reindexing... started %{time_ago}"
     stack:
       heading: "stack"
       postgres: "Postgres"
