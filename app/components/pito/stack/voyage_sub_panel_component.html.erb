@@ -33,10 +33,7 @@
       </span>
     </span>
   <% end %>
-  <p class="pito-sub-panel__hint">
-    <span class="pito-sub-panel__hint-label">Voyage AI</span>
-    <span class="pito-sub-panel__hint-status <%= status_color_class %>"><%= status_word %></span>
-  </p>
+  <p class="pito-sub-panel__hint <%= hint_color_class %>"><%= hint_text %></p>
   <%= helpers.turbo_stream_from "reindex_status" %>
   <%= render "settings/voyage_section" %>
 <% end %>

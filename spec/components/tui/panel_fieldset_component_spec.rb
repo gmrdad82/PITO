@@ -10,8 +10,8 @@ RSpec.describe Tui::PanelFieldsetComponent, type: :component do
       expect(rendered.css("fieldset.tui-panel-fieldset")).to be_present
     end
 
-    it "yields content into the fieldset body" do
-      expect(rendered.css("fieldset.tui-panel-fieldset").text).to include("body content")
+    it "yields content into the inner scroll wrapper" do
+      expect(rendered.css("fieldset.tui-panel-fieldset .tui-panel-fieldset__scroll").text).to include("body content")
     end
 
     it "auto-mounts the tui-scroll-indicator Stimulus controller" do
@@ -26,6 +26,21 @@ RSpec.describe Tui::PanelFieldsetComponent, type: :component do
       expect(bottom).to be_present
       expect(top.text.strip).to eq("▲")
       expect(bottom.text.strip).to eq("▼")
+    end
+
+    it "wraps content in .tui-panel-fieldset__scroll with scroll Stimulus target" do
+      wrapper = rendered.css("fieldset .tui-panel-fieldset__scroll").first
+      expect(wrapper).to be_present
+      expect(wrapper["data-tui-scroll-indicator-target"]).to eq("scroll")
+    end
+
+    it "positions scroll indicators before the inner scroll wrapper (siblings, not nested)" do
+      fieldset = rendered.css("fieldset").first
+      children = fieldset.children.select { |n| n.element? }
+      # Indicator spans come before the scroll wrapper div
+      indicator_indices = children.each_with_index.filter_map { |n, i| i if n["class"].to_s.include?("tui-scroll-indicator") }
+      wrapper_index = children.each_with_index.find_index { |n, _| n["class"].to_s.include?("tui-panel-fieldset__scroll") }
+      expect(indicator_indices).to all(be < wrapper_index)
     end
   end
 

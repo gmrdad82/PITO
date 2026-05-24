@@ -79,14 +79,20 @@ module Pito
         AppSetting.voyage_configured? ? :configured : :not_configured
       end
 
-      # Human-readable status word for the hint line.
-      def status_word
-        AppSetting.voyage_configured? ? "configured and ready" : "not configured"
+      # Full i18n'd hint line string for the sub-panel body top.
+      # E.g. "Voyage AI configured and ready" or "Voyage AI not configured".
+      # Sourced from `tui.stack.hint.voyage_ai` + `tui.stack.status.*`
+      # so the future Rust TUI client reads the same YAML.
+      def hint_text
+        I18n.t(
+          "tui.stack.hint.voyage_ai",
+          status: I18n.t("tui.stack.status.#{state}"),
+        )
       end
 
-      # CSS modifier class for the hint-line status span.
+      # CSS modifier class for the ENTIRE hint line.
       # Configured → green (is-success); not configured → red (is-danger).
-      def status_color_class
+      def hint_color_class
         AppSetting.voyage_configured? ? "is-success" : "is-danger"
       end
     end

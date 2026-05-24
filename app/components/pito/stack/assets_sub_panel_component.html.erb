@@ -2,10 +2,7 @@
     inside the stack panel on Home. FB-63-V4 — V4 title-in-border.
     Phase 1D — status chip removed; hint line added at body top. %>
 <%= render Tui::SubPanelComponent.new(title: t("settings.stack.assets"), focusable_key: "assets") do |c| %>
-  <p class="pito-sub-panel__hint">
-    <span class="pito-sub-panel__hint-label">Assets</span>
-    <span class="pito-sub-panel__hint-status <%= status_color_class %>"><%= status_word %></span>
-  </p>
+  <p class="pito-sub-panel__hint <%= hint_color_class %>"><%= hint_text %></p>
 
   <% if breakdown.any? %>
     <div data-controller="sortable-table" data-sortable-table-id-value="stack-assets">

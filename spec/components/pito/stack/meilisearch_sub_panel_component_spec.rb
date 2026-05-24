@@ -13,16 +13,21 @@ RSpec.describe Pito::Stack::MeilisearchSubPanelComponent, type: :component do
       render_inline(described_class.new(healthy: true, stats: healthy_stats, per_index_stats: []))
     end
 
-    it "renders the hint label with Meilisearch and v-prefixed major.minor version" do
-      expect(page).to have_css(".pito-sub-panel__hint-label", text: "Meilisearch v1.10")
+    it "renders a single hint paragraph (not two spans)" do
+      expect(page).to have_css("p.pito-sub-panel__hint", count: 1)
+      expect(page).not_to have_css(".pito-sub-panel__hint-label")
+      expect(page).not_to have_css(".pito-sub-panel__hint-status")
     end
 
-    it "renders the status word 'connected'" do
-      expect(page).to have_css(".pito-sub-panel__hint-status", text: "connected")
+    it "renders the full i18n hint text when healthy" do
+      expected = I18n.t("tui.stack.hint.meilisearch",
+        version: "1.10",
+        status: I18n.t("tui.stack.status.connected"))
+      expect(page).to have_css("p.pito-sub-panel__hint", text: expected)
     end
 
     it "applies is-success class when healthy" do
-      expect(page).to have_css(".pito-sub-panel__hint-status.is-success")
+      expect(page).to have_css("p.pito-sub-panel__hint.is-success")
     end
 
     it "does not render a Tui::ChipComponent in the title actions" do
@@ -35,16 +40,15 @@ RSpec.describe Pito::Stack::MeilisearchSubPanelComponent, type: :component do
       render_inline(described_class.new(healthy: false, stats: no_version_stats, per_index_stats: []))
     end
 
-    it "renders the hint label with em-dash when version is nil" do
-      expect(page).to have_css(".pito-sub-panel__hint-label", text: "Meilisearch —")
-    end
-
-    it "renders the status word 'disconnected'" do
-      expect(page).to have_css(".pito-sub-panel__hint-status", text: "disconnected")
+    it "renders the full i18n hint text when disconnected (em-dash version)" do
+      expected = I18n.t("tui.stack.hint.meilisearch",
+        version: "—",
+        status: I18n.t("tui.stack.status.disconnected"))
+      expect(page).to have_css("p.pito-sub-panel__hint", text: expected)
     end
 
     it "applies is-danger class when unhealthy" do
-      expect(page).to have_css(".pito-sub-panel__hint-status.is-danger")
+      expect(page).to have_css("p.pito-sub-panel__hint.is-danger")
     end
   end
 
@@ -53,12 +57,45 @@ RSpec.describe Pito::Stack::MeilisearchSubPanelComponent, type: :component do
       render_inline(described_class.new(healthy: true, stats: empty_stats, per_index_stats: []))
     end
 
-    it "falls back to em-dash for version" do
-      expect(page).to have_css(".pito-sub-panel__hint-label", text: "Meilisearch —")
+    it "falls back to em-dash for version in hint text" do
+      expected = I18n.t("tui.stack.hint.meilisearch",
+        version: "—",
+        status: I18n.t("tui.stack.status.connected"))
+      expect(page).to have_css("p.pito-sub-panel__hint", text: expected)
     end
 
-    it "still shows connected status with is-success" do
-      expect(page).to have_css(".pito-sub-panel__hint-status.is-success", text: "connected")
+    it "still applies is-success class when healthy" do
+      expect(page).to have_css("p.pito-sub-panel__hint.is-success")
+    end
+  end
+
+  describe "#hint_text" do
+    it "returns i18n'd hint with major.minor version and connected status" do
+      component = described_class.new(healthy: true, stats: healthy_stats, per_index_stats: [])
+      expected = I18n.t("tui.stack.hint.meilisearch",
+        version: "1.10",
+        status: I18n.t("tui.stack.status.connected"))
+      expect(component.hint_text).to eq(expected)
+    end
+
+    it "returns i18n'd hint with em-dash version when disconnected" do
+      component = described_class.new(healthy: false, stats: no_version_stats, per_index_stats: [])
+      expected = I18n.t("tui.stack.hint.meilisearch",
+        version: "—",
+        status: I18n.t("tui.stack.status.disconnected"))
+      expect(component.hint_text).to eq(expected)
+    end
+  end
+
+  describe "#hint_color_class" do
+    it "returns 'is-success' when healthy" do
+      component = described_class.new(healthy: true, stats: healthy_stats, per_index_stats: [])
+      expect(component.hint_color_class).to eq("is-success")
+    end
+
+    it "returns 'is-danger' when not healthy" do
+      component = described_class.new(healthy: false, stats: no_version_stats, per_index_stats: [])
+      expect(component.hint_color_class).to eq("is-danger")
     end
   end
 
@@ -81,30 +118,6 @@ RSpec.describe Pito::Stack::MeilisearchSubPanelComponent, type: :component do
     it "returns em-dash when stats has no :version key" do
       component = described_class.new(healthy: true, stats: empty_stats, per_index_stats: [])
       expect(component.meilisearch_version).to eq("—")
-    end
-  end
-
-  describe "#status_word" do
-    it "returns 'connected' when healthy" do
-      component = described_class.new(healthy: true, stats: healthy_stats, per_index_stats: [])
-      expect(component.status_word).to eq("connected")
-    end
-
-    it "returns 'disconnected' when not healthy" do
-      component = described_class.new(healthy: false, stats: no_version_stats, per_index_stats: [])
-      expect(component.status_word).to eq("disconnected")
-    end
-  end
-
-  describe "#status_color_class" do
-    it "returns 'is-success' when healthy" do
-      component = described_class.new(healthy: true, stats: healthy_stats, per_index_stats: [])
-      expect(component.status_color_class).to eq("is-success")
-    end
-
-    it "returns 'is-danger' when not healthy" do
-      component = described_class.new(healthy: false, stats: no_version_stats, per_index_stats: [])
-      expect(component.status_color_class).to eq("is-danger")
     end
   end
 

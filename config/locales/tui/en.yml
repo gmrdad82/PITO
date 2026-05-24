@@ -42,6 +42,27 @@ en:
     # feeds the future Ratatui client (parity with the panel-name keys
     # in Pito::PanelChannel::ALLOWED_PANELS). Brand names stay
     # capitalized; non-brand words stay lowercase per design.md.
+    # 2026-05-24 — Stack sub-panel hint line i18n.
+    # Each sub-panel VC builds its hint string via
+    # `I18n.t("tui.stack.hint.<key>", ...)` so the future Rust TUI
+    # client reads the same YAML (parity contract). Status words live
+    # under `tui.stack.status.*`; hint templates under
+    # `tui.stack.hint.*`. Brand names stay capitalized; non-brand text
+    # lowercase per design.md.
+    stack:
+      status:
+        connected: "connected"
+        disconnected: "disconnected"
+        configured: "configured and ready"
+        not_configured: "not configured"
+        writable: "writable"
+        not_writable: "not writable"
+        unknown: "—"
+      hint:
+        postgres: "PostgreSQL %{version} %{status}"
+        meilisearch: "Meilisearch v%{version} %{status}"
+        voyage_ai: "Voyage AI %{status}"
+        assets: "Assets %{status}"
     home:
       panels:
         security:

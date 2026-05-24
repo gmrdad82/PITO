@@ -62,16 +62,27 @@ module Pito
         end
       end
 
-      # Human-readable status word for the hint line.
-      # Writable → "writable"; read-only or absent → "not writable".
-      def status_word
-        (storage_status[:present] && storage_status[:writable]) ? "writable" : "not writable"
+      # Normalizes `state` to an i18n status key.
+      # `:writable` → `"writable"`; `:read_only` / `:absent` → `"not_writable"`.
+      def hint_state_key
+        state == :writable ? "writable" : "not_writable"
       end
 
-      # CSS modifier class for the hint-line status span.
+      # Full i18n'd hint line string for the sub-panel body top.
+      # E.g. "Assets writable" or "Assets not writable".
+      # Sourced from `tui.stack.hint.assets` + `tui.stack.status.*`
+      # so the future Rust TUI client reads the same YAML.
+      def hint_text
+        I18n.t(
+          "tui.stack.hint.assets",
+          status: I18n.t("tui.stack.status.#{hint_state_key}"),
+        )
+      end
+
+      # CSS modifier class for the ENTIRE hint line.
       # Writable → green (is-success); not writable → red (is-danger).
-      def status_color_class
-        (storage_status[:present] && storage_status[:writable]) ? "is-success" : "is-danger"
+      def hint_color_class
+        state == :writable ? "is-success" : "is-danger"
       end
     end
   end

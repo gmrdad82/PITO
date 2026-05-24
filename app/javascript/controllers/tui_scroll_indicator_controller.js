@@ -18,27 +18,41 @@ import { Controller } from "@hotwired/stimulus"
  *   - scroll event (throttled via requestAnimationFrame)
  *   - resize event (via ResizeObserver)
  *
+ * Scroll target (FB-SCROLL-CLIP 2026-05-24):
+ *   When a `scroll` target element is present (e.g., the inner
+ *   `.tui-panel-fieldset__scroll` wrapper div that owns `overflow-y: auto`
+ *   while the fieldset itself stays `overflow: visible`), the controller
+ *   attaches its scroll + resize listeners to that inner element rather
+ *   than `this.element`. This allows the fieldset to remain
+ *   `overflow: visible` so the absolutely-positioned indicator glyphs
+ *   at `right: -7px` are not clipped by the fieldset's own overflow box.
+ *   If no `scroll` target is registered, falls back to `this.element`
+ *   for backwards compatibility with standalone usage.
+ *
  * The indicators are pointer-events: none — purely visual hints. Scroll
  * itself is mouse-wheel + keyboard cursor (j/k) handled elsewhere.
  */
 export default class extends Controller {
-  static targets = ["top", "bottom", "handle"]
+  static targets = ["top", "bottom", "handle", "scroll"]
   static THRESHOLD_PX = 2
 
   connect() {
+    // Prefer inner scroll target (fieldset wrapper) over this.element so
+    // the fieldset can stay overflow: visible and the indicators are not clipped.
+    const scrollEl = this.hasScrollTarget ? this.scrollTarget : this.element
+    this._scrollEl = scrollEl
     this._boundCompute = this.requestCompute.bind(this)
-    this._boundResize = this.requestCompute.bind(this)
     this._raf = null
-    this.element.addEventListener("scroll", this._boundCompute, { passive: true })
+    scrollEl.addEventListener("scroll", this._boundCompute, { passive: true })
     if (typeof ResizeObserver !== "undefined") {
-      this._resizeObserver = new ResizeObserver(this._boundResize)
-      this._resizeObserver.observe(this.element)
+      this._resizeObserver = new ResizeObserver(this._boundCompute)
+      this._resizeObserver.observe(scrollEl)
     }
     this.requestCompute()
   }
 
   disconnect() {
-    this.element.removeEventListener("scroll", this._boundCompute)
+    if (this._scrollEl) this._scrollEl.removeEventListener("scroll", this._boundCompute)
     if (this._resizeObserver) {
       this._resizeObserver.disconnect()
       this._resizeObserver = null
@@ -55,9 +69,10 @@ export default class extends Controller {
   }
 
   compute() {
+    if (!this._scrollEl) return
     const t = this.constructor.THRESHOLD_PX
-    const top = this.element.scrollTop
-    const max = this.element.scrollHeight - this.element.clientHeight
+    const top = this._scrollEl.scrollTop
+    const max = this._scrollEl.scrollHeight - this._scrollEl.clientHeight
     const topVisible = top > t
     const bottomVisible = top < max - t
     if (this.hasTopTarget) this.topTarget.classList.toggle("tui-scroll-indicator--visible", topVisible)

@@ -96,14 +96,24 @@ module Pito
         parts.first(2).join(".")
       end
 
-      # Human-readable status word for the hint line.
-      def status_word
-        healthy ? "connected" : "disconnected"
+      # Full i18n'd hint line string for the sub-panel body top.
+      # E.g. "Meilisearch v1.10 connected" or "Meilisearch v— disconnected".
+      # Sourced from `tui.stack.hint.meilisearch` + `tui.stack.status.*`
+      # so the future Rust TUI client reads the same YAML.
+      # Note: the i18n template includes the "v" prefix literal so the
+      # em-dash fallback ("—") renders as "Meilisearch v— disconnected"
+      # which the operator reads as "no version available".
+      def hint_text
+        I18n.t(
+          "tui.stack.hint.meilisearch",
+          version: meilisearch_version,
+          status: I18n.t("tui.stack.status.#{state}"),
+        )
       end
 
-      # CSS modifier class for the hint-line status span.
+      # CSS modifier class for the ENTIRE hint line.
       # Connected → green (is-success); disconnected → red (is-danger).
-      def status_color_class
+      def hint_color_class
         healthy ? "is-success" : "is-danger"
       end
     end

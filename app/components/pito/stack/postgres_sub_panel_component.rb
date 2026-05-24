@@ -64,14 +64,21 @@ module Pito
         status[:version].presence || "—"
       end
 
-      # Human-readable status word for the hint line.
-      def status_word
-        status[:connected] ? "connected" : "disconnected"
+      # Full i18n'd hint line string for the sub-panel body top.
+      # E.g. "PostgreSQL 17 connected" or "PostgreSQL — disconnected".
+      # Sourced from `tui.stack.hint.postgres` + `tui.stack.status.*`
+      # so the future Rust TUI client reads the same YAML.
+      def hint_text
+        I18n.t(
+          "tui.stack.hint.postgres",
+          version: postgres_version,
+          status: I18n.t("tui.stack.status.#{state}"),
+        )
       end
 
-      # CSS modifier class for the hint-line status span.
+      # CSS modifier class for the ENTIRE hint line.
       # Connected → green (is-success); disconnected → red (is-danger).
-      def status_color_class
+      def hint_color_class
         status[:connected] ? "is-success" : "is-danger"
       end
     end

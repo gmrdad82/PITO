@@ -58,10 +58,12 @@ import { Controller } from "@hotwired/stimulus"
 //     - `mouseenter` on document/viewport (cursor re-entry after mouseleave),
 //       excluding synthetic zero-coord zero-movement events
 //     - Side-button presses on the mouse (back = X1 / button 3,
-//       forward = X2 / button 4) AND middle-button (button 1) via the
-//       `auxclick` event AND `mousedown` capture-phase guard. This blocks
-//       the browser's built-in back/forward shortcut on side-button
-//       clicks (added 2026-05-22).
+//       forward = X2 / button 4, extra side buttons 6/7 = button 5/6+)
+//       AND middle-button (button 1) via the `auxclick` event AND
+//       `mousedown` capture-phase guard (button >= 1). Any non-primary
+//       button at mousedown is caught. `auxclick` catches all non-primary
+//       click completions (button !== 0). Added 2026-05-22; buttons 6/7
+//       added 2026-05-24.
 //
 //   DOES NOT TRIGGER:
 //     - Programmatic `.click()` calls (event.isTrusted === false)
@@ -140,16 +142,15 @@ export default class extends Controller {
       return
     }
 
-    // Side-button mousedown (back = X1 / button 3, forward = X2 / button 4)
-    // — always physical, fast-path block. Without this branch the
-    // browser fires its built-in history back/forward navigation on the
-    // ensuing `auxclick`. We still let the capture-phase `auxclick`
-    // listener do its own preventDefault, but blocking at mousedown
-    // stops the navigation earlier and surfaces the alert immediately.
-    // Middle-click (button 1) is included for parity; it can also open
-    // links in new tabs which is mouse-only behavior we forbid.
-    if (event.type === "mousedown" && event.isTrusted &&
-        (event.button === 1 || event.button === 3 || event.button === 4)) {
+    // Non-primary mousedown — any button except the primary (0).
+    // Covers: middle (1), right (2, also via contextmenu above),
+    // back/X1 (3), forward/X2 (4), and any extra side buttons (5, 6, …).
+    // Blocking at mousedown stops browser navigation (back/forward) and
+    // middle-click tab-open BEFORE the ensuing auxclick fires. The
+    // auxclick listener provides a second layer for buttons that don't
+    // fire mousedown reliably. Added 2026-05-22; >= 1 generalized
+    // 2026-05-24 to catch buttons 6, 7, and beyond.
+    if (event.type === "mousedown" && event.isTrusted && event.button >= 1) {
       event.preventDefault()
       event.stopPropagation()
       this.showAlert()
@@ -205,15 +206,20 @@ export default class extends Controller {
   }
 
   handleAuxClick(event) {
-    // `auxclick` fires for non-primary mouse buttons:
+    // `auxclick` fires for ALL non-primary mouse buttons (button !== 0):
     //   button 1 = middle (open-in-new-tab on links)
-    //   button 3 = back (X1 — browser back-history)
-    //   button 4 = forward (X2 — browser forward-history)
-    // All three are mouse-only interactions; block them and surface the
-    // alert. preventDefault is critical here — browsers wire side-button
-    // history navigation to the `auxclick` default action.
+    //   button 2 = right (usually contextmenu; auxclick fallback)
+    //   button 3 = back / X1 (browser back-history)
+    //   button 4 = forward / X2 (browser forward-history)
+    //   button 5 = extra side button 6
+    //   button 6 = extra side button 7
+    //   button N = any additional hardware buttons
+    // Block all of them — every non-primary click is mouse-only behavior
+    // we forbid. preventDefault stops browser history navigation on
+    // side buttons. Generalized from button === 1|3|4 to button !== 0
+    // on 2026-05-24 to cover buttons 5, 6, 7, and beyond.
     if (!event.isTrusted) return
-    if (event.button === 1 || event.button === 3 || event.button === 4) {
+    if (event.button !== 0) {
       event.preventDefault()
       event.stopPropagation()
       this.showAlert()
