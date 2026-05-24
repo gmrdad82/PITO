@@ -33,6 +33,13 @@
         registry mutates. %>
     <meta name="pito-actions" content="<%= Pito::ActionRegistry.all.to_h { |a| [a.name.to_s, a.to_h] }.to_json %>">
 
+    <%# Phase 1D (2026-05-24 sync-rebuild) — serialized i18n strings for
+        ephemeral TST notices. The JS notice emitters (sync toggles, etc.)
+        read this meta and dispatch `tui:notice` events with the
+        ready-to-display string. Same YAML feeds the future Rust TUI
+        client; the JS path stays free of an in-browser i18n runtime. %>
+    <meta name="pito-notices" content="<%= I18n.t('tui.notices').to_json %>">
+
     <%# 2026-05-20 — section-accent meta tag. The `<body data-section>`
         attribute below is the canonical signal for the Dracula section-
         variant accent CSS cascade, but Turbo Drive replaces body

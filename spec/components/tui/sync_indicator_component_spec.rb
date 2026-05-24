@@ -388,4 +388,46 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
       expect(page).to have_css(".tui-sync-word")
     end
   end
+
+  # 2026-05-24 (sync-rebuild) — lock the master flag key + cascade in
+  # the controller JS via static analysis. The architecture lock: ONE
+  # global master flag (`pito.sync.app`) cascades to every per-panel
+  # target on every screen. A direct `"yes"` per-panel override still
+  # wins so the user can opt a single panel back in.
+  describe "controller JS master cascade (static source check)" do
+    let(:js_source) do
+      Rails.root.join("app/javascript/controllers/tui_sync_indicator_controller.js").read
+    end
+
+    it "uses `pito.sync.app` for the master gate (renamed from pito.sync.home)" do
+      expect(js_source).to include('"pito.sync.app"')
+      expect(js_source).not_to include('"pito.sync.home"')
+    end
+
+    it "treats the `app` target as the master in isTargetSyncDisabled" do
+      expect(js_source).to match(/localStorage\.getItem\("pito\.sync\.app"\)\s*===\s*"no"/)
+    end
+
+    it "treats the `app` target as the master inside _computeTargetState" do
+      expect(js_source).to match(/this\._lsKey\("app"\)/)
+    end
+
+    it "treats `changed === \"app\"` as the master cascade trigger in onSyncChanged" do
+      expect(js_source).to match(/changed === "app"/)
+    end
+
+    it ":tst mode listens for the master toggle to flip to idle on master OFF" do
+      expect(js_source).to match(/if \(changed === "app"\)[\s\S]*?setIdle\(\)/)
+    end
+
+    it "the per-target toggle fires a `tui:notice` event with severity info" do
+      expect(js_source).to include('new CustomEvent("tui:notice"')
+      expect(js_source).to match(/severity:\s*"info"/)
+    end
+
+    it "the notice message lookup interpolates panel title from data-panel-title" do
+      expect(js_source).to include("data-panel-title")
+      expect(js_source).to match(/sync_paused_for|sync_resumed_for/)
+    end
+  end
 end

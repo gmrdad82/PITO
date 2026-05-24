@@ -35,6 +35,12 @@
     <%= render Tui::AppVersionComponent.new %>
     <%= render Tui::BreadcrumbComponent.new(screen: section, panel: page) %>
   </div>
+  <%# Phase 1D (2026-05-24) — centered ephemeral notice slot. Listens for
+      `tui:notice` document events (fired by sync toggles + future
+      ephemeral-message emitters) and renders the message verbatim. %>
+  <div class="sb-center">
+    <%= render Tui::TstNoticeComponent.new %>
+  </div>
   <div class="sb-right">
     <% if progress_visible? %>
       <span class="sb-progress-bar" data-tui-status-bar-target="progressBar">

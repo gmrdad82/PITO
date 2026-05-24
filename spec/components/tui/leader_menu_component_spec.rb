@@ -144,12 +144,35 @@ RSpec.describe Tui::LeaderMenuComponent, type: :component do
   end
 
   # 2026-05-24 — `s` entry: SPACE+s fires the canonical `:toggle_tst_sync`
-  # registered action which flips the `pito.sync.home` master switch.
+  # registered action which flips the `pito.sync.app` master switch
+  # (renamed from `pito.sync.home` in the sync-rebuild pass — ONE
+  # global master flag covers every screen).
   describe "SPACE+s dispatch wiring" do
     before { render_inline(component) }
 
     it "marks the `s` entry with data-leader-action-name='toggle_tst_sync'" do
       expect(page).to have_css("[data-leader-key='s'][data-leader-action-name='toggle_tst_sync']")
+    end
+  end
+
+  # 2026-05-24 (sync-rebuild) — lock the JS master flag key name via
+  # static analysis of pito_actions.js. If a refactor renames the key
+  # without updating the spec, the toggle stops being a no-op silently
+  # — this regression test surfaces the drift at test time.
+  describe "pito_actions.js master key (static JS source check)" do
+    let(:js_source) { Rails.root.join("app/javascript/pito_actions.js").read }
+
+    it "uses `pito.sync.app` as the master key (renamed from pito.sync.home)" do
+      expect(js_source).to include('const key = "pito.sync.app"')
+      expect(js_source).not_to include('"pito.sync.home"')
+    end
+
+    it "dispatches `tui:sync-changed` with target: 'app'" do
+      expect(js_source).to match(/target:\s*"app"/)
+    end
+
+    it "fires `tui:notice` after the master toggle" do
+      expect(js_source).to include('new CustomEvent("tui:notice"')
     end
   end
 end

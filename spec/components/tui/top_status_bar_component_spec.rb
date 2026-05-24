@@ -49,6 +49,22 @@ RSpec.describe Tui::TopStatusBarComponent, type: :component do
     expect(page).to have_css("span.sb-clock")
   end
 
+  # Phase 1D (2026-05-24 sync-rebuild) — centered TstNoticeComponent
+  # slot mounted between breadcrumb (left) and sync indicator (right).
+  # Empty on SSR; `tui_notice_controller` patches the text on
+  # `tui:notice` events.
+  describe "centered notice slot" do
+    it "renders the Tui::TstNoticeComponent inside an .sb-center wrapper" do
+      render_inline(component)
+      expect(page).to have_css(".sb-center .tui-tst-notice")
+    end
+
+    it "wires the tui-notice Stimulus controller on the slot root" do
+      render_inline(component)
+      expect(page).to have_css('.tui-tst-notice[data-controller="tui-notice"]')
+    end
+  end
+
   describe "progress segment" do
     it "omits the progress bar when no progress kwarg is given" do
       render_inline(component)
@@ -147,34 +163,34 @@ RSpec.describe Tui::TopStatusBarComponent, type: :component do
       end
     end
 
-    # 2026-05-22 — Lock the SyncIndicator activity-pulse contract via
-    # static analysis of the child controller source. PULSE_MS is the
-    # locked debounce window; if anyone changes the constant the spec
-    # surfaces the drift.
-    describe "SyncIndicator activity-pulse contract (static JS source check)" do
+    # 2026-05-22 (rewritten 2026-05-24 sync-rebuild) — Lock the
+    # SyncIndicator cool-down + cable-activity contract via static
+    # analysis. The legacy PULSE_MS / _pulseTimer pair was replaced
+    # during the Phase 1D 5-state rewrite by COOL_DOWN_MS / _coolDownTimer
+    # (the indicator no longer "pulses" — it transitions through
+    # idle/active/syncing/mixed/disconnected explicitly). The new
+    # assertions track the current contract.
+    describe "SyncIndicator activity contract (static JS source check)" do
       let(:js_source) do
         Rails.root.join("app/javascript/controllers/tui_sync_indicator_controller.js").read
       end
 
-      it "locks PULSE_MS to 400" do
-        expect(js_source).to match(/static PULSE_MS = 400/)
+      it "locks COOL_DOWN_MS to 1000" do
+        expect(js_source).to match(/static COOL_DOWN_MS = 1000/)
       end
 
       it "listens for tui:cable-activity in connect()" do
         expect(js_source).to match(/addEventListener\("tui:cable-activity"/)
       end
 
-      it "honors tui:sync-changed for the disconnected state only" do
+      it "listens for tui:sync-changed (master cascade + sibling reactivity)" do
         expect(js_source).to match(/addEventListener\("tui:sync-changed"/)
-        expect(js_source).to match(/if \(state === "disconnected"\)/)
       end
 
-      it "re-arms the pulse timer on every activity event" do
-        # 2026-05-22 (Phase 3 drift fix) — actual var is `_pulseTimer`
-        # (underscore-prefixed); spec regex updated to match the lived
-        # source. The pattern still locks the contract: clearTimeout on
-        # the existing timer immediately followed by a new setTimeout.
-        expect(js_source).to match(/clearTimeout\(this\._pulseTimer\)[\s\S]+?setTimeout/)
+      it "re-arms the cool-down timer on every active → idle transition" do
+        # The new contract: clearTimeout on the existing _coolDownTimer
+        # immediately followed by a new setTimeout that flips to idle.
+        expect(js_source).to match(/clearTimeout\(this\._coolDownTimer\)[\s\S]+?setTimeout/)
       end
     end
   end

@@ -42,11 +42,10 @@ module Tui
 
     # 2026-05-24 — `s` entry added: `Space s` toggles TST sync. The
     # entry fires the `:toggle_tst_sync` registered action which flips
-    # the `pito.sync.home` master switch (Option C: a screen-wide
-    # gate that suppresses cable-driven repaints across every home
-    # panel + sub-panel when "no"). The TST sync VC and per-panel sync
-    # VCs all read this master flag via `isTargetSyncDisabled` and
-    # display the cascaded state.
+    # the `pito.sync.app` global master switch (one flag covers every
+    # screen). The TST sync VC and per-panel sync VCs all read this
+    # master flag via `isTargetSyncDisabled` and display the cascaded
+    # state.
     DEFAULT_ENTRIES = [
       { key: "h", label_key: "tui.leader.entries.h.label",       path: "/" },
       { key: "v", label_key: "tui.leader.entries.v.label",       path: "/videos" },

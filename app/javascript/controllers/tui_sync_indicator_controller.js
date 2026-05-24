@@ -30,14 +30,18 @@ import { Controller } from "@hotwired/stimulus"
  *                              to a uniform state, see toggle())
  *   disconnected → "[!] sync"  danger (red) color, no shimmer
  *
- * ## localStorage shape (locked 2026-05-24)
+ * ## localStorage shape (locked 2026-05-24, refined sync-rebuild)
  *
- *   key   = `pito.sync.<target>`
+ *   key   = `pito.sync.app`                           — MASTER
+ *         | `pito.sync.<screen>.<panel>`              — per-panel
+ *         | `pito.sync.<screen>.<panel>.<sub_panel>`  — per-sub-panel
  *   value = `"yes"` (enabled, default)
  *         | `"no"`  (user-disabled)
  *
- * Unset key = enabled (default). Inverted from the old
- * `pito.pause.<target>` semantic — "yes" used to mean paused.
+ * Unset key = enabled (default). `pito.sync.app` is the ONE global
+ * master across every screen — toggling it suppresses every panel's
+ * cable broadcasts unless that panel has an explicit `"yes"` override.
+ * Per-panel-per-screen flags are independent across screens.
  *
  * ## :target mode behavior
  *
@@ -180,13 +184,56 @@ export default class extends Controller {
         enabled: nextEnabled
       }
     }))
+
+    // 2026-05-24 (sync-rebuild) — surface a centered TST notice so the
+    // user gets immediate visual feedback on the silent toggle. The
+    // panel title comes from the closest panel's `data-panel-title`
+    // attribute. When unavailable, fall back to the bare master copy.
+    const panelTitle = this._closestPanelTitle()
+    const message = this._buildNoticeMessage(nextEnabled, panelTitle)
+    if (message) {
+      document.dispatchEvent(new CustomEvent("tui:notice", {
+        detail: { message, severity: "info" }
+      }))
+    }
+  }
+
+  // Walks up from the host element to the nearest panel and reads its
+  // `data-panel-title` attribute (planted by `Tui::PanelBase`). Falls
+  // back to null when not found — caller emits the title-less message.
+  _closestPanelTitle() {
+    if (!this.element || !this.element.closest) return null
+    const panel = this.element.closest('[data-tui-cursor-target="panel"][data-panel-title]')
+    if (!panel) return null
+    const title = panel.dataset.panelTitle
+    return typeof title === "string" && title.length > 0 ? title : null
+  }
+
+  // Reads the resolved i18n string for a target toggle out of the
+  // `<meta name="pito-notices" content="JSON">` payload. Layer-cake
+  // fallback: scoped message → bare message → null. Caller decides
+  // whether to emit the event.
+  _buildNoticeMessage(nextEnabled, panelTitle) {
+    const meta = document.querySelector('meta[name="pito-notices"]')
+    if (!meta) return null
+    let map
+    try { map = JSON.parse(meta.content) } catch (_) { return null }
+    if (!map || typeof map !== "object") return null
+    if (panelTitle) {
+      const tmpl = nextEnabled ? map.sync_resumed_for : map.sync_paused_for
+      if (typeof tmpl === "string" && tmpl.length > 0) {
+        return tmpl.replace(/%\{title\}/g, panelTitle)
+      }
+    }
+    const bare = nextEnabled ? map.sync_resumed : map.sync_paused
+    return typeof bare === "string" && bare.length > 0 ? bare : null
   }
 
   // Listen for sibling / parent / child / master toggles — re-evaluate
   // if this control observes the changed target (self), its parent
   // (inheritance), one of its registered children (parent ↔ child
-  // mixed-state aggregation), or the master `home` switch (cascades to
-  // every home.* target). All locked 2026-05-24.
+  // mixed-state aggregation), or the global `app` master switch (cascades
+  // to every target on every screen). All locked 2026-05-24.
   onSyncChanged(event) {
     const changed = event && event.detail && event.detail.target
     if (!changed) return
@@ -197,17 +244,26 @@ export default class extends Controller {
       // changes, the parent re-derives its mixed/idle reading.
       const isChild  = this._isParent() &&
         (this.constructor.CHILDREN_BY_PARENT[this.targetValue] || []).includes(changed)
-      // 2026-05-24 — master `home` cascade. Affects every home.* target.
-      const isMaster = changed === "home" &&
-        typeof this.targetValue === "string" &&
-        this.targetValue.startsWith("home.")
+      // 2026-05-24 (sync-rebuild) — global `app` master cascade. Affects
+      // every per-panel target on every screen.
+      const isMaster = changed === "app"
       if (isSelf || isParent || isChild || isMaster) {
         this._paint(this._computeTargetState())
       }
+    } else if (this.isTstMode()) {
+      // 2026-05-24 (sync-rebuild) — TST `:tst` mode mirrors the master
+      // `app` switch. When the user fires `Space s`, the TST glyph
+      // flips between idle/`[ ]` (master OFF) and the Sidekiq-derived
+      // active/idle state (master ON).
+      if (changed === "app") {
+        if (event.detail.enabled === false) {
+          this.setIdle()
+        }
+        // When master flips back ON, the next Sidekiq tick re-derives
+        // active/idle from the live stats. The explicit nudge here is
+        // not needed.
+      }
     }
-    // In :tst mode, any change in any target may shift the aggregate.
-    // Re-derive on next tick (Sidekiq event will refresh the source-of-truth
-    // numbers; the explicit refresh here is a safe nudge).
   }
 
   // ─── explicit state path (legacy `tui:sync-state-changed` event) ──
@@ -271,14 +327,12 @@ export default class extends Controller {
       const parentEnabled = this._readEnabled(this.parentTargetValue)
       if (!parentEnabled) return "idle"
     }
-    // 2026-05-24 — master `home` switch cascade. When `pito.sync.home`
-    // is "no", every home.* target paints as idle even if its direct
-    // flag is unset / "yes". A direct "yes" override still wins (the
-    // user can opt a single panel back in even with master off).
+    // 2026-05-24 (sync-rebuild) — global `app` master switch cascade.
+    // When `pito.sync.app` is "no", every per-panel target on every
+    // screen paints as idle UNLESS the panel's direct flag is explicitly
+    // "yes" (user opt-in per panel survives the global master OFF).
     if (
-      typeof this.targetValue === "string" &&
-      this.targetValue.startsWith("home.") &&
-      localStorage.getItem(this._lsKey("home")) === "no" &&
+      localStorage.getItem(this._lsKey("app")) === "no" &&
       localStorage.getItem(this._lsKey(this.targetValue)) !== "yes"
     ) {
       return "idle"
@@ -458,11 +512,13 @@ export default class extends Controller {
  * Parent inheritance: a disabled parent target cascades to its
  * sub-panels unless the sub-panel has its own explicit "yes" override.
  *
- * 2026-05-24 — `pito.sync.home` master gate. When the home master
- * switch is "no" (toggled via `Space s` → `:toggle_tst_sync`), every
- * `home.*` target is treated as disabled even if its direct flag is
- * unset / "yes". A direct "yes" override still wins (user opt-in per
- * panel). This is Option C from the dispatch spec.
+ * 2026-05-24 (sync-rebuild) — `pito.sync.app` global master gate. When
+ * the master switch is "no" (toggled via `Space s` →
+ * `:toggle_tst_sync`), EVERY per-panel target on EVERY screen is
+ * treated as disabled even if its direct flag is unset / "yes". A
+ * direct "yes" override still wins (user opt-in per panel survives the
+ * global master OFF). The per-panel-per-screen flag namespace
+ * (`pito.sync.<screen>.<panel>`) is independent across screens.
  */
 export function isTargetSyncDisabled(target, parentTarget = null) {
   const direct = localStorage.getItem(`pito.sync.${target}`)
@@ -471,9 +527,9 @@ export function isTargetSyncDisabled(target, parentTarget = null) {
   if (parentTarget) {
     if (localStorage.getItem(`pito.sync.${parentTarget}`) === "no") return true
   }
-  // 2026-05-24 — master "home" switch cascade for any home.* target.
-  if (typeof target === "string" && target.startsWith("home.")) {
-    return localStorage.getItem("pito.sync.home") === "no"
-  }
+  // 2026-05-24 (sync-rebuild) — global `app` master switch cascade.
+  // Applies regardless of screen; the direct-yes override above already
+  // covers per-panel opt-ins.
+  if (localStorage.getItem("pito.sync.app") === "no") return true
   return false
 }

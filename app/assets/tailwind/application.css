@@ -5845,6 +5845,34 @@ body > header {
   padding: 0 4px;
 }
 
+/* Phase 1D (2026-05-24) — centered TST notice slot. Sits between
+   the left (version + breadcrumb) and right (sync + clock) groups.
+   Center alignment via flex: 1 + text-align center. The notice itself
+   is empty until `tui_notice_controller` patches the slot in response
+   to a `tui:notice` event. */
+.sb-center {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.tui-tst-notice {
+  color: var(--section-accent);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tui-tst-notice.is-visible {
+  opacity: 1;
+}
+.tui-tst-notice[data-severity="success"] { color: var(--color-success); }
+.tui-tst-notice[data-severity="warn"]    { color: var(--dracula-orange); }
+.tui-tst-notice[data-severity="danger"]  { color: var(--color-danger); }
+.tui-tst-notice__slot { display: inline-block; }
+
 /* Sidekiq cells — b/e/r with per-letter color + muted-zero variant */
 .sb-sidekiq                    { display: inline-flex; gap: 4px; }
 .sb-sk-cell                    { font-variant-numeric: tabular-nums; }

@@ -283,6 +283,18 @@ en:
     # (mirrored through a Stimulus value emitted from the VC).
     sidekiq:
       label: "Sidekiq:"
+    # Phase 1D (2026-05-24 sync-rebuild) — ephemeral TST notices fired
+    # from JS via `tui:notice` document events. The Rails layout
+    # serializes these keys into `<meta name="pito-notices">` so the
+    # client-side emitters (pito_actions.js, tui_sync_indicator_controller.js)
+    # can paint the user-visible strings without their own i18n call.
+    # The future Rust TUI client reads the same keys via the screen
+    # export pipeline (same YAML feeds the TUI).
+    notices:
+      sync_paused: "sync paused"
+      sync_resumed: "sync resumed"
+      sync_paused_for: "sync paused for %{title}"
+      sync_resumed_for: "sync resumed for %{title}"
     tst:
       sync:
         idle: "sync"

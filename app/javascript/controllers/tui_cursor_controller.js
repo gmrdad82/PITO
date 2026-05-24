@@ -334,7 +334,14 @@ export default class extends Controller {
     if (k === " ") {
       const active = document.activeElement
       const onTextInput = active && active.matches && active.matches(INPUT_SELECTOR)
-      if (!onTextInput && this.toggleFocusedFocusableCheckbox()) {
+      if (onTextInput) return
+      // 2026-05-24 (sync-rebuild) — SPACE in INSERT mode toggles the
+      // focused action focusable. The helper covers BOTH the checkbox
+      // path (e.g., notification toggle) AND the action-button path
+      // (e.g., Tui::SyncIndicatorComponent in :target mode). Always
+      // preventDefault when the helper succeeds so the native button
+      // SPACE keyup activation does NOT fire a second click.
+      if (this.toggleFocusedFocusableCheckbox()) {
         event.preventDefault()
         event.stopPropagation()
       }
@@ -720,17 +727,25 @@ export default class extends Controller {
       checkbox.click()
       return true
     }
-    // Path 2 — action-style focusable rendered as a <button> (the sync
-    // VC is the canonical case). Click the button directly so its
-    // Stimulus action runs; INSERT mode stays intact because the click
-    // path doesn't trigger focusout on the host element.
-    if (
-      el.dataset.tuiFocusableStyle === "action" &&
-      el.matches &&
-      el.matches('button')
-    ) {
-      el.click()
-      return true
+    // Path 2 — action-style focusable. The canonical case is the
+    // Tui::SyncIndicatorComponent in :target mode, where the focusable
+    // host IS the `<button>`. Path 2 also covers the more general case
+    // of an action focusable that WRAPS a button (no current call site,
+    // but defensible against future call sites that wrap the button
+    // with an outer span carrying the focusable attrs).
+    //
+    // 2026-05-24 (sync-rebuild) — generalised from "is-a-button" to
+    // "is-or-contains-a-button" so a future wrapper-around-button
+    // focusable picks up the SPACE toggle without re-deriving Path 2.
+    if (el.dataset && el.dataset.tuiFocusableStyle === "action") {
+      const button =
+        (el.matches && el.matches('button'))
+          ? el
+          : el.querySelector('button')
+      if (button) {
+        button.click()
+        return true
+      }
     }
     return false
   }

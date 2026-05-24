@@ -114,13 +114,12 @@ Rails.application.config.after_initialize do
   #
   # Wired to the leader menu (`Tui::LeaderMenuComponent` DEFAULT_ENTRIES,
   # `s` entry). The JS dispatcher resolves the action by flipping the
-  # `pito.sync.home` localStorage master switch and dispatching
-  # `tui:sync-changed` for the master scope; every home panel / sub-
-  # panel sync VC re-evaluates via the existing parent-cascade path
-  # (`isTargetSyncDisabled` walks parent flags). Option C from the
-  # dispatch spec: a screen-wide gate rather than bulk-writing
-  # individual targets, so per-panel user preferences survive the
-  # global toggle.
+  # `pito.sync.app` localStorage master switch (ONE global flag covers
+  # every screen) and dispatching `tui:sync-changed` for the master
+  # scope; every panel / sub-panel sync VC re-evaluates via the
+  # existing cascade path (`isTargetSyncDisabled`). Per-panel user
+  # preferences survive the global toggle via the per-panel "yes"
+  # opt-in override.
   Pito::ActionRegistry.define(
     :toggle_tst_sync,
     path: -> { "#" },

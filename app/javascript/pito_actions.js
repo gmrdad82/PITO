@@ -26,21 +26,53 @@
 // entirely in JS (no POST, no path lookup). The leader menu / palette /
 // any other dispatcher hands them off here.
 const CLIENT_ACTIONS = {
-  // `Space s` master switch — toggle the `pito.sync.home` localStorage
-  // flag and dispatch `tui:sync-changed` so every home panel + sub-panel
-  // sync VC re-evaluates via the existing parent-cascade path. Option C
-  // from the dispatch spec (a screen-wide gate, not a bulk-write of
-  // per-panel flags — per-panel preferences survive the toggle).
+  // `Space s` master switch — toggle the `pito.sync.app` localStorage
+  // flag (single global master across every screen) and dispatch
+  // `tui:sync-changed` so every panel + sub-panel sync VC anywhere
+  // re-evaluates via the existing cascade path.
+  //
+  // 2026-05-24 (sync-rebuild) — master key renamed from `pito.sync.home`
+  // to `pito.sync.app`. Architecture lock: ONE master flag covers
+  // every screen (videos/games will share the same gate when their
+  // sync VCs land). Per-panel-per-screen flags stay scoped
+  // (`pito.sync.<screen>.<panel>`).
+  //
+  // After the flip the handler fires a `tui:notice` event so the TST
+  // notice slot surfaces the visible "sync paused" / "sync resumed"
+  // confirmation. Messages flow through i18n
+  // (`tui.notices.sync_paused` / `tui.notices.sync_resumed`).
   toggle_tst_sync() {
-    const key = "pito.sync.home"
+    const key = "pito.sync.app"
     const raw = localStorage.getItem(key)
     const currentlyEnabled = raw === "no" ? false : true // unset/"yes" => enabled
     const nextEnabled = !currentlyEnabled
     localStorage.setItem(key, nextEnabled ? "yes" : "no")
     document.dispatchEvent(new CustomEvent("tui:sync-changed", {
-      detail: { target: "home", parentTarget: null, enabled: nextEnabled }
+      detail: { target: "app", parentTarget: null, enabled: nextEnabled }
     }))
+    const message = readNoticeI18n(nextEnabled ? "sync_resumed" : "sync_paused")
+    if (message) {
+      document.dispatchEvent(new CustomEvent("tui:notice", {
+        detail: { message, severity: "info" }
+      }))
+    }
   }
+}
+
+// Reads the resolved i18n string for a notice key out of the
+// `<meta name="pito-notices" content="JSON">` payload emitted by the
+// layout. Returns the string when present, or null when the meta is
+// missing / the key is absent (caller decides whether to fire a
+// fallback). Centralized here so every JS-side notice emitter shares
+// one lookup contract.
+function readNoticeI18n(key) {
+  const meta = document.querySelector('meta[name="pito-notices"]')
+  if (!meta) return null
+  let map
+  try { map = JSON.parse(meta.content) } catch (_) { return null }
+  if (!map || typeof map !== "object") return null
+  const value = map[key]
+  return typeof value === "string" ? value : null
 }
 
 const PITO = {
