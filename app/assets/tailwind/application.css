@@ -1871,16 +1871,12 @@ th.col-action, td.col-action {
   flex: 1;
   min-height: 0;
   width: 100%;
-  /* 2026-05-24 (sub-panel-title-clip fix) — the top row of sub-panels
-     (Meilisearch / Voyage AI) renders `.pito-sub-panel__title` at
-     `top: -7px` outside the sub-panel. Inside `.tui-panel-fieldset__scroll`
-     (which sets `overflow-y: auto`, clipping anything above scrollTop=0),
-     a sub-panel sitting at the very top of the scroll surface gets its
-     title clipped — visible as `ilisearch` / `yage AI` truncated at the
-     character mid-line. `padding-top: 8px` = 7px outset + 1px safety so the
-     -7px title clears the scroll's top edge with minimal breathing room.
-     Same reasoning for `[reindex]` action chips on the same border line. */
-  padding-top: 8px;
+  /* 2026-05-24 — padding-top: 0 verified by user in DevTools. Sub-panel
+     titles at `top: -7px` extend into the parent `.pito-pane`'s own
+     padding-top zone (6px) which is `overflow: visible` — no clipping
+     happens at the stack-grid boundary in practice, so the grid does
+     not need additional padding to clear the outset. */
+  padding-top: 0;
 }
 .pito-stack-grid > .pito-sub-panel {
   min-height: 0;
