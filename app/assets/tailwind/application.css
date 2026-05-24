@@ -7074,8 +7074,14 @@ body.keyboard-only * {
   animation: tui-shimmer-flow var(--tui-trn-shimmer-cycle-ms, 1600ms) linear infinite;
 }
 
-/* sync word slot */
-.tui-sync-word { min-width: 13ch; color: var(--section-accent-home); }
+/* sync word slot.
+   2026-05-24 — min-width: 13ch dropped. The previous reservation was
+   intended to keep the TST cell at a fixed width across the 4 states
+   ("[ ] sync" 8 chars, "[x] sync" 8, "[-] sync" 8, "[!] sync" 8 —
+   all 8 chars; 13ch was overkill). With panels/sub-panels also
+   mounting the VC inside narrow title-actions slots, the min-width
+   produced a 5ch padding gap to the left of `[ ] sync`. Drop it. */
+.tui-sync-word { color: var(--section-accent-home); }
 .tui-sync-word.is-muted { color: var(--color-muted); }
 .tui-sync-word.is-pink  { color: var(--color-danger); }
 
