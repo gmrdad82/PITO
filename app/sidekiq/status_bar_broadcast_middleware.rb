@@ -149,8 +149,22 @@ class StatusBarBroadcastMiddleware
   # the ActiveJob `JobWrapper`; before this fix the guard NEVER
   # matched and every trailing-edge job re-scheduled another, causing
   # an infinite chain of broadcasts that kept `b1` stuck.
+  # 2026-05-24 — uniqueness guard via Redis SETNX. The self-skip above
+  # is necessary but not sufficient: when real jobs fire faster than
+  # 1/sec (e.g. a rake-task burst, a cable-driven retry storm), each
+  # one schedules its own trailing broadcast and the queue grows
+  # faster than it drains. Cap to one pending trailing broadcast at a
+  # time via a 2-second Redis lock — if a trailing is already pending,
+  # this one is a no-op (the in-flight broadcast covers our state too).
+  TRAILING_LOCK_KEY = "pito:status_bar:trailing_pending".freeze
+  TRAILING_LOCK_TTL = 2 # seconds
+
   def schedule_trailing_broadcast
     return if @current_job_class == "StatusBarBroadcastJob"
+    acquired = Sidekiq.redis do |conn|
+      conn.set(TRAILING_LOCK_KEY, "1", nx: true, ex: TRAILING_LOCK_TTL)
+    end
+    return unless acquired
     StatusBarBroadcastJob.set(wait: 1.second).perform_later
   rescue StandardError => e
     Rails.logger.warn("StatusBarBroadcastMiddleware trailing broadcast schedule failed: #{e.message}")
