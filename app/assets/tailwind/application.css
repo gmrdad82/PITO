@@ -181,7 +181,12 @@
      same accent against the panel bg so the border on `:input`
      reads as the SAME visual color as the row tint over the same
      background. */
-  --focus-tint-bg:     color-mix(in srgb, var(--section-accent) 18%, transparent);
+  /* 2026-05-24 — variant D (locked): solid darker tint mixing 12% of the
+     section accent against the page bg. Replaces the previous 18%-against-
+     transparent value. Solid (not translucent) so it reads as a coherent
+     accent slab rather than a "filtered" overlay on whatever sits beneath
+     it. Muted text contrast lift below still applies. */
+  --focus-tint-bg:     color-mix(in srgb, var(--section-accent) 12%, var(--dracula-bg));
   --focus-tint-border: color-mix(in srgb, var(--section-accent) 45%, transparent);
 
   /* ============================================================
@@ -1105,7 +1110,14 @@ button.bracketed .bl {
 .tui-sync-word--target {
   background: transparent;
   border: 0;
-  padding: 0 4px;
+  /* 2026-05-24 (padding fix) — zero horizontal padding. The title-actions
+     slot already provides `padding: 0 6px` + `gap: 1ch` between adjacent
+     children; the extra `padding-left: 4px` on this button stacked an
+     extra blank ch worth of whitespace flush against the left pipe
+     border in user testing. Idle / hover / focus states do not need the
+     internal padding either since the focus tint paints on the host
+     element itself with the breathing room the slot already provides. */
+  padding: 0;
   cursor: pointer;
   font: inherit;
   line-height: 1;
@@ -7270,6 +7282,12 @@ body.keyboard-only * {
 .tui-view-toggle__view--active.is-warn         { color: var(--color-warn); }
 .tui-view-toggle__view--active.is-danger       { color: var(--color-danger); }
 .tui-view-toggle__view--active.is-accent-pale  { color: var(--color-accent-pale); }
+/* 2026-05-24 — `:accent` active variant added so the entire toggle can
+   read in section-accent ("actions are always accent" lock). Pair with
+   `active_style: :plain` (calendar panel) for the `month [schedule]`
+   shape where the difference between active / inactive is bracketed vs
+   unbracketed, not color. */
+.tui-view-toggle__view--active.is-accent       { color: var(--section-accent, var(--color-link)); }
 .tui-view-toggle__view:focus,
 .tui-view-toggle__view:focus-visible {
   outline: 0;

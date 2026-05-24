@@ -82,7 +82,10 @@ module Pito
     end
 
     def focusables
-      %w[month schedule]
+      # 2026-05-24 — `calendar_sync` leads the focus list (matches the
+      # `[ ] sync` action in the title-actions slot, rendered first in
+      # the template); month + schedule remain the view-toggle stops.
+      %w[calendar_sync month schedule]
     end
 
     def views

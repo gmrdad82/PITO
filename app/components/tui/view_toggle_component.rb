@@ -41,15 +41,38 @@ module Tui
   # different `Style` modifiers + literal space/bracket characters.
   # Width-stability keeps the Rust grid layout still on toggle too.
   class ViewToggleComponent < ViewComponent::Base
-    ALLOWED_ACTIVE_COLORS = %i[success warn danger accent_pale].freeze
+    ALLOWED_ACTIVE_COLORS = %i[success warn danger accent_pale accent].freeze
+    ALLOWED_ACTIVE_STYLES = %i[padded plain].freeze
 
-    def initialize(views:, current:, event_name: "tui:view-toggle-changed", active_color: :success)
+    # 2026-05-24 — `active_style:` kwarg added.
+    #
+    #   :padded (default) — active renders as ` label ` (label.length + 2
+    #     cols, matches inactive `[label]` width — width-stable variant
+    #     used by toggles in fixed-width slots).
+    #   :plain — active renders as plain `label` (no surrounding spaces,
+    #     no brackets). Used by the calendar panel where the user-locked
+    #     design wants `month [schedule]` instead of `[month] [schedule]`
+    #     (the active state reads as a static label rather than a
+    #     bracketed action). Layout shifts by 2 cols when toggled —
+    #     accepted in this context.
+    #
+    # 2026-05-24 — `:accent` added to ALLOWED_ACTIVE_COLORS so the
+    # active label can take the section accent (the "actions are always
+    # accent" lock applies to inactive too; with :plain + :accent the
+    # entire toggle reads in the same color and the difference is just
+    # the bracketed / unbracketed shape).
+    def initialize(views:, current:, event_name: "tui:view-toggle-changed",
+                   active_color: :success, active_style: :padded)
       @views = views
       @current = current.to_sym
       @event_name = event_name
       @active_color = active_color.to_sym
+      @active_style = active_style.to_sym
       unless ALLOWED_ACTIVE_COLORS.include?(@active_color)
         raise ArgumentError, "Tui::ViewToggleComponent active_color must be one of #{ALLOWED_ACTIVE_COLORS.inspect}, got #{@active_color.inspect}"
+      end
+      unless ALLOWED_ACTIVE_STYLES.include?(@active_style)
+        raise ArgumentError, "Tui::ViewToggleComponent active_style must be one of #{ALLOWED_ACTIVE_STYLES.inspect}, got #{@active_style.inspect}"
       end
     end
 
@@ -77,9 +100,18 @@ module Tui
         name: name,
         label: label,
         active: active,
-        visible_text: active ? " #{label} " : "[#{label}]",
+        visible_text: visible_text_for(label, active),
         classes: classes_for(active)
       }
+    end
+
+    def visible_text_for(label, active)
+      return "[#{label}]" unless active
+
+      case @active_style
+      when :plain  then label
+      else              " #{label} " # :padded — width-stable default
+      end
     end
 
     def classes_for(active)

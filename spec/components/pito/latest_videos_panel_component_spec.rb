@@ -34,8 +34,8 @@ RSpec.describe Pito::LatestVideosPanelComponent, type: :component do
     expect(root["data-tui-cursor-target"]).to eq("panel")
   end
 
-  it "emits empty focusables + keybinds in the blank-shell round" do
-    expect(root["data-tui-panel-focusables-value"]).to eq("")
+  it "emits latest_videos_sync as the leading focusable + empty keybinds in the blank-shell round" do
+    expect(root["data-tui-panel-focusables-value"]).to eq("latest_videos_sync")
     expect(root["data-tui-panel-keybinds-value"]).to eq("{}")
   end
 
@@ -43,6 +43,19 @@ RSpec.describe Pito::LatestVideosPanelComponent, type: :component do
     placeholder = rendered.css(".tui-panel-fieldset .pito-panel__placeholder").first
     expect(placeholder).to be_present
     expect(placeholder.text.strip).to eq("[ panel content TBD ]")
+  end
+
+  describe "panel-level [ ] sync action (2026-05-24)" do
+    it "renders the Tui::SyncIndicatorComponent with target=home.latest_videos" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync).to be_present
+      expect(sync["data-tui-sync-indicator-target-value"]).to eq("home.latest_videos")
+    end
+
+    it "carries data-tui-focusable-key=latest_videos_sync" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync["data-tui-focusable-key"]).to eq("latest_videos_sync")
+    end
   end
 
   describe "PANEL_NAME" do

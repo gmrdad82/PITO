@@ -40,10 +40,18 @@ module Tui
   class LeaderMenuComponent < ViewComponent::Base
     DIALOG_ID = "tui-leader-menu".freeze
 
+    # 2026-05-24 — `s` entry added: `Space s` toggles TST sync. The
+    # entry fires the `:toggle_tst_sync` registered action which flips
+    # the `pito.sync.home` master switch (Option C: a screen-wide
+    # gate that suppresses cable-driven repaints across every home
+    # panel + sub-panel when "no"). The TST sync VC and per-panel sync
+    # VCs all read this master flag via `isTargetSyncDisabled` and
+    # display the cascaded state.
     DEFAULT_ENTRIES = [
       { key: "h", label_key: "tui.leader.entries.h.label",       path: "/" },
       { key: "v", label_key: "tui.leader.entries.v.label",       path: "/videos" },
       { key: "g", label_key: "tui.leader.entries.g.label",       path: "/games" },
+      { key: "s", label_key: "tui.leader.entries.s.label",       action_name: "toggle_tst_sync" },
       { key: "?", label_key: "tui.leader.entries.help.label",    dispatch_method: "open_help" },
       { key: ":", label_key: "tui.leader.entries.command.label", dispatch_method: "open_command" },
       { key: "q", label_key: "tui.leader.entries.q.label",       path: "/session", path_method: "delete" },

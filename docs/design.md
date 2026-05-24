@@ -176,6 +176,31 @@ mouse guard is active — cursor is hidden then).
 Destructive actions always route through a confirmation dialog. No hover
 effects. No focus rings (focus signal = color tint).
 
+### Actions are always section accent color (locked 2026-05-24)
+
+Every bracketed action — `[reindex]`, `[resync]`, `[schedule]`, `[month]`,
+`[update]`, `[help]`, `[ ] sync` / `[x] sync` / `[-] sync` / `[!] sync`,
+the reindex progress slot — paints in `var(--section-accent)`. Idle,
+active, hovered, or otherwise: actions speak the section's accent voice.
+Non-action chrome (titles, hints, delimiters, muted labels) keeps its own
+token.
+
+One exception: the `[!] sync` disconnected state renders in red
+`var(--color-danger)`.
+
+### Bracket-to-space rule on TST chrome (locked 2026-05-24)
+
+Where a non-action label sits in an actions slot adjacent to a bracketed
+action, use a literal space pair around the label instead of brackets —
+`month [schedule]` not `[month] [schedule]`. Brackets mean "this is an
+action"; bare labels with surrounding spaces are static chrome. Avoids
+a color rainbow across multiple bracketed items and keeps the
+"brackets = action" reading unambiguous.
+
+When the mode flips (e.g. user activates `[schedule]`), labels swap roles:
+`[month] schedule` — `[month]` becomes the bracketed action, `schedule`
+becomes the static label.
+
 ## Tables
 
 `.tui-table` grammar:

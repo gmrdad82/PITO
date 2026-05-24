@@ -683,24 +683,51 @@ export default class extends Controller {
     return list[this.focusableIndex] || null
   }
 
-  // SPACE on a focused focusable. If the focusable IS a checkbox or
-  // CONTAINS a checkbox, toggle it. Otherwise no-op.
+  // SPACE on a focused focusable.
+  //
+  // 2026-05-24 — extended past the original "checkbox only" semantic.
+  // The focused focusable may be:
+  //   1. an `<input type="checkbox">` (or contain one) — toggle the
+  //      checkbox via .click(). Original case.
+  //   2. an action-style focusable that is itself a `<button>` (e.g.
+  //      `Tui::SyncIndicatorComponent` in `:target` mode renders as a
+  //      `<button.tui-sync-word--target>`). SPACE in INSERT must fire
+  //      the action so the user can toggle sync without leaving the
+  //      keyboard. CLAUDE.md lock 2026-05-24: "x key is NOT a toggle;
+  //      INSERT + SPACE is the only toggle path".
+  //   3. otherwise no-op (return false so the leader menu controller's
+  //      own SPACE guard can decide if it wants the keystroke).
   //
   // FB-167 (2026-05-21) — do NOT blur after toggle. The previous blur
   // triggered focusout → handleFocusOut → exitInsertMode, kicking the
   // user out of INSERT after every SPACE toggle. User contract: only
-  // Esc exits INSERT, period. Leaving focus on the checkbox keeps the
+  // Esc exits INSERT, period. Leaving focus on the focusable keeps the
   // native focus ring + INSERT lozenge alive across repeated toggles.
   toggleFocusedFocusableCheckbox() {
     const el = this.focusedFocusable()
     if (!el) return false
+    // Path 1 — checkbox or contains-a-checkbox.
     const checkbox =
       el.matches && el.matches('input[type="checkbox"]')
         ? el
         : el.querySelector('input[type="checkbox"]')
-    if (!checkbox) return false
-    checkbox.click()
-    return true
+    if (checkbox) {
+      checkbox.click()
+      return true
+    }
+    // Path 2 — action-style focusable rendered as a <button> (the sync
+    // VC is the canonical case). Click the button directly so its
+    // Stimulus action runs; INSERT mode stays intact because the click
+    // path doesn't trigger focusout on the host element.
+    if (
+      el.dataset.tuiFocusableStyle === "action" &&
+      el.matches &&
+      el.matches('button')
+    ) {
+      el.click()
+      return true
+    }
+    return false
   }
 
   // Enter triggers the focusable's primary action — if the focusable IS

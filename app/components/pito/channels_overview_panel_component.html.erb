@@ -2,6 +2,17 @@
       class: "pane pito-pane pito-panel pito-panel--channels-overview",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <%# 2026-05-24 — panel-level `[ ] sync` action. Mirrors the existing
+      stack / security / notifications panels. `target: "home.channels"`
+      per the dispatch lock (the localStorage key stays `home.channels`
+      while the panel name in cable + i18n stays `channels_overview`). %>
+  <span class="pito-pane__title-actions">
+    <%= render Tui::SyncIndicatorComponent.new(
+      mode: :target,
+      target: "home.channels",
+      focusable_key: "channels_sync"
+    ) %>
+  </span>
   <%= render Tui::PanelFieldsetComponent.new do %>
     <p class="pito-panel__placeholder">[ panel content TBD ]</p>
   <% end %>

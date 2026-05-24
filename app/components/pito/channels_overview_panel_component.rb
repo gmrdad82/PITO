@@ -35,8 +35,15 @@ module Pito
       I18n.t("tui.home.panels.#{PANEL_NAME}.title")
     end
 
+    # 2026-05-24 — panel-level `[ ] sync` action contributed as the
+    # leading focusable. `target: "home.channels"` matches the panel's
+    # canonical sync localStorage suffix.
+    def focusables
+      %w[channels_sync]
+    end
+
     def panel_data
-      panel_root_data(name: PANEL_NAME, focusables: [], keybinds: {})
+      panel_root_data(name: PANEL_NAME, focusables: focusables, keybinds: {})
     end
   end
 end

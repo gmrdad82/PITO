@@ -2,6 +2,17 @@
       class: "pane pito-pane pito-panel pito-panel--games-releasing",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <%# 2026-05-24 — panel-level `[ ] sync` action. `target:
+      "home.upcoming_games"` matches the lock (cable + panel name stay
+      `games_releasing`; the localStorage suffix tracks the user-facing
+      label).  %>
+  <span class="pito-pane__title-actions">
+    <%= render Tui::SyncIndicatorComponent.new(
+      mode: :target,
+      target: "home.upcoming_games",
+      focusable_key: "upcoming_games_sync"
+    ) %>
+  </span>
   <%= render Tui::PanelFieldsetComponent.new do %>
     <p class="pito-panel__placeholder">[ panel content TBD ]</p>
   <% end %>

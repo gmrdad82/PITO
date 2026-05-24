@@ -34,8 +34,8 @@ RSpec.describe Pito::GamesReleasingPanelComponent, type: :component do
     expect(root["data-tui-cursor-target"]).to eq("panel")
   end
 
-  it "emits empty focusables + keybinds in the blank-shell round" do
-    expect(root["data-tui-panel-focusables-value"]).to eq("")
+  it "emits upcoming_games_sync as the leading focusable + empty keybinds in the blank-shell round" do
+    expect(root["data-tui-panel-focusables-value"]).to eq("upcoming_games_sync")
     expect(root["data-tui-panel-keybinds-value"]).to eq("{}")
   end
 
@@ -43,6 +43,19 @@ RSpec.describe Pito::GamesReleasingPanelComponent, type: :component do
     placeholder = rendered.css(".tui-panel-fieldset .pito-panel__placeholder").first
     expect(placeholder).to be_present
     expect(placeholder.text.strip).to eq("[ panel content TBD ]")
+  end
+
+  describe "panel-level [ ] sync action (2026-05-24)" do
+    it "renders the Tui::SyncIndicatorComponent with target=home.upcoming_games" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync).to be_present
+      expect(sync["data-tui-sync-indicator-target-value"]).to eq("home.upcoming_games")
+    end
+
+    it "carries data-tui-focusable-key=upcoming_games_sync" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync["data-tui-focusable-key"]).to eq("upcoming_games_sync")
+    end
   end
 
   describe "PANEL_NAME" do

@@ -17,17 +17,25 @@ module Tui
   #      sub-panel; disabling a sub-panel target suppresses that target
   #      alone.
   #
-  # ## Four canonical states (locked 2026-05-24)
+  # ## Five canonical states (locked 2026-05-24)
   #
   # | State        | Glyph | Color           | Shimmer | When                                                            |
   # |--------------|-------|-----------------|---------|-----------------------------------------------------------------|
-  # | idle         | [ ]   | muted           | no      | Self-flag = "no", or no enabled targets / no activity.          |
+  # | idle         | [ ]   | accent          | no      | Self-flag = "no", or no enabled targets / no activity.          |
   # | active       | [x]   | accent          | no      | Enabled + has active work (Sidekiq busy/enqueued/retry > 0).    |
   # | syncing      | [x]   | accent          | yes     | THIS target currently receiving cable content (shimmer on word) |
+  # | mixed        | [-]   | accent          | no      | Parent panel state when its sub-panels have MIXED self-flags.   |
   # | disconnected | [!]   | danger (red)    | no      | Cable connection failed / syncing not available.                |
   #
-  # NO `[-]` paused-with-warn-dash state — dropped from the previous
-  # PauseControlComponent design. Pausing = unchecked = idle.
+  # 2026-05-24 lock update — "actions are always accent": every state
+  # except `:disconnected` (which is the documented red exception) reads
+  # in section-accent. The previous `:idle` muted color was wrong per
+  # the new design rule and has been promoted to accent.
+  #
+  # `:mixed` (`[-]` glyph, accent) — parent panel only. A parent sync VC
+  # shows `[-]` when its sub-panels have a mix of "yes" / "no" self
+  # flags. Toggling the parent bulk-writes children to a uniform state
+  # (the click handler propagates).
   #
   # ## Kwargs
   #
@@ -73,7 +81,7 @@ module Tui
     include Tui::Transitionable
 
     MODES  = %i[tst target].freeze
-    STATES = %i[idle active syncing disconnected].freeze
+    STATES = %i[idle active syncing mixed disconnected].freeze
     DEFAULT_MODE  = :tst
     DEFAULT_STATE = :idle
 
@@ -104,6 +112,7 @@ module Tui
       case @state
       when :active, :syncing then I18n.t("tui.tst.sync.active")
       when :disconnected     then I18n.t("tui.tst.sync.disconnected", default: I18n.t("tui.tst.sync.idle"))
+      when :mixed            then I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
       else                        I18n.t("tui.tst.sync.idle")
       end
     end
@@ -112,6 +121,7 @@ module Tui
       case @state
       when :active, :syncing then "[x]"
       when :disconnected     then "[!]"
+      when :mixed            then "[-]"
       else                        "[ ]"
       end
     end
@@ -132,6 +142,10 @@ module Tui
       "[x] #{I18n.t("tui.tst.sync.active")}"
     end
 
+    def word_mixed
+      "[-] #{I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))}"
+    end
+
     def word_disconnected
       "[!] #{I18n.t("tui.tst.sync.disconnected", default: I18n.t("tui.tst.sync.idle"))}"
     end
@@ -150,6 +164,7 @@ module Tui
       attrs[:tui_sync_indicator_idle_value]         = word_idle
       attrs[:tui_sync_indicator_active_value]       = word_active
       attrs[:tui_sync_indicator_syncing_value]      = word_syncing
+      attrs[:tui_sync_indicator_mixed_value]        = word_mixed
       attrs[:tui_sync_indicator_disconnected_value] = word_disconnected
       attrs[:tui_sync_indicator_tui_transition_outlet] = ".tui-sync-word"
       attrs[:tui_status_bar_target] = "sync" if tst_mode?
@@ -179,13 +194,13 @@ module Tui
     # Color name maps to the `kind=sync` row of the tui-transition
     # controller's COLOR_CLASS table:
     #   accent → no class (default `.tui-sync-word` color)
-    #   muted  → `.is-muted`
+    #   muted  → `.is-muted` (no longer used; idle is accent per
+    #             2026-05-24 "actions are always accent" lock)
     #   pink   → `.is-pink` (var(--color-danger), used for disconnected)
     def color_for(state)
       case state
-      when :active, :syncing then :accent
-      when :disconnected     then :pink
-      else                        :muted
+      when :disconnected then :pink
+      else                    :accent
       end
     end
   end

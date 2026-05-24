@@ -2,6 +2,14 @@
       class: "pane pito-pane pito-panel pito-panel--notifications-feed",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <%# 2026-05-24 — panel-level `[ ] sync` action. %>
+  <span class="pito-pane__title-actions">
+    <%= render Tui::SyncIndicatorComponent.new(
+      mode: :target,
+      target: "home.notifications_feed",
+      focusable_key: "notifications_feed_sync"
+    ) %>
+  </span>
   <%= render Tui::PanelFieldsetComponent.new do %>
     <p class="pito-panel__placeholder">[ panel content TBD ]</p>
   <% end %>

@@ -22,8 +22,35 @@
  * `Tui::ConfirmationDialogComponent`) carry spec coverage.
  */
 
+// 2026-05-24 — client-side action whitelist. Actions in this map run
+// entirely in JS (no POST, no path lookup). The leader menu / palette /
+// any other dispatcher hands them off here.
+const CLIENT_ACTIONS = {
+  // `Space s` master switch — toggle the `pito.sync.home` localStorage
+  // flag and dispatch `tui:sync-changed` so every home panel + sub-panel
+  // sync VC re-evaluates via the existing parent-cascade path. Option C
+  // from the dispatch spec (a screen-wide gate, not a bulk-write of
+  // per-panel flags — per-panel preferences survive the toggle).
+  toggle_tst_sync() {
+    const key = "pito.sync.home"
+    const raw = localStorage.getItem(key)
+    const currentlyEnabled = raw === "no" ? false : true // unset/"yes" => enabled
+    const nextEnabled = !currentlyEnabled
+    localStorage.setItem(key, nextEnabled ? "yes" : "no")
+    document.dispatchEvent(new CustomEvent("tui:sync-changed", {
+      detail: { target: "home", parentTarget: null, enabled: nextEnabled }
+    }))
+  }
+}
+
 const PITO = {
   dispatchAction(name) {
+    // 2026-05-24 — client-side action short-circuit. Avoids the
+    // registry / POST roundtrip for actions defined entirely in JS.
+    if (Object.prototype.hasOwnProperty.call(CLIENT_ACTIONS, name)) {
+      CLIENT_ACTIONS[name]()
+      return
+    }
     const meta = document.querySelector('meta[name="pito-actions"]')
     if (!meta) throw new Error("Pito.dispatchAction: <meta name=pito-actions> missing")
     const registry = JSON.parse(meta.content)

@@ -4,15 +4,28 @@
   <span class="pito-pane__title"><%= title %></span>
   <%# View toggle in the title-actions slot — mirrors Meilisearch
       sub-panel's `[reindex]` placement on the top border, right edge.
-      Width-stable: ` view ` (active) and `[view]` (inactive) both
-      render at `label.length + 2` cols, so the chrome doesn't
-      shift horizontally on toggle. %>
+
+      2026-05-24 (locked) — active variant renders as plain `label`
+      (no surrounding spaces, no brackets); inactive stays bracketed
+      `[label]`. Result: when month is current, the slot reads
+      `month [schedule]`; toggle and it flips to `[month] schedule`.
+      Active also uses section-accent (matches the "actions are always
+      accent" lock — the entire toggle reads in one color, distinguished
+      only by the bracketed / unbracketed shape). The leading sync VC
+      gains a `[ ] sync` action; full slot now reads
+      `[ ] sync   month [schedule]`. %>
   <span class="pito-pane__title-actions">
+    <%= render Tui::SyncIndicatorComponent.new(
+          mode: :target,
+          target: "home.calendar",
+          focusable_key: "calendar_sync"
+        ) %>
     <%= render Tui::ViewToggleComponent.new(
           views: views,
           current: current_view,
           event_name: "calendar:view-changed",
-          active_color: :success
+          active_color: :accent,
+          active_style: :plain
         ) %>
   </span>
   <%= render Tui::PanelFieldsetComponent.new do %>

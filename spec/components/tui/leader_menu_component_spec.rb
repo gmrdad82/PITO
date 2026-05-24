@@ -27,12 +27,14 @@ RSpec.describe Tui::LeaderMenuComponent, type: :component do
   describe "default entries" do
     before { render_inline(component) }
 
-    it "renders 7 entry rows (h v g ? : q a)" do
-      expect(page).to have_css("li.tui-leader-menu__entry", count: 7)
+    # 2026-05-24 — new `s` entry: `Space s` toggles the home-wide sync
+    # master switch via the `:toggle_tst_sync` registered action.
+    it "renders 8 entry rows (h v g s ? : q a)" do
+      expect(page).to have_css("li.tui-leader-menu__entry", count: 8)
     end
 
     it "renders an entry with data-leader-key for each key" do
-      %w[h v g ? : q a].each do |key|
+      %w[h v g s ? : q a].each do |key|
         expect(page).to have_css("[data-leader-key='#{key}']")
       end
     end
@@ -47,6 +49,10 @@ RSpec.describe Tui::LeaderMenuComponent, type: :component do
 
     it "renders g entry with i18n label 'games'" do
       expect(page).to have_text(I18n.t("tui.leader.entries.g.label"))
+    end
+
+    it "renders s entry with i18n label 'sync'" do
+      expect(page).to have_text(I18n.t("tui.leader.entries.s.label"))
     end
 
     it "renders ? entry with i18n label 'help'" do
@@ -134,6 +140,16 @@ RSpec.describe Tui::LeaderMenuComponent, type: :component do
 
     it "marks the `:` entry with data-leader-dispatch-method='open_command'" do
       expect(page).to have_css("[data-leader-key=':'][data-leader-dispatch-method='open_command']")
+    end
+  end
+
+  # 2026-05-24 — `s` entry: SPACE+s fires the canonical `:toggle_tst_sync`
+  # registered action which flips the `pito.sync.home` master switch.
+  describe "SPACE+s dispatch wiring" do
+    before { render_inline(component) }
+
+    it "marks the `s` entry with data-leader-action-name='toggle_tst_sync'" do
+      expect(page).to have_css("[data-leader-key='s'][data-leader-action-name='toggle_tst_sync']")
     end
   end
 end

@@ -296,6 +296,22 @@ mode (or both). Keyboard-fired clicks and programmatic Stimulus
 **Keybindings shared between web + TUI** with one exception: `q` quits
 the TUI; no web equivalent.
 
+**Actions are always section accent color.** Every bracketed action —
+`[reindex]`, `[resync]`, `[schedule]`, `[month]`, `[update]`, `[help]`,
+`[ ] sync` / `[x] sync` / `[-] sync` / `[!] sync`, the progress slot
+during reindex — paints in `var(--section-accent)`. Idle, active,
+hovered, or otherwise — actions speak the section's accent voice.
+Non-action chrome (titles, hints, delimiters, muted labels) stays in
+its own token. The `[!] sync` disconnected state is the one exception
+(red `var(--color-danger)`). Locked 2026-05-24.
+
+**Bracket-to-space rule on TST chrome.** Where a non-action label sits
+in an actions slot adjacent to a bracketed action (e.g. `month` next to
+`[schedule]`), use a literal space pair around the label instead of
+brackets — `month [schedule]` not `[month] [schedule]`. Keeps the
+accent-color rule readable as "brackets = action" without painting a
+color rainbow across multiple bracketed items. Locked 2026-05-24.
+
 **Brand capitalization.** Always capitalize: Slack, Discord, YouTube,
 Voyage AI, Meilisearch, PostgreSQL, Redis, Chrome, Firefox, Safari,
 Linux, macOS, Windows, Android, iOS. Non-brand words lowercase.

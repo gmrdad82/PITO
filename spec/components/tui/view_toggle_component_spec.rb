@@ -123,4 +123,39 @@ RSpec.describe Tui::ViewToggleComponent, type: :component do
       expect(root["data-tui-view-toggle-event-name-value"]).to eq("tui:view-toggle-changed")
     end
   end
+
+  # 2026-05-24 — `:plain` active style + `:accent` color. The calendar
+  # panel renders `month [schedule]` (active = unbracketed plain label,
+  # accent color); width-stability is intentionally dropped here.
+  describe "active_style: :plain (2026-05-24)" do
+    subject(:rendered) do
+      render_inline(described_class.new(
+        views: views,
+        current: :month,
+        active_style: :plain,
+        active_color: :accent
+      ))
+    end
+
+    it "renders the active view with NO surrounding spaces or brackets" do
+      active = rendered.css(".tui-view-toggle__view--active").first
+      expect(active.text).to eq("month")
+    end
+
+    it "renders the inactive view still bracketed" do
+      inactive = rendered.css(".tui-view-toggle__view--inactive").first
+      expect(inactive.text).to eq("[schedule]")
+    end
+
+    it "applies is-accent on the active variant" do
+      active = rendered.css(".tui-view-toggle__view--active").first
+      expect(active["class"]).to include("is-accent")
+    end
+
+    it "raises when active_style is not in the allowlist" do
+      expect {
+        described_class.new(views: views, current: :month, active_style: :totally_made_up)
+      }.to raise_error(ArgumentError, /active_style must be one of/)
+    end
+  end
 end

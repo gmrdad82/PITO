@@ -72,7 +72,12 @@ en:
         stack:
           title: "stack"
         channels_overview:
-          title: "channels overview"
+          # 2026-05-24 (lock) — display value shortened "channels overview"
+          # → "channels". YAML key intentionally kept as `channels_overview`
+          # so cable channel grammar (`pito:home:channels_overview`),
+          # PANEL_NAME, file names, etc. stay stable; only the user-facing
+          # title shortened.
+          title: "channels"
         latest_videos:
           title: "latest videos"
         games_releasing:
@@ -95,6 +100,8 @@ en:
           label: "videos"
         g:
           label: "games"
+        s:
+          label: "sync"
         help:
           label: "help"
         command:
@@ -217,6 +224,9 @@ en:
       sync_toggle:
         name: "sync toggle"
         hint: "toggle sync for the focused scope"
+      toggle_tst_sync:
+        name: "toggle sync"
+        hint: "toggle the home-wide sync master switch"
       toggle_all:
         name: "toggle all"
         hint: "toggle the all notifications checkbox"
@@ -271,9 +281,11 @@ en:
         idle: "sync"
         active: "sync"
         syncing: "sync"
+        mixed: "sync"
         disconnected: "sync"
         # `paused` retained as a defensive alias; the canonical states
-        # are idle / active / syncing / disconnected (Phase 1D, 2026-05-24).
+        # are idle / active / syncing / mixed / disconnected
+        # (Phase 1D, 2026-05-24).
         paused: "sync"
       sidekiq:
         busy_prefix: "b"

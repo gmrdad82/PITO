@@ -34,8 +34,8 @@ RSpec.describe Pito::CalendarPanelComponent, type: :component do
     expect(root["data-tui-cursor-target"]).to eq("panel")
   end
 
-  it "registers month + schedule as the panel focusables" do
-    expect(root["data-tui-panel-focusables-value"]).to eq("month,schedule")
+  it "registers calendar_sync + month + schedule as the panel focusables" do
+    expect(root["data-tui-panel-focusables-value"]).to eq("calendar_sync,month,schedule")
   end
 
   it "emits empty keybinds map (view toggle dispatches via Stimulus events, not flat keys)" do
@@ -50,19 +50,21 @@ RSpec.describe Pito::CalendarPanelComponent, type: :component do
       expect(toggle).to be_present
     end
 
-    it "defaults to current_view: :month (month active + schedule inactive)" do
+    it "defaults to current_view: :month (month active plain, schedule inactive bracketed)" do
       buttons = rendered.css(".tui-view-toggle button")
       month = buttons.find { |b| b["data-tui-view-toggle-view-param"] == "month" }
       schedule = buttons.find { |b| b["data-tui-view-toggle-view-param"] == "schedule" }
       expect(month["class"]).to include("tui-view-toggle__view--active")
-      expect(month.text).to eq(" month ")
+      # 2026-05-24 (lock) — active variant uses `active_style: :plain`:
+      # no surrounding spaces, no brackets. Renders as `month`.
+      expect(month.text).to eq("month")
       expect(schedule["class"]).to include("tui-view-toggle__view--inactive")
       expect(schedule.text).to eq("[schedule]")
     end
 
-    it "renders the active variant with the is-success color modifier (Dracula green per locked design)" do
+    it "renders the active variant with the is-accent color modifier (2026-05-24 'actions are always accent' lock)" do
       active = rendered.css(".tui-view-toggle__view--active").first
-      expect(active["class"]).to include("is-success")
+      expect(active["class"]).to include("is-accent")
     end
 
     it "swaps the active variant when current_view: :schedule" do
@@ -71,7 +73,7 @@ RSpec.describe Pito::CalendarPanelComponent, type: :component do
       month = buttons.find { |b| b["data-tui-view-toggle-view-param"] == "month" }
       schedule = buttons.find { |b| b["data-tui-view-toggle-view-param"] == "schedule" }
       expect(schedule["class"]).to include("tui-view-toggle__view--active")
-      expect(schedule.text).to eq(" schedule ")
+      expect(schedule.text).to eq("schedule")
       expect(month["class"]).to include("tui-view-toggle__view--inactive")
       expect(month.text).to eq("[month]")
     end
@@ -102,26 +104,45 @@ RSpec.describe Pito::CalendarPanelComponent, type: :component do
     end
   end
 
-  describe "#focusables (FB-187 — view toggle reachable inside the panel)" do
+  describe "#focusables (2026-05-24 — calendar_sync + view toggle reachable inside the panel)" do
     let(:component) { described_class.new }
 
-    it "returns the month + schedule keys in declaration order" do
-      expect(component.focusables).to eq(%w[month schedule])
+    it "returns calendar_sync + month + schedule keys in declaration order" do
+      expect(component.focusables).to eq(%w[calendar_sync month schedule])
     end
 
     it "matches the data-tui-focusable-key attrs emitted by the view toggle buttons" do
       toggle_keys = rendered.css(".tui-view-toggle button").map { |b| b["data-tui-focusable-key"] }
-      expect(toggle_keys).to eq(component.focusables)
+      expect(toggle_keys).to eq(%w[month schedule])
     end
 
-    it "wires both toggle buttons as data-tui-focusable so the cursor controller picks them up" do
+    it "wires both toggle buttons + the sync VC as data-tui-focusable" do
       focusables = rendered.css("[data-tui-focusable]")
       keys = focusables.map { |el| el["data-tui-focusable-key"] }
-      expect(keys).to include("month", "schedule")
+      expect(keys).to include("calendar_sync", "month", "schedule")
     end
 
-    it "emits the panel-level focusables data attr so the TUI parity contract reads both keys" do
-      expect(root["data-tui-panel-focusables-value"]).to eq("month,schedule")
+    it "emits the panel-level focusables data attr so the TUI parity contract reads all three keys" do
+      expect(root["data-tui-panel-focusables-value"]).to eq("calendar_sync,month,schedule")
+    end
+  end
+
+  describe "panel-level [ ] sync action (2026-05-24)" do
+    it "renders the Tui::SyncIndicatorComponent in :target mode in the title-actions slot" do
+      actions = rendered.css(".pito-pane__title-actions").first
+      expect(actions).to be_present
+      sync = actions.css("button.tui-sync-word--target").first
+      expect(sync).to be_present
+    end
+
+    it "uses target=home.calendar for the localStorage key" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync["data-tui-sync-indicator-target-value"]).to eq("home.calendar")
+    end
+
+    it "carries data-tui-focusable=calendar_sync so the cursor lands on it" do
+      sync = rendered.css("button.tui-sync-word--target").first
+      expect(sync["data-tui-focusable-key"]).to eq("calendar_sync")
     end
   end
 

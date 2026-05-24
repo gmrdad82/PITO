@@ -109,4 +109,24 @@ Rails.application.config.after_initialize do
     i18n_key: "tui.commands.revoke_selected_sessions",
     cable_panel: nil
   )
+
+  # 2026-05-24 — `Space s` master TST sync toggle.
+  #
+  # Wired to the leader menu (`Tui::LeaderMenuComponent` DEFAULT_ENTRIES,
+  # `s` entry). The JS dispatcher resolves the action by flipping the
+  # `pito.sync.home` localStorage master switch and dispatching
+  # `tui:sync-changed` for the master scope; every home panel / sub-
+  # panel sync VC re-evaluates via the existing parent-cascade path
+  # (`isTargetSyncDisabled` walks parent flags). Option C from the
+  # dispatch spec: a screen-wide gate rather than bulk-writing
+  # individual targets, so per-panel user preferences survive the
+  # global toggle.
+  Pito::ActionRegistry.define(
+    :toggle_tst_sync,
+    path: -> { "#" },
+    method: :get,
+    confirmation: nil,
+    i18n_key: "tui.commands.toggle_tst_sync",
+    cable_panel: nil
+  )
 end

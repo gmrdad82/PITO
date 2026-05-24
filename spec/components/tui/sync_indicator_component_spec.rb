@@ -11,9 +11,11 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
   let(:idle_word)         { I18n.t("tui.tst.sync.idle") }
   let(:active_word)       { I18n.t("tui.tst.sync.active") }
   let(:disconnected_word) { I18n.t("tui.tst.sync.disconnected", default: idle_word) }
+  let(:mixed_word)        { I18n.t("tui.tst.sync.mixed", default: idle_word) }
   let(:idle_display)         { "[ ] #{idle_word}" }
   let(:active_display)       { "[x] #{active_word}" }
   let(:syncing_display)      { "[x] #{active_word}" }
+  let(:mixed_display)        { "[-] #{mixed_word}" }
   let(:disconnected_display) { "[!] #{disconnected_word}" }
 
   describe "default state + mode" do
@@ -56,6 +58,11 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         expect(page).to have_css(".tui-sync-word", text: syncing_display)
       end
 
+      it "renders '[-] sync' for :mixed (parent panel mixed-children state)" do
+        render_inline(described_class.new(state: :mixed))
+        expect(page).to have_css(".tui-sync-word", text: mixed_display)
+      end
+
       it "renders '[!] sync' for :disconnected" do
         render_inline(described_class.new(state: :disconnected))
         expect(page).to have_css(".tui-sync-word", text: disconnected_display)
@@ -81,10 +88,10 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
       end
     end
 
-    describe "color contract" do
-      it "is muted for :idle" do
+    describe "color contract (2026-05-24 — 'actions are always accent' lock)" do
+      it "is accent for :idle (promoted from muted per the 2026-05-24 lock)" do
         render_inline(described_class.new(state: :idle))
-        expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="muted"]')
+        expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
       end
 
       it "is accent for :active" do
@@ -97,7 +104,12 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
       end
 
-      it "is pink (red) for :disconnected" do
+      it "is accent for :mixed (parent-panel mixed-children state)" do
+        render_inline(described_class.new(state: :mixed))
+        expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
+      end
+
+      it "is pink (red) for :disconnected (the documented exception)" do
         render_inline(described_class.new(state: :disconnected))
         expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="pink"]')
       end
@@ -117,6 +129,11 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
       it "is yes for :syncing (currently receiving cable content)" do
         render_inline(described_class.new(state: :syncing))
         expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="yes"]')
+      end
+
+      it "is no for :mixed (parent-panel mixed-children state)" do
+        render_inline(described_class.new(state: :mixed))
+        expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="no"]')
       end
 
       it "is no for :disconnected" do
@@ -150,11 +167,12 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
     end
 
     describe "per-state display value data-* attrs (JS contract)" do
-      it "seeds idle, active, syncing, and disconnected Stimulus values" do
+      it "seeds idle, active, syncing, mixed, and disconnected Stimulus values" do
         render_inline(described_class.new(state: :idle))
         expect(page).to have_css("[data-tui-sync-indicator-idle-value]")
         expect(page).to have_css("[data-tui-sync-indicator-active-value]")
         expect(page).to have_css("[data-tui-sync-indicator-syncing-value]")
+        expect(page).to have_css("[data-tui-sync-indicator-mixed-value]")
         expect(page).to have_css("[data-tui-sync-indicator-disconnected-value]")
       end
 
@@ -162,6 +180,7 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         render_inline(described_class.new(state: :idle))
         expect(page).to have_css(%([data-tui-sync-indicator-idle-value="#{idle_display}"]))
         expect(page).to have_css(%([data-tui-sync-indicator-active-value="#{active_display}"]))
+        expect(page).to have_css(%([data-tui-sync-indicator-mixed-value="#{mixed_display}"]))
         expect(page).to have_css(%([data-tui-sync-indicator-disconnected-value="#{disconnected_display}"]))
       end
 
@@ -325,8 +344,22 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
       expect(component.word_active).to eq(active_display)
     end
 
+    it "word_mixed returns the full mixed display string" do
+      expect(component.word_mixed).to eq(mixed_display)
+    end
+
     it "word_disconnected returns the full disconnected display string" do
       expect(component.word_disconnected).to eq(disconnected_display)
+    end
+  end
+
+  describe "STATES constant (2026-05-24 — five canonical states)" do
+    it "includes idle / active / syncing / mixed / disconnected" do
+      expect(described_class::STATES).to eq(%i[idle active syncing mixed disconnected])
+    end
+
+    it "treats :mixed as a valid state input" do
+      expect(described_class.new(state: :mixed).state).to eq(:mixed)
     end
   end
 
