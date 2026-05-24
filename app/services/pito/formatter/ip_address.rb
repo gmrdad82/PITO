@@ -19,7 +19,12 @@ module Pito
 
       EM_DASH  = "—"
       ELLIPSIS = "…"
-      MAX_LEN  = 15
+      # 2026-05-24 — width tightened from 15 (IPv4 max) to 13 per user pick.
+      # IPv4 "255.255.255.255" (15 chars) gets head-trimmed with trailing
+      # ellipsis like IPv6; acceptable since the trailing octet is the
+      # least-distinguishing part of a LAN address and the table reads
+      # tighter overall.
+      MAX_LEN  = 13
 
       def call(ip)
         return EM_DASH if ip.nil?

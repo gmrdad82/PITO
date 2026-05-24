@@ -4,51 +4,46 @@ require "rails_helper"
 
 RSpec.describe Pito::Formatter::IpAddress do
   describe ".call" do
-    # IPv4 — always returned verbatim, well under any reasonable column
-    # width.
-    it "returns an IPv4 address unchanged" do
+    # IPv4 — short addresses returned verbatim, addresses over MAX_LEN
+    # (13) get the same trailing-ellipsis treatment as IPv6.
+    it "returns a short IPv4 address unchanged" do
       expect(described_class.call("127.0.0.1")).to eq("127.0.0.1")
     end
 
-    it "returns a private IPv4 address unchanged" do
-      expect(described_class.call("192.168.1.42")).to eq("192.168.1.42")
+    it "returns a 13-char IPv4 address unchanged" do
+      expect(described_class.call("192.168.1.100")).to eq("192.168.1.100")
     end
 
-    # IPv6 8-group full form — middle-truncated to "<g1>:<g2>:…:<g7>:<g8>".
-    it "middle-truncates a full 8-group IPv6 address" do
+    it "trims a 15-char IPv4 address with trailing ellipsis" do
+      expect(described_class.call("255.255.255.255")).to eq("255.255.255.…")
+    end
+
+    # IPv6 — trailing ellipsis after the longest group-boundary head that
+    # fits within MAX_LEN - 1 chars (12 for the head + 1 for the ellipsis).
+    it "trims a full 8-group IPv6 with trailing ellipsis at a group boundary" do
       expect(described_class.call("2a0d:3344:0db8:85a3:fe2b:250f:abcd:ef01"))
-        .to eq("2a0d:3344:…:abcd:ef01")
+        .to eq("2a0d:3344…")
     end
 
-    it "middle-truncates an 8-group IPv6 address with leading-zero groups" do
-      expect(described_class.call("2a0d:0000:0db8:85a3:fe2b:250f:abcd:ef01"))
-        .to eq("2a0d:0000:…:abcd:ef01")
+    it "trims a 7-group IPv6 with trailing ellipsis" do
+      expect(described_class.call("2a0d:3344:7a3e:9efe:0c1f:dce9:24f1"))
+        .to eq("2a0d:3344…")
     end
 
-    # IPv6 6 / 5 groups (long enough to need truncation).
-    it "middle-truncates a 6-group IPv6 address" do
-      expect(described_class.call("2a0d:3344:0db8:85a3:abcd:ef01"))
-        .to eq("2a0d:3344:…:abcd:ef01")
+    it "trims a 5-group abbreviated IPv6 with trailing ellipsis" do
+      expect(described_class.call("2a0d:3344::dce9:24f1")).to eq("2a0d:3344…")
     end
 
-    it "middle-truncates an abbreviated 5-group IPv6 address" do
-      expect(described_class.call("2a0d:3344::dce9:24f1"))
-        .to eq("2a0d:3344:…:dce9:24f1")
-    end
-
-    # Short forms — ≤ 4 groups after `split(":")` stay as-is so we never
-    # mangle a loopback / link-local / heavily-abbreviated address into
-    # something less readable than its input.
-    it "returns ::1 unchanged (3-group split)" do
+    # Short IPv6 — fits within MAX_LEN, returned unchanged.
+    it "returns ::1 unchanged" do
       expect(described_class.call("::1")).to eq("::1")
     end
 
-    it "returns an IPv6 address with 4 groups unchanged" do
-      expect(described_class.call("2a0d:3344:abcd:ef01")).to eq("2a0d:3344:abcd:ef01")
+    it "returns a 13-char or shorter IPv6 unchanged" do
+      expect(described_class.call("2a0d:abcd:ef")).to eq("2a0d:abcd:ef")
     end
 
-    # Empty / nil — em-dash sentinel, matching the rest of the formatter
-    # family (used in any width-constrained TUI cell on /settings).
+    # Empty / nil — em-dash sentinel.
     it "returns the em-dash sentinel for nil" do
       expect(described_class.call(nil)).to eq("—")
     end
@@ -61,12 +56,11 @@ RSpec.describe Pito::Formatter::IpAddress do
       expect(described_class.call("   ")).to eq("—")
     end
 
-    # `Session#ip` is an `IPAddr` instance, not a string. The formatter
-    # must accept any object that responds to `#to_s` (IPAddr does, with
-    # `"2a0d:3344:…"`-style output).
-    it "accepts an IPAddr instance and middle-truncates the rendered string" do
+    # `Session#ip` is an `IPAddr` instance — formatter must accept any
+    # object responding to `#to_s`.
+    it "accepts an IPAddr instance and trims with trailing ellipsis" do
       ipaddr = IPAddr.new("2a0d:3344:5dfc:5808:5a1c:f8ff:fe2b:250f")
-      expect(described_class.call(ipaddr)).to eq("2a0d:3344:…:fe2b:250f")
+      expect(described_class.call(ipaddr)).to eq("2a0d:3344…")
     end
 
     it "accepts an IPv4 IPAddr instance and returns it unchanged" do
