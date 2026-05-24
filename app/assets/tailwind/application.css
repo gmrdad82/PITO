@@ -2073,6 +2073,23 @@ table.sessions-table td {
   border-left: none;
   border-right: none;
 }
+/* 2026-05-24 — column spacing tweaks. Default `.tui-table__td` is
+   `padding: 3px 8px 3px 0` which leaves the LEFT side of every cell
+   flush to the previous cell. For right-aligned numeric cells this
+   crowds adjacent columns ("last secreated" running together). And
+   for the checkbox column the 8px gap to the device label reads as
+   too tight. */
+table.sessions-table .col-action,
+table.sessions-table th.col-action,
+table.sessions-table td.col-action {
+  padding-right: 14px;
+}
+table.sessions-table .sessions-table__col-last-seen,
+table.sessions-table .sessions-table__cell-last-seen,
+table.sessions-table .sessions-table__col-created,
+table.sessions-table .sessions-table__cell-created {
+  padding-left: 14px;
+}
 /* FB-67 (2026-05-20) — global `tr:hover` is gone sitewide; the prior
    stack-table opt-out (`table.tui-table--stack tr:hover { background-
    color: transparent }`) is no longer needed. Hairline-bottom rhythm
