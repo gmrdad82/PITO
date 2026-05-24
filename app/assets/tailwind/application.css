@@ -1206,10 +1206,15 @@ button.bracketed .bl {
      * `:input`          — NO bg; section-accent border on the input
                            itself (the input is the focusable).
    */
+/* 2026-05-24 — drop the generic `[data-tui-focusable-focused="yes"]`
+   catchall. The specific-style rules below (`:row`, `:action`,
+   `:checkbox_label`) paint the bg only for focusables that earned
+   it; the catchall was painting bg on the inert sub-panel-root
+   focusables too (Postgres sub-panel was flooding with bg-tint when
+   selected as a navigation stop). */
 .tui-table__row[data-tui-cursor-row-focused="yes"],
 tr[data-tui-cursor-row-focused="yes"],
-[data-tui-cursor-row-focused="yes"],
-[data-tui-focusable-focused="yes"] {
+[data-tui-cursor-row-focused="yes"] {
   background: var(--focus-tint-bg);
 }
 

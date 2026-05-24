@@ -78,35 +78,62 @@ export default class extends Controller {
     }
   }
 
-  // Returns true when a click was dispatched, false on no-op.
-  cycleNextSortable(panel) {
-    // Sortable links live in `<th class="sortable"><a>...</a></th>`
-    // (server-rendered via `sort_link_to`) — find every such anchor.
-    const links = Array.from(panel.querySelectorAll("th.sortable > a"));
-    if (links.length === 0) return false;
+  // Two rendering shapes are supported:
+  //   * `<th class="sortable"><a>...</a></th>` — server-rendered via
+  //     `sort_link_to`. The active sort lives on the inner anchor
+  //     (`<a class="sort-asc">`). Click the anchor to sort.
+  //   * `<th class="sortable">...</th>` — client-side rendered via
+  //     `SortableHeaderComponent` + `sortable_table_controller`. The
+  //     active sort lives on the `<th>` itself (`<th class="sortable
+  //     sort-asc">`). Click the `<th>` to sort.
+  // The helpers below pick the right element shape per call so both
+  // patterns participate in `s` / `S` keyboard sort.
+  _sortableTargets(panel) {
+    return Array.from(panel.querySelectorAll("th.sortable")).map(th => {
+      const anchor = th.querySelector(":scope > a");
+      return anchor || th;
+    });
+  }
 
-    const active = panel.querySelector(
-      "th.sortable > a.sort-asc, th.sortable > a.sort-desc",
-    );
-    let nextIndex = 0;
-    if (active) {
-      const currentIndex = links.indexOf(active);
-      if (currentIndex >= 0) {
-        nextIndex = (currentIndex + 1) % links.length;
+  _activeSortable(panel) {
+    const ths = Array.from(panel.querySelectorAll("th.sortable"));
+    for (const th of ths) {
+      const anchor = th.querySelector(":scope > a");
+      if (anchor && (anchor.classList.contains("sort-asc") || anchor.classList.contains("sort-desc"))) {
+        return anchor;
+      }
+      if (th.classList.contains("sort-asc") || th.classList.contains("sort-desc")) {
+        return th;
       }
     }
-    links[nextIndex].click();
+    return null;
+  }
+
+  // Returns true when a click was dispatched, false on no-op.
+  cycleNextSortable(panel) {
+    const targets = this._sortableTargets(panel);
+    if (targets.length === 0) return false;
+
+    const active = this._activeSortable(panel);
+    let nextIndex = 0;
+    if (active) {
+      const currentIndex = targets.indexOf(active);
+      if (currentIndex >= 0) {
+        nextIndex = (currentIndex + 1) % targets.length;
+      }
+    }
+    targets[nextIndex].click();
     return true;
   }
 
   // Returns true when a click was dispatched, false on no-op.
   toggleCurrentDirection(panel) {
-    const active = panel.querySelector(
-      "th.sortable > a.sort-asc, th.sortable > a.sort-desc",
-    );
+    const active = this._activeSortable(panel);
     if (!active) return false;
     // `sort_link_to` flips asc<->desc on each repeat click of the
-    // currently-active column, so a single click is enough.
+    // currently-active column. `sortable_table_controller` also
+    // toggles direction on repeat click. Single click works for
+    // both shapes.
     active.click();
     return true;
   }
