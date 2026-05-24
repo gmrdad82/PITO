@@ -69,16 +69,15 @@ module Pito
         helpers.game_detail_chip_slugs(game)
       end
 
-      # Compact "in Nd" / "in Nw" string. Surfaces nil when
+      # Compact "in Nd" / "in Nw" string via
+      # `Pito::Formatter::InTimeUntil` (the future-tense sibling of
+      # `Pito::Formatter::CompactTimeAgo`). Surfaces nil when
       # `release_date` is missing so the template can suppress the
-      # row instead of rendering "—" / "in 0d" for unreleased rows.
+      # row instead of rendering an "unknown" placeholder for
+      # metadata-poor pre-release rows.
       def time_until_release
         return nil if game.release_date.blank?
-        # `compact_time_ago` understands both past and future times;
-        # for future dates it emits "in 5d" / "in 2w" form. Convert
-        # the date to a Time at start-of-day in the project zone so
-        # the formatter does not under-report ("0d" for today).
-        helpers.compact_time_ago(game.release_date.in_time_zone.beginning_of_day)
+        helpers.in_time_until(game.release_date)
       end
     end
   end

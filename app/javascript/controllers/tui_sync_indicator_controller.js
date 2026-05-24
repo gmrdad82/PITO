@@ -251,17 +251,15 @@ export default class extends Controller {
         this._paint(this._computeTargetState())
       }
     } else if (this.isTstMode()) {
-      // 2026-05-24 (sync-rebuild) — TST `:tst` mode mirrors the master
-      // `app` switch. When the user fires `Space s`, the TST glyph
-      // flips between idle/`[ ]` (master OFF) and the Sidekiq-derived
-      // active/idle state (master ON).
+      // 2026-05-25 — TST mirrors master. ON → active immediately; OFF
+      // → idle. Previous "wait for Sidekiq tick" branch left the TST
+      // glyph stale until the next job ran.
       if (changed === "app") {
         if (event.detail.enabled === false) {
           this.setIdle()
+        } else {
+          this.setActive()
         }
-        // When master flips back ON, the next Sidekiq tick re-derives
-        // active/idle from the live stats. The explicit nudge here is
-        // not needed.
       }
     }
   }
