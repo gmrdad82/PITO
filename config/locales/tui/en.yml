@@ -22,8 +22,11 @@ en:
       code_placeholder: "6-digit code"
       backup_placeholder: "backup code"
       submit_label: "log in"
-      use_backup: "use a backup code"
-      no_enrollment_hint: "no TOTP enrolled — run bin/rails pito:auth:enroll in your terminal"
+      use_backup_label: "use backup code"
+      use_totp_label: "use TOTP code"
+      copy_label: "copy"
+      copied_label: "copied!"
+      code_block_intro: "no TOTP enrolled — run this in your terminal:"
       error: "login failed."
     # D9 (2026-05-22) — canonical Tui::DialogComponent dismiss hints. The
     # chrome renders `t("tui.dialog.esc_to_close")` in the top-right of

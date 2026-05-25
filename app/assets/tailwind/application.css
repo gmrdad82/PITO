@@ -1108,7 +1108,8 @@ button.bracketed .bl {
 .pito-sub-panel__hint.is-muted   { color: var(--color-muted); }
 
 /* === tui-sync-indicator (3-state, 2026-05-25) === */
-.tui-sync-indicator { font-family: monospace; font-size: 13px; display: inline-flex; gap: 0.25ch; }
+/* Just the word "sync" with color/animation states. No brackets, no glyphs. */
+.tui-sync-indicator                 { font-family: monospace; font-size: 13px; display: inline-block; }
 .tui-sync-indicator.is-synced       { color: var(--color-muted); }
 .tui-sync-indicator.is-syncing      { color: var(--section-accent); animation: tui-sync-shimmer 1.2s ease-in-out infinite; }
 .tui-sync-indicator.is-disconnected { color: var(--color-danger); }
@@ -7422,25 +7423,20 @@ body > main::-webkit-scrollbar {
 }
 
 /* === pito-auth-dialog ===
-   Z3 (2026-05-25) — full-viewport, non-dismissible TOTP login overlay.
+   Z3-redesign (2026-05-25) — full-viewport, non-dismissible TOTP login overlay.
    Rendered by Pito::AuthDialogComponent when Current.session.nil?.
 
    Strategy: a fixed `position: fixed; inset: 0` overlay div (not a native
    `<dialog>`) so we never accidentally allow the browser's built-in dialog
    dismiss behaviour (Esc, backdrop click). The overlay sits above all panel
-   chrome via `z-index: 1000` (above the sticky header at z-index: 100 and
-   the TST at z-index: 100). The backdrop is a semi-opaque Dracula dark layer
-   so the structural chrome skeleton is faintly visible underneath.
+   chrome via `z-index: 1000`.
 
-   The dialog box itself is centered, max-width 320px, monospace font,
-   with a single accent-colored border (var(--section-accent)) matching the
-   bracketed-action convention.
-
-   Input: full-width, monospace, centered text, outlined on focus in accent.
-   Submit: bracketed action button in section accent.
-   Error: muted danger line above input.
-   Hint: muted small text below submit for no-enrollment state.
-   Toggle: small muted button to reveal backup-code field. */
+   The dialog box adopts the canonical `.pito-pane` chrome — same border-radius,
+   same section-accent border mix, same `.pito-pane__title` title-in-border
+   pattern with pipe separators (border-left / border-right on the slot).
+   The 6-digit TOTP input renders via TotpCodeInputComponent (segmented boxes).
+   Submit + toggle are bracketed actions in section accent / muted respectively.
+   No-enrollment state shows a code-block row with [ copy ] inline action. */
 
 .pito-auth-overlay {
   position: fixed;
@@ -7458,20 +7454,15 @@ body > main::-webkit-scrollbar {
 body[data-tui-authenticated="no"] > main { display: none; }
 body[data-tui-authenticated="no"] .tui-page-scroll-indicator { display: none; }
 
+/* .pito-auth-dialog extends .pito-pane — max-width cap + top margin for
+   the absolutely-positioned title (same 14px as every other pane body
+   gets from the title overlap). Width is capped to accommodate the 6-box
+   segmented input row. Padding-top elevated to 18px so the .pito-pane__title
+   span (top: -7px, line-height: 14px) has breathing room before content. */
 .pito-auth-dialog {
-  background: var(--color-bg);
-  border: 1px solid var(--section-accent);
-  max-width: 320px;
+  max-width: 360px;
   width: 100%;
-  padding: 20px 24px;
-}
-
-.pito-auth-dialog__title {
-  color: var(--section-accent);
-  font-size: 13px;
-  font-weight: normal;
-  margin: 0 0 14px;
-  letter-spacing: 0.02em;
+  padding-top: 18px;
 }
 
 .pito-auth-dialog__error {
@@ -7481,9 +7472,10 @@ body[data-tui-authenticated="no"] .tui-page-scroll-indicator { display: none; }
 }
 
 .pito-auth-dialog__field {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
+/* Backup code text input — full-width, centered, accent focus ring. */
 .pito-auth-dialog__input {
   width: 100%;
   font-family: inherit;
@@ -7502,10 +7494,15 @@ body[data-tui-authenticated="no"] .tui-page-scroll-indicator { display: none; }
   border-color: var(--section-accent);
 }
 
+/* Actions row: submit + toggle on the same line, gap between them. */
 .pito-auth-dialog__actions {
-  margin: 12px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 10px;
 }
 
+/* [ log in ] — button.bracketed reset; accent color from button.bracketed family rule. */
 .pito-auth-dialog__submit {
   background: none;
   border: none;
@@ -7513,27 +7510,66 @@ body[data-tui-authenticated="no"] .tui-page-scroll-indicator { display: none; }
   cursor: pointer;
   font: inherit;
   font-size: 13px;
-  color: var(--section-accent);
 }
 
-.pito-auth-dialog__toggle {
-  margin: 6px 0 0;
-}
-
+/* [ use backup code ] / [ use TOTP code ] — secondary action, muted color.
+   cursor: pointer overrides the `.bracketed-muted` cursor: default since
+   these ARE interactive buttons. user-select also overridden. */
 .pito-auth-dialog__toggle-btn {
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
+  user-select: auto;
   font: inherit;
-  font-size: 12px;
-  color: var(--color-muted);
-  text-decoration: underline;
+  font-size: 13px;
+}
+
+/* No-enrollment code block: hint label + monospace command row. */
+.pito-auth-dialog__code-block {
+  margin-top: 14px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 20%, transparent);
+  padding-top: 10px;
 }
 
 .pito-auth-dialog__hint {
   color: var(--color-muted);
   font-size: 12px;
-  margin: 10px 0 0;
+  margin: 0 0 6px;
   line-height: 1.5;
+}
+
+/* Command row: code text on left, [ copy ] on right. */
+.pito-auth-dialog__code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid
+    color-mix(in srgb, var(--section-accent, var(--dracula-purple)) 30%, transparent);
+  padding: 4px 8px;
+}
+
+.pito-auth-dialog__code-text {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* [ copy ] — bracketed-muted action inline with code.
+   cursor: pointer overrides bracketed-muted's cursor: default. */
+.pito-auth-dialog__copy-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  user-select: auto;
+  font: inherit;
+  font-size: 12px;
+  flex-shrink: 0;
 }

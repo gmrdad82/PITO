@@ -3,32 +3,27 @@ import { Controller } from "@hotwired/stimulus"
 /**
  * tui-sync-indicator — Stimulus controller for Tui::SyncIndicatorComponent.
  *
- * Renders one of three visual states on the TST master sync indicator:
+ * Renders the word "sync" in one of three color states:
  *
- *   synced       → "[ ] sync"  muted, no animation
- *   syncing      → "[x] sync"  accent, shimmer
- *   disconnected → "[ ] sync"  danger (red), color-only, no animation
+ *   synced       → muted, no animation
+ *   syncing      → accent, shimmer
+ *   disconnected → danger (red), no animation
+ *
+ * NO brackets, NO glyphs — color + animation are the only differentiators.
  *
  * State transitions are driven by document events:
  *
  *   tui:cable-activity    → "syncing" (debounced back to "synced" after SETTLE_MS)
- *                           emitted by tui_status_bar_controller on every cable message
- *   tui:sync-changed      → "disconnected" when detail.state === "disconnected"
- *                           "synced" when detail.state === "synced" (cable reconnect)
- *                           emitted by tui_status_bar_controller on cable lifecycle events
+ *   tui:sync-changed      → "disconnected" or "synced" on cable lifecycle events
  *
- * Glyph transitions animate with a scramble effect (8 frames × 30 ms = 240 ms)
- * identical in cadence to sessions_scramble_controller.js. Only the inner
- * bracket character scrambles (the `[` and `]` delimiters stay static).
- * Scramble fires only when the NEW glyph differs from the current one.
- *
- * No click handler. No target mode. Single instance: TST only.
+ * The 4 letters of "sync" scramble (8 frames × 30 ms = 240 ms) on every
+ * state change. Same scramble cadence as sessions_scramble_controller.js.
  *
  * @see app/components/tui/sync_indicator_component.rb
- * @scramble-source sessions_scramble_controller.js (same chars + frame pattern)
  */
 
 const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+const FINAL_TEXT = "sync"
 const SCRAMBLE_FRAMES = 8
 const FRAME_INTERVAL_MS = 30
 
@@ -36,19 +31,19 @@ function randomChar() {
   return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
 }
 
-/** Scramble a single character from whatever is currently in `element.textContent`
- *  to `targetGlyph`, then call `onDone` when settled. Returns the interval id
- *  so the caller can cancel mid-flight if a faster transition arrives. */
-function scrambleGlyph(element, targetGlyph, onDone) {
+/** Scramble all 4 letters of `element.textContent` for SCRAMBLE_FRAMES frames,
+ *  then settle to FINAL_TEXT. Returns the interval id so the caller can cancel. */
+function scrambleWord(element, onDone) {
   let frame = 0
   const interval = setInterval(() => {
     frame++
     if (frame >= SCRAMBLE_FRAMES) {
       clearInterval(interval)
-      element.textContent = `[${targetGlyph}]`
+      element.textContent = FINAL_TEXT
       if (onDone) onDone()
     } else {
-      element.textContent = `[${randomChar()}]`
+      // Replace each char with a random one for the intermediate frames.
+      element.textContent = Array.from(FINAL_TEXT, () => randomChar()).join("")
     }
   }, FRAME_INTERVAL_MS)
   return interval
@@ -65,8 +60,6 @@ export default class extends Controller {
     document.addEventListener("tui:sync-changed", this._onSyncChanged)
     this._settleTimer = null
     this._scrambleInterval = null
-    this._currentGlyph = " "
-    this.applyState(this.stateValue)
   }
 
   disconnect() {
@@ -95,36 +88,19 @@ export default class extends Controller {
   }
 
   applyState(s) {
+    if (s === this.stateValue) return
     this.stateValue = s
-    const box = this.element.querySelector(".tui-sync-indicator__box")
-    if (!box) return
 
-    // Only "syncing" gets a non-blank glyph. "disconnected" shares the
-    // blank glyph with "synced" — color (danger red) is the differentiator.
-    const glyph = s === "syncing" ? "x" : " "
-
-    // Skip scramble if glyph hasn't changed.
-    if (glyph === this._currentGlyph) {
-      this.element.classList.remove("is-synced", "is-syncing", "is-disconnected")
-      this.element.classList.add(`is-${s}`)
-      return
-    }
+    // Class flip drives color + shimmer animation immediately.
+    this.element.classList.remove("is-synced", "is-syncing", "is-disconnected")
+    this.element.classList.add(`is-${s}`)
 
     // Cancel any in-flight scramble before starting a new one.
     if (this._scrambleInterval) {
       clearInterval(this._scrambleInterval)
       this._scrambleInterval = null
     }
-
-    const previousGlyph = this._currentGlyph
-    this._currentGlyph = glyph
-
-    // Apply class immediately so shimmer/color transitions start right away.
-    this.element.classList.remove("is-synced", "is-syncing", "is-disconnected")
-    this.element.classList.add(`is-${s}`)
-
-    // Run the scramble on the box.
-    this._scrambleInterval = scrambleGlyph(box, glyph, () => {
+    this._scrambleInterval = scrambleWord(this.element, () => {
       this._scrambleInterval = null
     })
   }

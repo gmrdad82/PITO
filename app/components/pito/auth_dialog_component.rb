@@ -6,14 +6,24 @@
 #   chrome so the owner can see the structural skeleton without seeing
 #   live data.
 #
+#   Visual pattern: adopts the canonical `.pito-pane` chrome (border-radius,
+#   section-accent border, title-in-border via `.pito-pane__title`). The
+#   6-digit TOTP input renders as TotpCodeInputComponent (six segmented
+#   boxes + hidden concatenation field). A backup-code field is toggled
+#   via the `pito-auth-dialog` Stimulus controller. When TOTP is not yet
+#   enrolled, a code-block hint appears with a `[ copy ]` action backed by
+#   the `clipboard-copy` Stimulus controller.
+#
 # Kwargs: none required.
 #
 # Variants: none.
 #
 # Focusables:
-#   - `#auth-code`        — primary 6-digit TOTP input (autofocused)
+#   - digit boxes (6)     — primary TOTP segmented input (autofocused on digit 1)
 #   - `#auth-backup-code` — 8-char backup code input (revealed via toggle)
-#   - submit button
+#   - `[ log in ]`        — submit button
+#   - `[ use backup code ]` / `[ use TOTP code ]` — toggle button
+#   - `[ copy ]`          — clipboard action (only when totp_not_enrolled?)
 #
 # Mode behavior:
 #   Unconditionally shown when the layout detects `Current.session.nil?`.
@@ -26,6 +36,9 @@
 #   app/views/layouts/application.html.erb — renders this component
 #   app/controllers/sessions_controller.rb — handles POST /login
 #   app/helpers/application_helper.rb      — tui_authenticated?
+#   app/components/totp_code_input_component.rb — 6-box segmented input
+#   app/javascript/controllers/pito_auth_dialog_controller.js — toggle + label swap
+#   app/javascript/controllers/clipboard_copy_controller.js — [ copy ] action
 #   config/locales/tui/en.yml              — tui.auth.* keys
 class Pito::AuthDialogComponent < ViewComponent::Base
   # Returns true when TOTP has not been enrolled yet.
