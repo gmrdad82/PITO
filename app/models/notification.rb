@@ -20,6 +20,16 @@
 #
 # Single shared `retry_count` per row (Q11 + master decision 2026-05-10
 # #3). Per-channel counters are a follow-up if needed.
+#
+# Category enum (added 2026-05-25) classifies the notification's origin:
+# - channel  — relates to a YouTube channel (sync errors, re-auth, diff)
+# - game     — relates to a game (release today, milestone reached)
+# - system   — infrastructure / admin level (import jobs, generic system)
+# - manual   — created directly by the owner via Builder.build_manual
+#
+# Message/body constraints for tweet-style copy: ≤ 140 chars, no emojis.
+# Applied at the model layer via the `category_message_constraints` validation.
+# `Pito::Notifications::Builder` enforces the same rules before persist.
 class Notification < ApplicationRecord
   # Reject app-path values containing whitespace (we accept absolute
   # http(s) URLs OR leading-slash app paths only — master decision #7).
@@ -45,6 +55,14 @@ class Notification < ApplicationRecord
   # Rails 8.1 — defensive: lock the enum-backing column types.
   attribute :kind, :integer
   attribute :severity, :integer
+
+  # String-backed so values are readable in the DB without a lookup table.
+  enum :category, {
+    channel: "channel",
+    game:    "game",
+    system:  "system",
+    manual:  "manual"
+  }
 
   enum :kind, {
     video_published: 0,
@@ -95,11 +113,17 @@ class Notification < ApplicationRecord
   validates :last_error, length: { maximum: 1000 }, allow_nil: true
   validate :url_is_well_formed_when_present
   validate :idempotency_keys_present
+  # Tweet-style constraint: title ≤ 140 chars, no emojis, when the
+  # notification was built via Builder (category not nil). Applied to
+  # `title` because that is the primary user-visible copy field on the
+  # existing schema; `body` is ancillary long-form detail.
+  validate :tweet_style_title_constraints
 
   scope :unread, -> { where(in_app_read_at: nil) }
   scope :read,   -> { where.not(in_app_read_at: nil) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :by_kind, ->(k) { where(kind: k) }
+  scope :by_kind,     ->(k) { where(kind: k) }
+  scope :by_category, ->(c) { where(category: c) }
   scope :ripe_for_delivery, -> { where("fires_at <= ?", Time.current) }
   scope :pending_discord, -> { where(discord_delivered_at: nil) }
   scope :pending_slack,   -> { where(slack_delivered_at: nil) }
@@ -204,6 +228,28 @@ class Notification < ApplicationRecord
     )
   rescue StandardError => e
     Rails.logger.warn("Notification##{id}: broadcast_row_replace failed: #{e.class}: #{e.message}")
+  end
+
+  # Tweet-style constraint guard. Only enforced when `category` is set
+  # (i.e. rows produced by Builder). Pre-existing rows without a category
+  # are grandfathered — their titles may exceed 140 chars.
+  #
+  # Emoji detection uses Onigmo's `\p{Emoji}` Unicode property (available
+  # in MRI 3.x). Surrogate-pair emojis (🎉 = \u{1F389}) are caught because
+  # Onigmo's property matching is codepoint-aware, not byte-width-aware.
+  EMOJI_PATTERN = /\p{Emoji}/u
+
+  def tweet_style_title_constraints
+    return if category.nil?
+    return if title.blank?
+
+    if title.length > 140
+      errors.add(:title, "must be 140 characters or fewer (tweet-style)")
+    end
+
+    if title.match?(EMOJI_PATTERN)
+      errors.add(:title, "no emojis allowed (tweet-style)")
+    end
   end
 
   def url_is_well_formed_when_present
