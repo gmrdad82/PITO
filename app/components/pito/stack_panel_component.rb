@@ -159,8 +159,8 @@ module Pito
 
     # Phase 1C (2026-05-24) — `:` palette commands for the stack panel
     # itself (aggregate level — sub-panels carry their own command
-    # lists). Only the panel-wide sync toggle lives here; sub-panel-
-    # specific reindex + sort verbs live on each sub-panel VC. See
+    # lists). Sync toggle + pause/resume live here. Sub-panel-specific
+    # reindex + sort verbs live on each sub-panel VC. See
     # `Pito::CommandPalette::Collector` for the merge contract.
     def panel_commands
       [
@@ -169,7 +169,7 @@ module Pito
           hint: I18n.t("tui.commands.sync_toggle.hint", label: "stack"),
           action_name: :sync_toggle,
           args: { target: "home.stack" } }
-      ]
+      ] + sync_pause_commands("home.stack", label: "stack")
     end
 
     def postgres_sub_panel

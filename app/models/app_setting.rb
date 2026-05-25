@@ -175,4 +175,56 @@ class AppSetting < ApplicationRecord
   def self.clear_reindex_lock!
     singleton_row.update!(reindex_running: false, reindex_started_at: nil)
   end
+
+  # 2026-05-25 (pause-from-sync) — paused target set.
+  #
+  # `paused_targets` is a JSON-serialized `text` column on the singleton
+  # row holding every dot-namespaced sync target the user has explicitly
+  # paused (e.g. `["home.stack", "home.stack.meilisearch"]`). The
+  # column is always non-NULL (defaults to `"[]"`). Reads/writes use the
+  # singleton row's built-in row-level lock so concurrent Sidekiq jobs
+  # cannot corrupt the set.
+  #
+  # `paused_targets_set`   — returns a Ruby `Set` of paused target strings.
+  # `mark_paused!(target)` — adds `target` to the set and persists atomically.
+  # `mark_resumed!(target)`— removes `target` from the set and persists atomically.
+  #
+  # Callers use `Pito::SyncState` instead of calling these directly; the
+  # service layer enforces cascade rules and broadcasts.
+
+  def self.paused_targets_set
+    raw = singleton_row.paused_targets.to_s
+    parsed = JSON.parse(raw)
+    Set.new(parsed.map(&:to_s))
+  rescue JSON::ParserError
+    Set.new
+  end
+
+  def self.mark_paused!(target)
+    target = target.to_s
+    row = singleton_row
+    row.with_lock do
+      current = begin
+        JSON.parse(row.paused_targets.to_s)
+      rescue JSON::ParserError
+        []
+      end
+      current << target unless current.include?(target)
+      row.update!(paused_targets: current.to_json)
+    end
+  end
+
+  def self.mark_resumed!(target)
+    target = target.to_s
+    row = singleton_row
+    row.with_lock do
+      current = begin
+        JSON.parse(row.paused_targets.to_s)
+      rescue JSON::ParserError
+        []
+      end
+      current.delete(target)
+      row.update!(paused_targets: current.to_json)
+    end
+  end
 end

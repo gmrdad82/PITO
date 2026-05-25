@@ -33,6 +33,18 @@
         registry mutates. %>
     <meta name="pito-actions" content="<%= Pito::ActionRegistry.all.to_h { |a| [a.name.to_s, a.to_h] }.to_json %>">
 
+    <%# 2026-05-25 — Screen-scoped action catalog for the `:` palette.
+        Carries only the actions whose scope is :global OR matches the
+        current screen (home / videos / games). This is the palette's
+        pre-filtered action bus catalog; it prevents cross-screen noise
+        (e.g. "reindex Meilisearch" must not appear on /videos or /games).
+        Turbo's head-merge swaps this tag on navigation so the palette
+        catalog updates correctly when moving between screens.
+        See `ApplicationHelper#pito_screen_actions_json` for the server-side
+        filter logic and `Pito::ActionRegistry.for_screen` for the registry
+        query. %>
+    <meta name="pito-screen-actions" content="<%= pito_screen_actions_json %>">
+
     <%# Phase 1D (2026-05-24 sync-rebuild) — serialized i18n strings for
         ephemeral TST notices. The JS notice emitters (sync toggles, etc.)
         read this meta and dispatch `tui:notice` events with the
@@ -232,7 +244,7 @@
       Ruby-picked literal hex paints the canvas. %>
   <body data-section="<%= current_section %>"
         style="--section-accent: <%= pito_section_accent %>; --color-section-accent: <%= pito_section_accent %>; background: <%= pito_section_bg %>;"
-        data-controller="keyboard notifications-modal tui-leader-menu flat-key timezone-detect webhook-help-modal dialog-scroll-lock sortable-keys keyboard-only tui-cursor"
+        data-controller="keyboard notifications-modal tui-leader-menu flat-key timezone-detect webhook-help-modal dialog-scroll-lock sortable-keys keyboard-only tui-cursor tui-panel-nav"
         <%# `data-keybindings-page-key` exposes the YAML key (e.g.
             `games_index`, `games_show`, `bundles_show`, `default`,
             or `nil` for deny-listed pages like /settings) so the

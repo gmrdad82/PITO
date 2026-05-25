@@ -119,6 +119,17 @@ module Pito
             name: I18n.t("tui.commands.sync_toggle.name", label: "assets"),
             hint: I18n.t("tui.commands.sync_toggle.hint", label: "assets"),
             action_name: :sync_toggle,
+            args: { target: "home.stack.assets" } },
+          # 2026-05-25 (pause-from-sync) — explicit pause / resume palette commands.
+          { key: "pause_home_stack_assets",
+            name: I18n.t("tui.commands.pause_target.name", label: "assets"),
+            hint: I18n.t("tui.commands.pause_target.hint", label: "assets"),
+            action_name: :pause_target,
+            args: { target: "home.stack.assets" } },
+          { key: "resume_home_stack_assets",
+            name: I18n.t("tui.commands.resume_target.name", label: "assets"),
+            hint: I18n.t("tui.commands.resume_target.hint", label: "assets"),
+            action_name: :resume_target,
             args: { target: "home.stack.assets" } }
         ]
       end

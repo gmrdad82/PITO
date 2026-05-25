@@ -294,6 +294,16 @@ en:
       focus_focusable:
         name: "focus"
         hint: "focus the named focusable"
+      # 2026-05-25 (pause-from-sync) — per-panel pause / resume palette
+      # commands. Both interpolate `%{label}` so the palette entry reads
+      # "pause (stack)" / "resume (stack.meilisearch)" rather than two
+      # indistinguishable rows. Callers MUST pass `label:` per call site.
+      pause_target:
+        name: "pause (%{label})"
+        hint: "pause sync for the %{label} scope"
+      resume_target:
+        name: "resume (%{label})"
+        hint: "resume sync for the %{label} scope"
     # 2026-05-22 — Phase 2F. Canonical Sidekiq brand label sourced from
     # i18n so the future Rust TUI client reads it from the same YAML
     # (per project's same-YAML-feeds-TUI contract). Used by

@@ -262,24 +262,36 @@ module Tui
       STATES.include?(sym) ? sym : DEFAULT_STATE
     end
 
-    # 2026-05-25 (sync-rebuild) — derive the SSR-initial state from
-    # the canonical AppSetting rows. Logic mirrors the cable
-    # suppression chain in `Pito::CableBroadcaster`:
+    # 2026-05-25 (sync-rebuild) — derive the SSR-initial state from the
+    # canonical AppSetting rows. Logic:
     #
-    #   :tst mode    → reads `sync.app` (master)
-    #   :target mode → reads `sync.<target>` AND every ancestor in the
-    #                  suppression chain (parent panel + "app"). Any
-    #                  disabled link short-circuits to `:idle`.
+    #   :tst mode    → reads `sync.app` (master) for enabled/idle;
+    #                  then checks `Pito::SyncState` for paused/uncertain.
+    #   :target mode → walks the suppression chain (parent + "app"); if any
+    #                  link is disabled → :idle. Then checks the pause-layer:
+    #                  if self is paused → :paused; if mixed children → :uncertain.
     #
-    # An enabled target lands as `:active` (the [x] glyph) so the user
-    # sees the right initial paint before any cable activity fires.
+    # 2026-05-25 (pause-from-sync) — pause state layered on top of the
+    # enable gate. Paused takes priority over active; uncertain reflects
+    # mixed child state (some children paused, some not).
     def derive_initial_state
       if tst_mode?
-        return AppSetting.sync_enabled?("app") ? :active : :idle
+        return :idle unless AppSetting.sync_enabled?("app")
+        # Even when globally enabled, reflect any broad pause state.
+        pause_state = Pito::SyncState.state("app")
+        return :paused    if pause_state == :paused
+        return :uncertain if pause_state == :uncertain
+        return :active
       end
       chain = Pito::SyncTargets.suppression_chain(@target) || [ @target ]
       enabled = chain.all? { |t| AppSetting.sync_enabled?(t) }
-      enabled ? :active : :idle
+      return :idle unless enabled
+
+      # Enabled — now check the pause layer.
+      pause_state = Pito::SyncState.state(@target)
+      return :paused    if pause_state == :paused
+      return :uncertain if pause_state == :uncertain
+      :active
     rescue StandardError
       # Defensive: tests render the VC without a DB row; fall back to
       # the documented default. Production has the table; the rescue

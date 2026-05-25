@@ -134,7 +134,7 @@ module Pito
           hint: I18n.t("tui.commands.sync_toggle.hint", label: "security"),
           action_name: :sync_toggle,
           args: { target: "home.security" } }
-      ]
+      ] + sync_pause_commands("home.security", label: "security")
     end
   end
 end

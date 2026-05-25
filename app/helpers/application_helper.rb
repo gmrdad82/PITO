@@ -338,6 +338,32 @@ module ApplicationHelper
     { busy: 0, enqueued: 0, retry: 0, scheduled: 0 }
   end
 
+  # 2026-05-25 — Screen-scoped action catalog JSON for the `:` command
+  # palette. Returns a JSON string of all `Pito::Action` entries whose
+  # scope is `:global` OR matches the current screen. The layout embeds
+  # this in the `<meta name="pito-screen-actions">` tag so the
+  # `tui-command-palette` Stimulus controller can filter the action bus
+  # catalog to only the commands that are meaningful on the current screen
+  # (e.g. "reindex Meilisearch" appears only on Home; "import video" would
+  # only appear on Videos when that action lands).
+  #
+  # The screen is resolved by `current_section` which maps controller_path
+  # to "home" / "channels" (videos) / "games" / "settings". "channels" is
+  # aliased to :videos since the action bus uses :videos internally.
+  # "settings" maps to :home because settings panels now live on Home.
+  #
+  # Call site: layout `<meta name="pito-screen-actions">` tag.
+  def pito_screen_actions_json(section = current_section)
+    screen = case section.to_s
+    when "channels" then :videos
+    when "settings" then :home
+    when "games"    then :games
+    else                 :home
+    end
+    actions = Pito::ActionRegistry.for_screen(screen)
+    actions.to_h { |a| [ a.name.to_s, a.to_h ] }.to_json
+  end
+
   def pane_breadcrumb_label(panes, show: 3, trunc_length: 14)
     return label_for_pane(panes.first) if panes.size == 1
 

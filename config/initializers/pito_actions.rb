@@ -15,13 +15,17 @@
 Rails.application.config.after_initialize do
   routes = Rails.application.routes.url_helpers
 
+  # scope: :home — stack operations only make sense on the home screen
+  # (Stack sub-panel). They must not appear in the palette on /videos or
+  # /games, where Meilisearch / Voyage AI context is absent.
   Pito::ActionRegistry.define(
     :reindex_meilisearch,
     path: -> { routes.settings_stack_meilisearch_reindex_path },
     method: :post,
     confirmation: { brand: "Meilisearch", danger: true },
     i18n_key: "tui.commands.reindex_meilisearch",
-    cable_panel: "pito:settings:stack:meilisearch"
+    cable_panel: "pito:settings:stack:meilisearch",
+    scope: :home
   )
 
   Pito::ActionRegistry.define(
@@ -30,7 +34,8 @@ Rails.application.config.after_initialize do
     method: :post,
     confirmation: { brand: "Voyage AI", danger: true },
     i18n_key: "tui.commands.reindex_voyage",
-    cable_panel: "pito:settings:stack:voyage"
+    cable_panel: "pito:settings:stack:voyage",
+    scope: :home
   )
 
   # Phase 1C (2026-05-24) — section-specific `:` palette actions.
@@ -56,13 +61,17 @@ Rails.application.config.after_initialize do
   # `revoke_all_except_current` / `revoke_selected_sessions` — STUB
   # entries; the underlying forms still POST through the legacy bulk-
   # revoke flow. Phase 2 lifts them into the action bus proper.
+  # scope: :global — these are palette-dispatch helpers used on every
+  # screen. The JS dispatcher resolves them client-side (no Rails route,
+  # no POST) so there is no screen-specific context requirement.
   Pito::ActionRegistry.define(
     :sort_table,
     path: -> { "#" },
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.sort_table",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :global
   )
 
   Pito::ActionRegistry.define(
@@ -71,7 +80,8 @@ Rails.application.config.after_initialize do
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.sync_toggle",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :global
   )
 
   Pito::ActionRegistry.define(
@@ -80,7 +90,8 @@ Rails.application.config.after_initialize do
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.click_focusable",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :global
   )
 
   Pito::ActionRegistry.define(
@@ -89,16 +100,20 @@ Rails.application.config.after_initialize do
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.focus_focusable",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :global
   )
 
+  # scope: :home — session revocation lives in the Security panel on the
+  # home screen. These stubs must not surface on /videos or /games.
   Pito::ActionRegistry.define(
     :revoke_all_except_current,
     path: -> { "#" },
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.revoke_all_except_current",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :home
   )
 
   Pito::ActionRegistry.define(
@@ -107,7 +122,8 @@ Rails.application.config.after_initialize do
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.revoke_selected_sessions",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :home
   )
 
   # 2026-05-24 — `Space s` master TST sync toggle.
@@ -120,12 +136,44 @@ Rails.application.config.after_initialize do
   # existing cascade path (`isTargetSyncDisabled`). Per-panel user
   # preferences survive the global toggle via the per-panel "yes"
   # opt-in override.
+  # scope: :global — master TST sync toggle applies on every screen.
   Pito::ActionRegistry.define(
     :toggle_tst_sync,
     path: -> { "#" },
     method: :get,
     confirmation: nil,
     i18n_key: "tui.commands.toggle_tst_sync",
-    cable_panel: nil
+    cable_panel: nil,
+    scope: :global
+  )
+
+  # 2026-05-25 (pause-from-sync) — explicit pause / resume actions.
+  #
+  # `:pause_target` and `:resume_target` are REVERSIBLE (no confirmation
+  # needed). The JS dispatcher POSTs to `/pito/sync/pause` or
+  # `/pito/sync/resume` with `target=<dot_namespaced_target>` in the
+  # request body. The server cascades to children, broadcasts the new
+  # state, and may emit `uncertain` on a parent if a child is individually
+  # resumed while the parent is still paused.
+  #
+  # scope: :global — pause/resume can be invoked on any panel on any screen.
+  Pito::ActionRegistry.define(
+    :pause_target,
+    path: -> { routes.pito_sync_pause_path },
+    method: :post,
+    confirmation: nil,
+    i18n_key: "tui.commands.pause_target",
+    cable_panel: nil,
+    scope: :global
+  )
+
+  Pito::ActionRegistry.define(
+    :resume_target,
+    path: -> { routes.pito_sync_resume_path },
+    method: :post,
+    confirmation: nil,
+    i18n_key: "tui.commands.resume_target",
+    cable_panel: nil,
+    scope: :global
   )
 end

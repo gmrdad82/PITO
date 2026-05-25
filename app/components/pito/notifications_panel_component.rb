@@ -118,7 +118,7 @@ module Pito
           hint: I18n.t("tui.commands.sync_toggle.hint", label: "notifications"),
           action_name: :sync_toggle,
           args: { target: "home.notifications" } }
-      ]
+      ] + sync_pause_commands("home.notifications", label: "notifications")
     end
   end
 end

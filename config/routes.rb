@@ -757,5 +757,15 @@ Rails.application.routes.draw do
   # full universe.
   post "sync/toggle", to: "sync#toggle", as: :sync_toggle
 
+  # 2026-05-25 (pause-from-sync) — explicit pause / resume endpoints.
+  # Distinct from toggle: these pause without disabling sync entirely.
+  # The `[-] sync` indicator reflects paused state; the user can resume
+  # without losing the enabled/disabled preference.
+  # `target=` follows the same dot-namespaced convention as `/sync/toggle`.
+  # Routed to `SyncController#pause` / `SyncController#resume` (same
+  # controller as the `/sync/toggle` action — no namespace module prefix).
+  post "pito/sync/pause",  to: "sync#pause",  as: :pito_sync_pause
+  post "pito/sync/resume", to: "sync#resume", as: :pito_sync_resume
+
   get "up" => "rails/health#show", as: :rails_health_check
 end
