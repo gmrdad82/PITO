@@ -3,17 +3,20 @@
 # Renders the canonical synthesized rating score for a `Game` as a
 # small inline chip whose background color tracks the same seven-tier
 # palette used by the rating heat-bar
-# (`Game::RatingHeatBarComponent::TIERS` + the `very_bad` fall-
+# (`Pito::ScoreBarComponent::TIERS` + the `very_bad` fall-
 # through). The chip is used in the new bundle-modal "all games"
 # table where a full-width gradient bar would compete with the dense
 # tabular layout — a single solid-color pill is the right density.
 #
-# Reuses the heat-bar's class-level helpers
-# (`Game::RatingHeatBarComponent.synthesized_score(game)` and
-# `Game::RatingHeatBarComponent.tier_for(score)`) so the score and
+# Reuses the score bar's class-level helpers
+# (`Pito::ScoreBarComponent.synthesized_score(game)` and
+# `Pito::ScoreBarComponent.tier_for(score)`) so the score and
 # tier come from a single canonical source. Adding a new tier or
 # changing the synthesis formula edits one place
-# (`RatingHeatBarComponent`) and propagates to this chip for free.
+# (`Pito::ScoreBarComponent`) and propagates to this chip for free.
+#
+# related: Pito::ScoreBarComponent (source of TIERS + synthesis helpers).
+#          Game::RatingHeatBarComponent is a deprecated alias for one sweep.
 #
 # `TIER_BG_COLOR` is intentionally hard-coded to the project's vivid
 # dark-theme palette in both themes. The chip carries the bg color as
@@ -50,11 +53,11 @@ class Game
     end
 
     def score
-      Game::RatingHeatBarComponent.synthesized_score(@game)
+      Pito::ScoreBarComponent.synthesized_score(@game)
     end
 
     def tier
-      Game::RatingHeatBarComponent.tier_for(score)
+      Pito::ScoreBarComponent.tier_for(score)
     end
 
     def background_color

@@ -196,7 +196,7 @@
         bar's color encodes the score. Sits below the meta block
         (release / dev / pub) so the LEFT pane reads: cover → title
         → genres → meta → heat-bar → ownership. %>
-    <%= render Game::RatingHeatBarComponent.new(game: @game) %>
+    <%= render Pito::ScoreBarComponent.new(game: @game) %>
 
     <%# 2026-05-17 BP slice (item 7 of the 10-item /games/:id reshape
         list) — LEFT-pane ownership section, now a per-platform
