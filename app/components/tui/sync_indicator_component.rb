@@ -2,8 +2,8 @@ module Tui
   # Tui::SyncIndicatorComponent — checkbox-style sync indicator.
   #
   # 2026-05-24 (Phase 1D) — unified replacement for the now-deleted
-  # `Tui::PauseControlComponent`. Renders the same `[ ] sync` / `[x] sync`
-  # / `[!] sync` checkbox+word display in TWO contexts:
+  # `Tui::PauseControlComponent`. Renders `[ ] sync` / `[x] sync` /
+  # `[-] sync` / `[!] sync` checkbox+word display in TWO contexts:
   #
   #   1. `mode: :tst` (default) — aggregate read-only indicator in the
   #      top status bar. Not clickable. Reflects global cable activity
@@ -11,79 +11,82 @@ module Tui
   #
   #   2. `mode: :target` — interactive per-panel / per-sub-panel control
   #      mounted in a panel or sub-panel's title-actions slot. Clicking
-  #      toggles a `pito.sync.<target>` localStorage flag between "yes"
+  #      toggles a `pito.sync.<target>` AppSetting row between "yes"
   #      (enabled, default) and "no" (disabled). Disabling a panel-level
   #      target suppresses cable broadcasts for every descendant
   #      sub-panel; disabling a sub-panel target suppresses that target
   #      alone.
   #
-  # ## Five canonical states (locked 2026-05-24)
+  # ## Six canonical states (A3 — 2026-05-25)
   #
   # | State        | Glyph | Color           | Shimmer | When                                                            |
   # |--------------|-------|-----------------|---------|-----------------------------------------------------------------|
   # | idle         | [ ]   | accent          | no      | Self-flag = "no", or no enabled targets / no activity.          |
   # | active       | [x]   | accent          | no      | Enabled + has active work (Sidekiq busy/enqueued/retry > 0).    |
   # | syncing      | [x]   | accent          | yes     | THIS target currently receiving cable content (shimmer on word) |
-  # | mixed        | [-]   | accent          | no      | Parent panel state when its sub-panels have MIXED self-flags.   |
+  # | paused       | [-]   | muted           | no      | Explicitly paused by user (cable kind: "pause").                |
+  # | uncertain    | [-]   | accent          | no      | Mixed sub-panel flags OR indeterminate external state.          |
   # | disconnected | [!]   | danger (red)    | no      | Cable connection failed / syncing not available.                |
   #
-  # 2026-05-24 lock update — "actions are always accent": every state
-  # except `:disconnected` (which is the documented red exception) reads
-  # in section-accent. The previous `:idle` muted color was wrong per
-  # the new design rule and has been promoted to accent.
+  # `mixed` is a deprecated alias for `uncertain`. Passing `state: "mixed"`
+  # still works but emits a Rails.logger.warn once per process.
   #
-  # `:mixed` (`[-]` glyph, accent) — parent panel only. A parent sync VC
-  # shows `[-]` when its sub-panels have a mix of "yes" / "no" self
-  # flags. Toggling the parent bulk-writes children to a uniform state
-  # (the click handler propagates).
+  # ## Paused vs Uncertain visual distinction
+  #
+  # Both `paused` and `uncertain` emit the `[-] sync` glyph. They are
+  # distinguished by color:
+  #
+  #   paused    → `var(--color-muted)` (gray, CSS class `.is-muted`)
+  #   uncertain → `var(--section-accent)` (CSS class `.is-accent`, default)
+  #
+  # An `aria-label` also distinguishes them at the accessibility layer
+  # (controller swaps this at runtime based on the cable kind).
   #
   # ## Kwargs
   #
   # @param mode [Symbol] `:tst` (default) or `:target`.
-  # @param state [Symbol] SSR initial state: one of
-  #   `:idle`, `:active`, `:syncing`, `:disconnected`. Defaults to `:idle`.
-  #   In `:target` mode the JS controller recomputes from localStorage on
-  #   connect, so this is paint-only.
+  # @param state [Symbol] SSR initial state: one of `:idle`, `:active`,
+  #   `:syncing`, `:paused`, `:uncertain`, `:disconnected`. Defaults to
+  #   the AppSetting-derived state when omitted.
+  #   `"mixed"` is accepted as a deprecated alias for `:uncertain`.
   # @param target [String, Symbol] (only `:target` mode) dot-namespaced
-  #   target key, e.g. `"home.stack"` or `"home.stack.meilisearch"`. Used
-  #   as the localStorage suffix: `pito.sync.<target>`. Value `"yes"` =
-  #   enabled (default), `"no"` = disabled.
+  #   target key, e.g. `"home.stack"` or `"home.stack.meilisearch"`.
   # @param parent_target [String, Symbol, nil] (only `:target` mode)
-  #   dot-namespaced target of the containing panel for sub-panels (e.g.
-  #   `"home.stack"`). The JS controller resolves the displayed state by
-  #   combining the self flag with the parent flag — a parent disabled
-  #   target cascades to all sub-panels.
+  #   dot-namespaced target of the containing panel for sub-panels.
   # @param focusable_key [String, Symbol, nil] (only `:target` mode) when
   #   present, emits `data-tui-focusable=<key>` so j/k cursor can land on
   #   it. Style = `action`.
   #
   # ## Cable contract (`:tst` mode)
   #
-  # Listens for `tui:cable-activity` and `tui:sync-changed` on document,
-  # plus per-panel `pito:panel:*:received` / `pito:panel:*:connected` /
-  # `pito:panel:*:disconnected` events. The controller derives idle /
-  # active / syncing / disconnected from the combined signal.
+  # Listens for `tui:cable-activity` and `tui:sync-changed` on document.
+  # Also handles `kind: "pause"` and `kind: "uncertain"` from
+  # `Pito::CableBroadcaster` (A8). The controller derives idle / active /
+  # syncing / paused / uncertain / disconnected from the combined signal.
   #
   # ## Cable contract (`:target` mode)
   #
-  # Click → flips `pito.sync.<target>` between "yes" and "no" → dispatches
-  # `tui:sync-changed` on document with detail
-  # `{ target, parentTarget, enabled }` so the TST + sibling targets +
-  # cable-suppression layer re-evaluate.
+  # Click → POST `/sync/toggle` → server cascades write + broadcasts on
+  # `pito:sync_state`. Cable kind `"pause"` → paint `paused`.
+  # Cable kind `"uncertain"` → paint `uncertain`.
   #
   # ## i18n
   #
   # The word "sync" comes from `config/locales/tui/en.yml` `tui.tst.sync.*`.
-  # All four per-state full display strings are emitted as data-* attrs.
+  # All per-state full display strings are emitted as data-* attrs.
   #
   # @contract see docs/design.md § Transitions
   class SyncIndicatorComponent < ViewComponent::Base
     include Tui::Transitionable
 
     MODES  = %i[tst target].freeze
-    STATES = %i[idle active syncing mixed disconnected].freeze
+    STATES = %i[idle active syncing paused uncertain mixed disconnected].freeze
     DEFAULT_MODE  = :tst
     DEFAULT_STATE = :idle
+
+    # Deprecated aliases: old state name → canonical state name.
+    STATE_ALIASES = { mixed: :uncertain }.freeze
+    private_constant :STATE_ALIASES
 
     # Sentinel for "no `state:` argument passed". Distinct from `:idle`
     # so an explicit `state: :idle` (spec fixtures + top-status-bar)
@@ -112,7 +115,7 @@ module Tui
       @state = if state.equal?(STATE_UNSET)
         derive_initial_state
       else
-        STATES.include?(state.to_sym) ? state.to_sym : DEFAULT_STATE
+        normalize_state(state.to_sym)
       end
     end
 
@@ -128,19 +131,19 @@ module Tui
 
     def state_word
       case @state
-      when :active, :syncing then I18n.t("tui.tst.sync.active")
-      when :disconnected     then I18n.t("tui.tst.sync.disconnected", default: I18n.t("tui.tst.sync.idle"))
-      when :mixed            then I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
-      else                        I18n.t("tui.tst.sync.idle")
+      when :active, :syncing               then I18n.t("tui.tst.sync.active")
+      when :paused, :uncertain             then I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
+      when :disconnected                   then I18n.t("tui.tst.sync.disconnected", default: I18n.t("tui.tst.sync.idle"))
+      else                                      I18n.t("tui.tst.sync.idle")
       end
     end
 
     def checkbox_glyph
       case @state
-      when :active, :syncing then "[x]"
-      when :disconnected     then "[!]"
-      when :mixed            then "[-]"
-      else                        "[ ]"
+      when :active, :syncing  then "[x]"
+      when :disconnected      then "[!]"
+      when :paused, :uncertain then "[-]"
+      else                         "[ ]"
       end
     end
 
@@ -160,7 +163,17 @@ module Tui
       "[x] #{I18n.t("tui.tst.sync.active")}"
     end
 
+    # Deprecated — kept for callers that read this helper directly.
+    # Returns the `uncertain` display string (same as word_uncertain).
     def word_mixed
+      word_uncertain
+    end
+
+    def word_paused
+      "[-] #{I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))}"
+    end
+
+    def word_uncertain
       "[-] #{I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))}"
     end
 
@@ -182,7 +195,9 @@ module Tui
       attrs[:tui_sync_indicator_idle_value]         = word_idle
       attrs[:tui_sync_indicator_active_value]       = word_active
       attrs[:tui_sync_indicator_syncing_value]      = word_syncing
-      attrs[:tui_sync_indicator_mixed_value]        = word_mixed
+      attrs[:tui_sync_indicator_mixed_value]        = word_uncertain
+      attrs[:tui_sync_indicator_paused_value]       = word_paused
+      attrs[:tui_sync_indicator_uncertain_value]    = word_uncertain
       attrs[:tui_sync_indicator_disconnected_value] = word_disconnected
       # 2026-05-25 — UNIQUE outlet selector per VC instance. The previous
       # `.tui-sync-word` selector matched EVERY sync VC in the document;
@@ -234,6 +249,19 @@ module Tui
 
     private
 
+    # Normalize a state symbol, handling deprecated aliases and
+    # unknown values. Emits a logger.warn for deprecated aliases.
+    def normalize_state(sym)
+      if STATE_ALIASES.key?(sym)
+        Rails.logger.warn(
+          "Tui::SyncIndicatorComponent: state '#{sym}' is deprecated; " \
+          "use '#{STATE_ALIASES[sym]}'"
+        )
+        return STATE_ALIASES[sym]
+      end
+      STATES.include?(sym) ? sym : DEFAULT_STATE
+    end
+
     # 2026-05-25 (sync-rebuild) — derive the SSR-initial state from
     # the canonical AppSetting rows. Logic mirrors the cable
     # suppression chain in `Pito::CableBroadcaster`:
@@ -262,12 +290,16 @@ module Tui
     # Color name maps to the `kind=sync` row of the tui-transition
     # controller's COLOR_CLASS table:
     #   accent → no class (default `.tui-sync-word` color)
-    #   muted  → `.is-muted` (no longer used; idle is accent per
-    #             2026-05-24 "actions are always accent" lock)
-    #   pink   → `.is-pink` (var(--color-danger), used for disconnected)
+    #   muted  → `.is-muted` (paused state — gray, not an action)
+    #   pink   → `.is-pink` (var(--color-danger), disconnected)
+    #
+    # Visual distinction between paused and uncertain:
+    #   paused    → muted (gray) — user deliberately paused; not an action
+    #   uncertain → accent       — system state, still "alive", accent voice
     def color_for(state)
       case state
       when :disconnected then :pink
+      when :paused       then :muted
       else                    :accent
       end
     end

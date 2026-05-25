@@ -15,23 +15,31 @@ import { Controller } from "@hotwired/stimulus"
  *             `/sync/toggle?target=<target>`; the server cascades the
  *             write and broadcasts the new state.
  *
- * ## Four states (locked 2026-05-25)
+ * ## Six states (A3 — 2026-05-25)
  *
  *   idle         → "[ ] sync"  accent, no shimmer (target disabled)
  *   active       → "[x] sync"  accent, no shimmer (target enabled)
  *   syncing      → "[x] sync"  accent, shimmer (cable activity)
+ *   paused       → "[-] sync"  muted (gray), no shimmer (cable kind:"pause")
+ *   uncertain    → "[-] sync"  accent, no shimmer (cable kind:"uncertain")
  *   disconnected → "[!] sync"  danger (red), no shimmer
+ *
+ * "mixed" is a deprecated alias for "uncertain" — both still accepted
+ * for backward-compat with any call sites not yet updated.
+ *
+ * ## Paused vs uncertain visual distinction
+ *
+ *   paused    → adds `.is-muted` class (gray, user deliberately paused)
+ *   uncertain → adds `.is-accent` class (section accent, system state)
  *
  * ## Wire shape
  *
  *   POST /sync/toggle?target=<target> (with CSRF token) → 204 no_content
  *
- *   Then the server broadcasts ONE envelope per cascaded target on the
- *   `pito:sync_state` channel:
- *
- *     { kind: "sync_state",
- *       payload: { target: "<key>", enabled: bool },
- *       ts: "..." }
+ *   Cable envelope kinds handled (A8 additions):
+ *     { kind: "sync_state",  payload: { target, enabled: bool } }
+ *     { kind: "pause",       payload: { target } }
+ *     { kind: "uncertain",   payload: { target } }
  *
  *   The shared SyncState bridge (`document` event `tui:sync-changed`,
  *   fan-out from the global subscription) is what every per-target
@@ -50,6 +58,9 @@ import { Controller } from "@hotwired/stimulus"
  *     between active and idle.
  *   - Listens for `tui:cable-activity` (Sidekiq stats); shimmer driven
  *     by busy>0 || enqueued>0 || retry>0.
+ *   - Listens for `tui:sync-paused` and `tui:sync-uncertain` document
+ *     events (dispatched by the global cable bridge when it receives
+ *     kind:"pause" / kind:"uncertain" envelopes from A8).
  *   - Click is a no-op in :tst mode.
  */
 export default class extends Controller {
@@ -60,6 +71,9 @@ export default class extends Controller {
     idle: String,
     active: String,
     syncing: String,
+    mixed: String,
+    paused: String,
+    uncertain: String,
     disconnected: String
   }
 
@@ -81,15 +95,21 @@ export default class extends Controller {
       }
     }
 
-    this._boundSyncChanged = this.onSyncChanged.bind(this)
-    this._boundActivity = this.onActivity.bind(this)
-    document.addEventListener("tui:sync-changed", this._boundSyncChanged)
+    this._boundSyncChanged  = this.onSyncChanged.bind(this)
+    this._boundActivity     = this.onActivity.bind(this)
+    this._boundSyncPaused   = this.onSyncPaused.bind(this)
+    this._boundSyncUncertain = this.onSyncUncertain.bind(this)
+    document.addEventListener("tui:sync-changed",   this._boundSyncChanged)
     document.addEventListener("tui:cable-activity", this._boundActivity)
+    document.addEventListener("tui:sync-paused",    this._boundSyncPaused)
+    document.addEventListener("tui:sync-uncertain", this._boundSyncUncertain)
   }
 
   disconnect() {
-    document.removeEventListener("tui:sync-changed", this._boundSyncChanged)
+    document.removeEventListener("tui:sync-changed",   this._boundSyncChanged)
     document.removeEventListener("tui:cable-activity", this._boundActivity)
+    document.removeEventListener("tui:sync-paused",    this._boundSyncPaused)
+    document.removeEventListener("tui:sync-uncertain", this._boundSyncUncertain)
     if (this._coolDownTimer) {
       clearTimeout(this._coolDownTimer)
       this._coolDownTimer = null
@@ -242,6 +262,41 @@ export default class extends Controller {
     return "active"
   }
 
+  // ─── paused handler (cable kind: "pause") ────────────────────────
+  //
+  // Dispatched by the global cable bridge when it receives a
+  // `kind: "pause"` envelope from Pito::CableBroadcaster (A8).
+  // Paints the indicator muted (gray) — the user deliberately paused.
+  onSyncPaused(event) {
+    const changed = event && event.detail && event.detail.target
+    if (changed === undefined || changed === null) return
+    if (this.isTargetMode()) {
+      if (changed === this.targetValue || changed === "app") {
+        this.setPaused()
+      }
+    } else if (this.isTstMode()) {
+      if (changed === "app") this.setPaused()
+    }
+  }
+
+  // ─── uncertain handler (cable kind: "uncertain") ──────────────────
+  //
+  // Dispatched by the global cable bridge when it receives a
+  // `kind: "uncertain"` envelope (also handles legacy kind: "mixed").
+  // Paints the indicator accent with `[-]` glyph — system state,
+  // not a user action; still in accent voice.
+  onSyncUncertain(event) {
+    const changed = event && event.detail && event.detail.target
+    if (changed === undefined || changed === null) return
+    if (this.isTargetMode()) {
+      if (changed === this.targetValue || changed === "app") {
+        this.setUncertain()
+      }
+    } else if (this.isTstMode()) {
+      if (changed === "app") this.setUncertain()
+    }
+  }
+
   _paint(state) {
     const word = this.wordFor(state) || this.wordFor("idle")
     if (typeof word === "string" && word.length > 0) {
@@ -251,7 +306,12 @@ export default class extends Controller {
     COLORS.forEach((cls) => this.element.classList.remove(cls))
     if (state === "disconnected") {
       this.element.classList.add("is-pink")
+    } else if (state === "paused") {
+      // paused → muted (gray). User deliberately paused; not an action in accent voice.
+      this.element.classList.add("is-muted")
     } else {
+      // idle / active / syncing / uncertain → all use accent per
+      // "actions are always accent" rule (2026-05-24 lock).
       this.element.classList.add("is-accent")
     }
     if (state === "syncing") {
@@ -265,6 +325,8 @@ export default class extends Controller {
   setSyncing()      { this._paint("syncing") }
   setIdle()         { this._paint("idle") }
   setDisconnected() { this._paint("disconnected") }
+  setPaused()       { this._paint("paused") }
+  setUncertain()    { this._paint("uncertain") }
 
   // ─── helpers ──────────────────────────────────────────────────────
   sidekiqActive(payload) {
@@ -279,6 +341,10 @@ export default class extends Controller {
     if (stateName === "idle")         return this.idleValue
     if (stateName === "active")       return this.activeValue
     if (stateName === "syncing")      return this.syncingValue || this.activeValue
+    if (stateName === "paused")       return this.pausedValue || this.mixedValue
+    // "uncertain" and legacy "mixed" both map to the uncertain display string.
+    if (stateName === "uncertain")    return this.uncertainValue || this.mixedValue
+    if (stateName === "mixed")        return this.mixedValue || this.uncertainValue
     if (stateName === "disconnected") return this.disconnectedValue
     return stateName
   }

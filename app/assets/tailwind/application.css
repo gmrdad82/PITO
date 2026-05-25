@@ -936,6 +936,48 @@ button.bracketed .bl {
   width: auto;
 }
 
+/* Games screen layout (2026-05-25) — 2-row CSS Grid:
+     Row 1 = 40/60 (games releasing | top games)
+     Row 2 = library row (full width cell containing nested rows 2A + 2B)
+   `.games-grid` overrides `.home-grid`'s 3-row equal split with a
+   2-row split where Row 2 (library) receives 2× the height of Row 1. */
+.games-grid {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+/* Row 2 library cell — vertical flex stack: Row 2A (60/40 split) on
+   top, Row 2B (full width table) below. Each sub-row fills its share
+   of the available height. */
+.games-library-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  height: 100%;
+}
+
+/* Row 2A — genres (left 60%) + bundles (right 40%) */
+.games-library-row__top {
+  display: grid;
+  grid-template-columns: 6fr 4fr;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Row 2B — library table, full width */
+.games-library-row__bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Panels inside the games grid fill their cells identically to the
+   home-grid rule. Shared via the same `.home-grid` class that
+   `.games-grid` extends — no additional rule needed since
+   `.home-grid .pito-pane` already applies. */
+
 .pito-pane {
   /* FB-48-IMPL (2026-05-20) — V4 corner-flush panel title in top border.
      `position: relative` anchors the absolutely-positioned
@@ -7574,4 +7616,246 @@ body.keyboard-only * {
 .tui-view-toggle__view:focus-visible {
   outline: 0;
   text-decoration: underline;
+}
+
+/* ── Home Calendar panel (Pito::CalendarPanelComponent) ─────────────────
+   2026-05-25 — Month grid + 4-category filter chips.
+   Bracket `[ ]` always in section-accent-home; label in category color.
+   Category bullet colors mirror the chip label colors.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Filter chip row */
+.cal-filter-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0 6px;
+  font-size: var(--font-size-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+/* Base chip — no hover color (FB-67 lock) */
+a.cal-filter-chip,
+a.cal-filter-chip:visited {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  text-decoration: none;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Brackets always in home accent */
+.cal-filter-chip__bracket,
+.cal-filter-chip__check {
+  color: var(--section-accent-home);
+}
+
+/* Label colors per category spec */
+.cal-filter-chip--channel .cal-filter-chip__label { color: var(--section-accent-videos); }
+.cal-filter-chip--game    .cal-filter-chip__label { color: var(--section-accent-games);  }
+.cal-filter-chip--system  .cal-filter-chip__label { color: var(--section-accent-home);   }
+.cal-filter-chip--manual  .cal-filter-chip__label { color: var(--dracula-orange);        }
+
+/* Month heading */
+.cal-month-heading {
+  font-size: var(--font-size-sm, 0.75rem);
+  color: var(--color-muted);
+  padding: 2px 0 4px;
+  letter-spacing: 0.04em;
+}
+
+/* Month grid — 7-column, auto-sizing rows */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--color-border-soft);
+  border: 1px solid var(--color-border-soft);
+  font-size: var(--font-size-xs, 0.7rem);
+}
+
+/* Day-of-week header cells */
+.cal-dow-header {
+  background: var(--color-bg-header);
+  color: var(--color-muted);
+  text-align: center;
+  padding: 2px 0;
+  font-size: var(--font-size-xs, 0.7rem);
+  letter-spacing: 0.02em;
+}
+
+/* Day cells */
+.cal-day-cell {
+  background: var(--color-bg);
+  min-height: 52px;
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Day cells outside the current month — dimmed */
+.cal-day-cell--other-month {
+  background: var(--color-bg-alt);
+  opacity: 0.5;
+}
+
+/* Today highlight */
+.cal-day-cell--today {
+  background: color-mix(in srgb, var(--section-accent-home) 8%, var(--color-bg));
+}
+
+/* Focusable accent tint when cursor is on a day cell */
+.cal-day-cell[data-tui-focusable-focused="yes"] {
+  background: color-mix(in srgb, var(--section-accent-home) 14%, var(--color-bg));
+}
+
+/* Day number / open button — full cell clickable area, no chrome */
+.cal-day-open-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  line-height: 1;
+}
+
+.cal-day-number {
+  font-size: var(--font-size-xs, 0.7rem);
+  color: var(--color-muted);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.cal-day-cell--today .cal-day-number {
+  color: var(--section-accent-home);
+  font-weight: 600;
+}
+
+/* Entry bullets per category */
+.cal-day-bullet {
+  display: block;
+  font-size: var(--font-size-xs, 0.7rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.cal-day-bullet--channel { color: var(--section-accent-videos); }
+.cal-day-bullet--game    { color: var(--section-accent-games);  }
+.cal-day-bullet--system  { color: var(--section-accent-home);   }
+.cal-day-bullet--manual  { color: var(--dracula-orange);        }
+
+/* ── Calendar Day Detail Dialog (Tui::CalendarDayDialogComponent) ───────
+   Shown when user hits Enter on a day cell. Simple table layout:
+   kind chip | title. No hover, no mouse. Esc to close.
+   ──────────────────────────────────────────────────────────────────── */
+
+.cal-day-dialog__body {
+  padding: 8px 12px 12px;
+  min-width: 320px;
+  max-width: 480px;
+}
+
+.cal-day-dialog__empty {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm, 0.75rem);
+  padding: 4px 0;
+}
+
+.cal-day-dialog__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm, 0.75rem);
+}
+
+.cal-day-dialog__row + .cal-day-dialog__row {
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.cal-day-dialog__kind-cell {
+  padding: 4px 8px 4px 0;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.cal-day-dialog__title-cell {
+  padding: 4px 0;
+  color: var(--color-text);
+  vertical-align: top;
+  word-break: break-word;
+}
+
+/* Kind chip color overrides for the day dialog table */
+.cal-day-dialog__kind--channel { color: var(--section-accent-videos); }
+.cal-day-dialog__kind--game    { color: var(--section-accent-games);  }
+.cal-day-dialog__kind--system  { color: var(--section-accent-home);   }
+.cal-day-dialog__kind--manual  { color: var(--dracula-orange);        }
+
+/* === tui-checkbox indeterminate === */
+/*
+ * A2 (2026-05-25) — 3-state checkbox: [ ] unchecked · [x] checked · [-] indeterminate.
+ *
+ * The `--indeterminate` modifier paints the box glyph in muted gray.
+ * Per the text-color taxonomy: indeterminate is NOT an action in the
+ * "actions are always accent" sense — it signals a system-derived mixed
+ * state, not a user-operable choice. Using muted keeps it visually
+ * subordinate and consistent with the "paused" sync indicator (also muted).
+ *
+ * The brackets of an indeterminate checkbox in an ACTION SLOT still render
+ * in var(--section-accent) because the bracket pair IS the action affordance;
+ * only the inner glyph char (`-`) is muted. This is a pure CSS trick:
+ * the parent `.tui-checkbox--indeterminate` class overrides the `__box`
+ * color, while any ancestor [data-tui-focusable-style="action"] or
+ * `.tui-action-slot` continues to color its children in accent.
+ * If the checkbox sits inside such a slot, the bracket color is controlled
+ * by the slot — not this component — so no override is needed here.
+ */
+
+/* Indeterminate state: mute the entire box span */
+.tui-checkbox--indeterminate .tui-checkbox__box {
+  color: var(--color-muted);
+}
+
+/* Indeterminate label is also muted (the combined `[-] label` reads as a
+   display-only indicator, not an interactive action). */
+.tui-checkbox--indeterminate .tui-checkbox__label {
+  color: var(--color-muted);
+}
+
+/* === tui-sync-indicator paused/uncertain === */
+/*
+ * A3 (2026-05-25) — paused + uncertain states for Tui::SyncIndicatorComponent.
+ *
+ * Both states render `[-] sync` as the display text. They are distinguished
+ * by color class applied to the host `.tui-sync-word` element:
+ *
+ *   .is-muted  → paused   (user deliberately paused; gray, not in accent voice)
+ *   .is-accent → uncertain (system-derived mixed state; stays in accent voice)
+ *
+ * The `.is-muted` class is shared with other tui-transition-painted elements.
+ * No new class is introduced — the existing `is-muted` / `is-accent` tokens
+ * already exist in the tui-transition color table.
+ *
+ * The rules below make `.tui-sync-word` honor `.is-muted` for the paused
+ * state. The `.is-accent` path is already covered by the existing
+ * `.tui-sync-word` default rules elsewhere in this file.
+ */
+
+/* Paused sync indicator — muted (gray). Explicitly not accent because
+   a paused target is not an operable action; it's an informational state. */
+.tui-sync-word.is-muted {
+  color: var(--color-muted);
+}
+
+/* Uncertain sync indicator — accent (same as active / idle / syncing).
+   Rule is declarative for documentation; the existing `.is-accent` rule
+   already handles this, but naming it explicitly makes the intent clear. */
+.tui-sync-word.is-accent {
+  color: var(--section-accent);
 }

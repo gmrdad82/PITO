@@ -67,8 +67,8 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         expect(page).to have_css(".tui-sync-word", text: syncing_display)
       end
 
-      it "renders '[-] sync' for :mixed (parent panel mixed-children state)" do
-        render_inline(described_class.new(state: :mixed))
+      it "renders '[-] sync' for :uncertain (A3 canonical name for parent-panel mixed-children state)" do
+        render_inline(described_class.new(state: :uncertain))
         expect(page).to have_css(".tui-sync-word", text: mixed_display)
       end
 
@@ -113,9 +113,14 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
       end
 
-      it "is accent for :mixed (parent-panel mixed-children state)" do
-        render_inline(described_class.new(state: :mixed))
+      it "is accent for :uncertain (parent-panel mixed-children state; A3 canonical name)" do
+        render_inline(described_class.new(state: :uncertain))
         expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
+      end
+
+      it "is muted for :paused (user deliberately paused; A3)" do
+        render_inline(described_class.new(state: :paused))
+        expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="muted"]')
       end
 
       it "is pink (red) for :disconnected (the documented exception)" do
@@ -140,8 +145,8 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
         expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="yes"]')
       end
 
-      it "is no for :mixed (parent-panel mixed-children state)" do
-        render_inline(described_class.new(state: :mixed))
+      it "is no for :uncertain (parent-panel mixed-children state; A3 canonical name)" do
+        render_inline(described_class.new(state: :uncertain))
         expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="no"]')
       end
 
@@ -176,12 +181,14 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
     end
 
     describe "per-state display value data-* attrs (JS contract)" do
-      it "seeds idle, active, syncing, mixed, and disconnected Stimulus values" do
+      it "seeds idle, active, syncing, mixed, paused, uncertain, and disconnected Stimulus values" do
         render_inline(described_class.new(state: :idle))
         expect(page).to have_css("[data-tui-sync-indicator-idle-value]")
         expect(page).to have_css("[data-tui-sync-indicator-active-value]")
         expect(page).to have_css("[data-tui-sync-indicator-syncing-value]")
         expect(page).to have_css("[data-tui-sync-indicator-mixed-value]")
+        expect(page).to have_css("[data-tui-sync-indicator-paused-value]")
+        expect(page).to have_css("[data-tui-sync-indicator-uncertain-value]")
         expect(page).to have_css("[data-tui-sync-indicator-disconnected-value]")
       end
 
@@ -216,10 +223,6 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
     describe "no legacy state names" do
       it "treats :synced as invalid and falls back to :idle" do
         expect(described_class.new(state: :synced).state).to eq(:idle)
-      end
-
-      it "treats :paused as invalid (paused state was dropped) and falls back to :idle" do
-        expect(described_class.new(state: :paused).state).to eq(:idle)
       end
     end
   end
@@ -387,13 +390,120 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
     end
   end
 
-  describe "STATES constant (2026-05-24 — five canonical states)" do
-    it "includes idle / active / syncing / mixed / disconnected" do
-      expect(described_class::STATES).to eq(%i[idle active syncing mixed disconnected])
+  describe "STATES constant (A3 — 2026-05-25 — six canonical states + mixed alias)" do
+    it "includes idle / active / syncing / paused / uncertain / mixed / disconnected" do
+      expect(described_class::STATES).to include(:idle, :active, :syncing, :paused, :uncertain, :mixed, :disconnected)
     end
 
-    it "treats :mixed as a valid state input" do
-      expect(described_class.new(state: :mixed).state).to eq(:mixed)
+    it "treats :mixed as a deprecated alias for :uncertain (maps to :uncertain)" do
+      # mixed is accepted as input but normalized to :uncertain internally.
+      allow(Rails.logger).to receive(:warn)
+      expect(described_class.new(state: :mixed).state).to eq(:uncertain)
+    end
+
+    it "treats :paused as a valid state input (A3 addition)" do
+      expect(described_class.new(state: :paused).state).to eq(:paused)
+    end
+
+    it "treats :uncertain as a valid state input (A3 addition)" do
+      expect(described_class.new(state: :uncertain).state).to eq(:uncertain)
+    end
+  end
+
+  # ─── A3: paused state ─────────────────────────────────────────────────
+  describe "A3: :paused state" do
+    it "renders '[-] sync' for :paused" do
+      mixed_word = I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
+      render_inline(described_class.new(state: :paused))
+      expect(page).to have_css(".tui-sync-word", text: "[-] #{mixed_word}")
+    end
+
+    it "renders checkbox_glyph as '[-]' for :paused" do
+      component = described_class.new(state: :paused)
+      expect(component.checkbox_glyph).to eq("[-]")
+    end
+
+    it "paints muted color for :paused (user deliberately paused, not in accent voice)" do
+      render_inline(described_class.new(state: :paused))
+      expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="muted"]')
+    end
+
+    it "has no shimmer for :paused" do
+      render_inline(described_class.new(state: :paused))
+      expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="no"]')
+    end
+
+    it "emits the paused display string as a data attr" do
+      render_inline(described_class.new(state: :paused))
+      expect(page).to have_css("[data-tui-sync-indicator-paused-value]")
+    end
+
+    it "word_paused returns the [-] sync string" do
+      component = described_class.new
+      mixed_word = I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
+      expect(component.word_paused).to eq("[-] #{mixed_word}")
+    end
+  end
+
+  # ─── A3: uncertain state ──────────────────────────────────────────────
+  describe "A3: :uncertain state" do
+    it "renders '[-] sync' for :uncertain" do
+      mixed_word = I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
+      render_inline(described_class.new(state: :uncertain))
+      expect(page).to have_css(".tui-sync-word", text: "[-] #{mixed_word}")
+    end
+
+    it "renders checkbox_glyph as '[-]' for :uncertain" do
+      component = described_class.new(state: :uncertain)
+      expect(component.checkbox_glyph).to eq("[-]")
+    end
+
+    it "paints accent color for :uncertain (system state, still in accent voice)" do
+      render_inline(described_class.new(state: :uncertain))
+      expect(page).to have_css('.tui-sync-word[data-tui-transition-color-value="accent"]')
+    end
+
+    it "has no shimmer for :uncertain" do
+      render_inline(described_class.new(state: :uncertain))
+      expect(page).to have_css('.tui-sync-word[data-tui-transition-shimmer-value="no"]')
+    end
+
+    it "emits the uncertain display string as a data attr" do
+      render_inline(described_class.new(state: :uncertain))
+      expect(page).to have_css("[data-tui-sync-indicator-uncertain-value]")
+    end
+
+    it "word_uncertain returns the [-] sync string" do
+      component = described_class.new
+      mixed_word = I18n.t("tui.tst.sync.mixed", default: I18n.t("tui.tst.sync.idle"))
+      expect(component.word_uncertain).to eq("[-] #{mixed_word}")
+    end
+  end
+
+  # ─── A3: mixed → uncertain alias ──────────────────────────────────────
+  describe "A3: mixed → uncertain deprecated alias" do
+    it "accepts :mixed and maps state to :uncertain internally" do
+      allow(Rails.logger).to receive(:warn)
+      component = described_class.new(state: :mixed)
+      expect(component.state).to eq(:uncertain)
+    end
+
+    it "emits a Rails.logger.warn once when :mixed is passed" do
+      expect(Rails.logger).to receive(:warn).with(
+        a_string_matching(/state 'mixed' is deprecated.*uncertain/)
+      )
+      described_class.new(state: :mixed)
+    end
+
+    it "word_mixed delegates to word_uncertain (both return the [-] sync string)" do
+      component = described_class.new
+      expect(component.word_mixed).to eq(component.word_uncertain)
+    end
+
+    it "passing 'mixed' as a string also triggers the alias" do
+      allow(Rails.logger).to receive(:warn)
+      component = described_class.new(state: "mixed")
+      expect(component.state).to eq(:uncertain)
     end
   end
 
@@ -443,6 +553,32 @@ RSpec.describe Tui::SyncIndicatorComponent, type: :component do
     it "the notice message lookup interpolates panel title from data-panel-title" do
       expect(js_source).to include("data-panel-title")
       expect(js_source).to match(/sync_paused_for|sync_resumed_for/)
+    end
+
+    # A3 — paused / uncertain cable kinds
+    it "listens for tui:sync-paused document event (cable kind: pause)" do
+      expect(js_source).to include('"tui:sync-paused"')
+    end
+
+    it "listens for tui:sync-uncertain document event (cable kind: uncertain)" do
+      expect(js_source).to include('"tui:sync-uncertain"')
+    end
+
+    it "has setPaused() that paints the paused state" do
+      expect(js_source).to include("setPaused()")
+    end
+
+    it "has setUncertain() that paints the uncertain state" do
+      expect(js_source).to include("setUncertain()")
+    end
+
+    it "paused state adds is-muted class, not is-accent" do
+      expect(js_source).to include('"paused"')
+      expect(js_source).to match(/state === "paused"[\s\S]*?is-muted/)
+    end
+
+    it "handles 'mixed' as a legacy wordFor alias (still returns mixed word)" do
+      expect(js_source).to include('"mixed"')
     end
   end
 
