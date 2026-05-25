@@ -21,6 +21,16 @@
 4. **Master + agent prompts must reference these rules + the canonical VC
    by file path** before any UI dispatch. No "render as bracketed action"
    — instead "use `Tui::ActionComponent`, never invent a new action class".
+5. **Flat focus navigation: CTRL+j / CTRL+k.** Within any focus context
+   (a dialog, a panel, a sub-panel), CTRL+j cycles focus forward through
+   visible focusables (buttons + inputs), CTRL+k cycles backward. Wraps at
+   the ends. Plain `j` / `k` are reserved for cursor row-nav inside tables
+   and would conflict with text inputs — CTRL+modifier makes the contract
+   work even when a code-cell input has focus. Reference implementation:
+   `app/javascript/controllers/pito_auth_dialog_controller.js`
+   (`visibleFocusables` + `focusNext` / `focusPrev`). Future panel-level
+   nav follows the same shape — extract into a mixin when the second
+   consumer lands.
 
 ## Goal
 
