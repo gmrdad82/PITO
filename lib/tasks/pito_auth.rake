@@ -36,21 +36,12 @@ namespace :pito do
 
       puts "TOTP enrolled."
       puts ""
-      puts "Scan this in your authenticator app:"
+      puts "Paste this into your authenticator app (manual entry, or as URI):"
       puts "  #{otpauth_uri}"
       puts ""
-
-      # ASCII QR via rqrcode (bail gracefully if gem missing)
-      begin
-        require "rqrcode"
-        qr = RQRCode::QRCode.new(otpauth_uri, level: :l)
-        puts qr.as_ansi(light: "[47m  [0m", dark: "[40m  [0m", quiet_zone_size: 1)
-        puts ""
-      rescue LoadError
-        puts "(install rqrcode gem to print an ASCII QR)"
-        puts ""
-      end
-
+      puts "Or enter the raw secret manually:"
+      puts "  #{seed}"
+      puts ""
       puts "Backup codes (single-use; store in a password manager):"
       plain_codes.each_with_index { |c, i| puts "  #{i + 1}. #{c}" }
       puts ""
