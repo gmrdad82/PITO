@@ -232,27 +232,31 @@ module HomePanelData
     LATEST_VIDEOS_ALLOWED_DIRS.include?(v) ? v : LATEST_VIDEOS_DEFAULT_DIR
   end
 
+  # Frozen lookup: every [sort_key, dir] pair maps to a compile-time
+  # literal SQL string. No user input is interpolated into Arel.sql —
+  # the entire string is a constant. `.fetch` falls back to the default
+  # if any unexpected combination slips through sanitization.
+  LATEST_VIDEOS_ORDER_CLAUSES = {
+    %w[title asc]  => "videos.title asc",
+    %w[title desc] => "videos.title desc",
+    %w[channel asc]  => "channels.title asc",
+    %w[channel desc] => "channels.title desc",
+    %w[views asc]  => "view_count asc",
+    %w[views desc] => "view_count desc",
+    %w[published_at asc]  => "videos.published_at asc nulls last",
+    %w[published_at desc] => "videos.published_at desc nulls last"
+  }.freeze
+
   def fetch_latest_videos
-    dir = sanitized_latest_videos_dir
-    sort_clause =
-      case sanitized_latest_videos_sort
-      when "title"
-        Arel.sql("videos.title #{dir}")
-      when "channel"
-        # JOIN already present via `includes(:channel).joins(:channel)`
-        Arel.sql("channels.title #{dir}")
-      when "views"
-        Arel.sql("view_count #{dir}")
-      else
-        # published_at — secondary sort by id desc keeps rows stable
-        [ Arel.sql("published_at #{dir} nulls last"), Arel.sql("id desc") ]
-      end
+    sort   = sanitized_latest_videos_sort
+    dir    = sanitized_latest_videos_dir
+    clause = LATEST_VIDEOS_ORDER_CLAUSES.fetch([ sort, dir ], "videos.published_at desc nulls last")
 
     Video
       .where.not(published_at: nil)
       .includes(:channel)
       .joins(:channel)
-      .order(sort_clause)
+      .order(Arel.sql(clause))
       .limit(LATEST_VIDEOS_LIMIT)
   rescue StandardError
     []
@@ -274,10 +278,11 @@ module HomePanelData
   end
 
   # Apply the 4-category `?calendar_filter[*]=on` filter to a scope.
-  # Returns scope.none when all chips are off, unmodified scope when all
-  # chips are on or the param is absent, filtered scope otherwise.
+  # nil   = param absent → all on (default state, no WHERE clause).
+  # {}    = param present but empty → all off → scope.none.
+  # Hash  = explicit subset of categories that are "on".
   def home_calendar_filter_scope(scope, raw_filter)
-    return scope if raw_filter.blank?
+    return scope if raw_filter.nil?
     active = CalendarHelper::PANEL_CALENDAR_CATEGORIES.keys.select { |k| raw_filter[k].to_s == "on" }
     return scope.none if active.empty?
     types = active.flat_map { |cat| CalendarHelper::PANEL_CALENDAR_CATEGORIES[cat] }.compact
@@ -573,10 +578,16 @@ module HomePanelData
                     .group(:channel_id)
                     .to_sql
 
-    base = Channel.select("channels.*, COALESCE(v.last_published_at, NULL) AS last_published_video_at")
-                  .joins("LEFT OUTER JOIN (#{subquery}) v ON v.channel_id = channels.id")
-
-    @channels_overview_channels = base.order(Arel.sql(channels_overview_order_clause))
+    # Eagerly load with `.to_a` so `channels.any?` / `.each` in the VC
+    # never triggers a COUNT(*) against the complex SELECT (which would
+    # produce a syntax error because PostgreSQL cannot wrap `channels.*` +
+    # virtual columns inside COUNT). The result set is small (all owned
+    # channels) so eager loading is appropriate here.
+    @channels_overview_channels =
+      Channel.joins("LEFT OUTER JOIN (#{subquery}) v ON v.channel_id = channels.id")
+             .select("channels.*", "v.last_published_at AS last_published_video_at")
+             .order(Arel.sql(channels_overview_order_clause))
+             .to_a
   end
 
   def channels_overview_sort_key
