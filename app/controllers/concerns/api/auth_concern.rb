@@ -46,7 +46,8 @@ module Api
       end
 
       Current.token = token
-      Current.user  = user
+      # Z1: User model gone; Current.user removed. Token identity is
+      # established by Current.token alone for API calls.
     end
 
     # Raise if the current token does not carry the given scope. The

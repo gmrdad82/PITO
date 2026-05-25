@@ -1,0 +1,67 @@
+<%# Pito::AuthDialogComponent — full-viewport non-dismissible TOTP login overlay.
+    Rendered by app/views/layouts/application.html.erb when Current.session.nil?.
+    Form posts to POST /login (sessions#create). On success → full-page reload.
+    On 422 → same layout re-renders with flash[:alert] set.
+
+    The pito-auth-dialog Stimulus controller is mounted on the outer
+    .pito-auth-dialog wrapper so its targets (backupField, codeInput,
+    backupInput) and the toggle button's action all share a single
+    controller instance. %>
+<div class="pito-auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title">
+  <div class="pito-auth-dialog" data-controller="pito-auth-dialog">
+    <h1 id="auth-dialog-title" class="pito-auth-dialog__title"><%= t("tui.auth.title") %></h1>
+
+    <% if login_error %>
+      <p class="pito-auth-dialog__error"><%= login_error %></p>
+    <% end %>
+
+    <%= form_with url: "/login", method: :post, scope: nil do |f| %>
+      <%# Primary TOTP input — 6-digit numeric %>
+      <div class="pito-auth-dialog__field" id="auth-totp-field">
+        <input type="text"
+               name="code"
+               id="auth-code"
+               class="pito-auth-dialog__input"
+               placeholder="<%= t("tui.auth.code_placeholder") %>"
+               maxlength="6"
+               inputmode="numeric"
+               autocomplete="one-time-code"
+               autofocus
+               data-pito-auth-dialog-target="codeInput">
+      </div>
+
+      <%# Backup code input — revealed via toggle link; hidden by default %>
+      <div class="pito-auth-dialog__field" id="auth-backup-field" hidden
+           data-pito-auth-dialog-target="backupField">
+        <input type="text"
+               name="backup_code"
+               id="auth-backup-code"
+               class="pito-auth-dialog__input"
+               placeholder="<%= t("tui.auth.backup_placeholder") %>"
+               maxlength="8"
+               autocomplete="off"
+               data-pito-auth-dialog-target="backupInput">
+      </div>
+
+      <div class="pito-auth-dialog__actions">
+        <button type="submit" class="pito-auth-dialog__submit bracketed-action">
+          [<%= t("tui.auth.submit_label") %>]
+        </button>
+      </div>
+    <% end %>
+
+    <%# Toggle link — swap between TOTP and backup-code input.
+        data-action targets the outer .pito-auth-dialog controller. %>
+    <p class="pito-auth-dialog__toggle">
+      <button type="button"
+              class="pito-auth-dialog__toggle-btn"
+              data-action="click->pito-auth-dialog#toggleBackup">
+        <%= t("tui.auth.use_backup") %>
+      </button>
+    </p>
+
+    <% if totp_not_enrolled? %>
+      <p class="pito-auth-dialog__hint"><%= t("tui.auth.no_enrollment_hint") %></p>
+    <% end %>
+  </div>
+</div>

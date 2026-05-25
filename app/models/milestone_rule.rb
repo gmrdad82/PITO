@@ -9,9 +9,7 @@ class MilestoneRule < ApplicationRecord
   extend FriendlyId
   friendly_id :slug_candidates, use: %i[slugged history finders]
 
-  belongs_to :created_by_user,
-             class_name: "User",
-             optional: true
+  # Z1-ext: created_by_user_id FK to users dropped (migration 20260525190002).
 
   has_many :calendar_entries,
            dependent: :nullify,

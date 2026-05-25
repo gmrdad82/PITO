@@ -1,13 +1,12 @@
 # Phase 3 — Step B (5b-token-and-auth-concern.md) — token model.
 #
-# Renamed from `McpAccessToken`. Adds user ownership, the scope array,
-# and optional expiry. Digest semantics (HMAC-SHA256, secure compare)
-# inherited from the prior model — but the pepper is now sourced from
-# the `:tokens.pepper` credential rather than the global
-# `secret_key_base`.
+# Renamed from `McpAccessToken`. Adds the scope array and optional expiry.
+# Digest semantics (HMAC-SHA256, secure compare) inherited from the prior
+# model — but the pepper is now sourced from the `:tokens.pepper` credential
+# rather than the global `secret_key_base`.
 #
 # Phase 8 — tenant drop (ADR 0003). The `tenant_id` column is gone.
-# Tokens are owned by a User row install-wide.
+# Z1 — User model dropped; `user_id` column removed from `api_tokens`.
 #
 # Validation rules:
 #   - name presence
@@ -16,7 +15,7 @@
 #   - scopes presence (empty array rejected) AND every entry in `Scopes::ALL`
 #
 # Class methods:
-#   - `generate!(user:, name:, scopes:, expires_at: nil)` — returns
+#   - `generate!(name:, scopes:, expires_at: nil)` — returns
 #     `[record, plaintext]`. Plaintext is shown once, never stored.
 #   - `authenticate(plaintext)` — kept for the legacy lookup path used by
 #     specs; the production lookup goes through `Api::TokenAuthenticator`.
@@ -26,8 +25,6 @@
 #   - `touch_used!` — `update_columns(last_used_at: Time.current)`; skips
 #     validations and callbacks so it's safe to call on every request.
 class ApiToken < ApplicationRecord
-  belongs_to :user
-
   validates :name, presence: true
   validates :token_digest, presence: true, uniqueness: true
   validates :last_token_preview, presence: true
@@ -39,10 +36,9 @@ class ApiToken < ApplicationRecord
 
   # Generates a new token; stores the digest and the last-4 preview. Returns
   # the plaintext exactly once — callers must capture it now or lose it.
-  def self.generate!(user:, name:, scopes:, expires_at: nil)
+  def self.generate!(name:, scopes:, expires_at: nil)
     plaintext = SecureRandom.urlsafe_base64(32)
     record = create!(
-      user: user,
       name: name,
       scopes: Array(scopes),
       expires_at: expires_at,

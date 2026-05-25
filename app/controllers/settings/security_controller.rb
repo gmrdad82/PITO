@@ -9,6 +9,7 @@
 # surface.
 class Settings::SecurityController < ApplicationController
   def show
-    @twofa_enabled = Current.user&.totp_enabled? || false
+    # Z1: User model gone; TOTP state now lives on AppSetting singleton.
+    @twofa_enabled = AppSetting.instance.totp_enabled? rescue false
   end
 end

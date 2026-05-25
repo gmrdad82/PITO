@@ -43,8 +43,6 @@ module Tui
   #   - page:           was the breadcrumb page tail; breadcrumb moved to BST.
   #   - sidekiq_stats:  was the Sidekiq cells; Sidekiq moved to BST center.
   class TopStatusBarComponent < ViewComponent::Base
-    SYNC_STATES = %i[idle syncing syncing_with_target disconnected].freeze
-
     # Locked progress bar width (characters). 8 cells matches the demo
     # final reference (`▓▓▓░░░░░` for 12/33). Centralized here so the
     # template never inlines a literal.
@@ -55,7 +53,7 @@ module Tui
       page: nil,
       version: nil,
       sidekiq_stats: nil,
-      sync_state: :idle,
+      sync_state: nil,
       sync_target: nil,
       progress: nil
     )
@@ -63,12 +61,12 @@ module Tui
       @page = page.presence
       @version = version.presence || default_version
       @sidekiq_stats = normalize_stats(sidekiq_stats)
-      @sync_state = SYNC_STATES.include?(sync_state.to_sym) ? sync_state.to_sym : :idle
-      @sync_target = sync_target.presence
+      # Z2e (2026-05-25): sync_state + sync_target accepted for compat but unused.
+      # The 3-state indicator is now pure JS (Tui::SyncIndicatorComponent).
       @progress = normalize_progress(progress)
     end
 
-    attr_reader :section, :page, :version, :sidekiq_stats, :sync_state, :sync_target, :progress
+    attr_reader :section, :page, :version, :sidekiq_stats, :progress
 
     # Section accent class — used by tests + future cable hooks to
     # confirm the bar is wired to the right CSS cascade. The actual
@@ -89,43 +87,6 @@ module Tui
 
     def sidekiq_value_for(letter)
       @sidekiq_stats.fetch(letter_to_key(letter), 0)
-    end
-
-    # Sync dot glyph + class triple. Mirrors the demo:
-    #   :idle                  -> ● green
-    #   :syncing               -> ● amber
-    #   :syncing_with_target   -> ● amber + sync_target rendered
-    #   :disconnected          -> ✗ red (pink token)
-    def sync_dot_glyph
-      @sync_state == :disconnected ? "✗" : "●"
-    end
-
-    def sync_dot_class
-      case @sync_state
-      when :idle              then "sb-sync-dot sb-sync-dot--green"
-      when :syncing, :syncing_with_target then "sb-sync-dot sb-sync-dot--amber"
-      when :disconnected      then "sb-sync-dot sb-sync-dot--red"
-      end
-    end
-
-    def sync_word
-      case @sync_state
-      when :idle              then "synced"
-      when :syncing, :syncing_with_target then "syncing"
-      when :disconnected      then "disconnected"
-      end
-    end
-
-    def sync_word_class
-      case @sync_state
-      when :idle              then "sb-sync-word sb-sync-word--idle"
-      when :syncing, :syncing_with_target then "sb-sync-word sb-sync-word--syncing"
-      when :disconnected      then "sb-sync-word sb-sync-word--disconnected"
-      end
-    end
-
-    def sync_target_visible?
-      @sync_state == :syncing_with_target && @sync_target.present?
     end
 
     def progress_visible?

@@ -1,351 +1,129 @@
 import { Controller } from "@hotwired/stimulus"
 
 /**
- * tui-sync-indicator — thin controller for Tui::SyncIndicatorComponent.
+ * tui-sync-indicator — Stimulus controller for Tui::SyncIndicatorComponent.
  *
- * 2026-05-25 (sync-rebuild) — every `localStorage.setItem` /
- * `localStorage.getItem` call has been deleted. The server's
- * AppSetting rows are the single source of truth; the SyncStateChannel
- * cable broadcasts re-paint every connected client in lockstep.
+ * Renders one of three visual states on the TST master sync indicator:
  *
- * ## Mode values (declared via `data-tui-sync-indicator-mode-value`)
+ *   synced       → "[ ] sync"  muted, no animation
+ *   syncing      → "[x] sync"  accent, shimmer
+ *   disconnected → "[!] sync"  danger (red), no animation
  *
- *   :tst    — aggregate read-only (default; used in the top status bar)
- *   :target — interactive per-panel / per-sub-panel; click POSTs
- *             `/sync/toggle?target=<target>`; the server cascades the
- *             write and broadcasts the new state.
+ * State transitions are driven by document events:
  *
- * ## Six states (A3 — 2026-05-25)
+ *   tui:cable-activity    → "syncing" (debounced back to "synced" after SETTLE_MS)
+ *                           emitted by tui_status_bar_controller on every cable message
+ *   tui:sync-changed      → "disconnected" when detail.state === "disconnected"
+ *                           "synced" when detail.state === "synced" (cable reconnect)
+ *                           emitted by tui_status_bar_controller on cable lifecycle events
  *
- *   idle         → "[ ] sync"  accent, no shimmer (target disabled)
- *   active       → "[x] sync"  accent, no shimmer (target enabled)
- *   syncing      → "[x] sync"  accent, shimmer (cable activity)
- *   paused       → "[-] sync"  muted (gray), no shimmer (cable kind:"pause")
- *   uncertain    → "[-] sync"  accent, no shimmer (cable kind:"uncertain")
- *   disconnected → "[!] sync"  danger (red), no shimmer
+ * Glyph transitions animate with a scramble effect (8 frames × 30 ms = 240 ms)
+ * identical in cadence to sessions_scramble_controller.js. Only the inner
+ * bracket character scrambles (the `[` and `]` delimiters stay static).
+ * Scramble fires only when the NEW glyph differs from the current one.
  *
- * "mixed" is a deprecated alias for "uncertain" — both still accepted
- * for backward-compat with any call sites not yet updated.
+ * No click handler. No target mode. Single instance: TST only.
  *
- * ## Paused vs uncertain visual distinction
- *
- *   paused    → adds `.is-muted` class (gray, user deliberately paused)
- *   uncertain → adds `.is-accent` class (section accent, system state)
- *
- * ## Wire shape
- *
- *   POST /sync/toggle?target=<target> (with CSRF token) → 204 no_content
- *
- *   Cable envelope kinds handled (A8 additions):
- *     { kind: "sync_state",  payload: { target, enabled: bool } }
- *     { kind: "pause",       payload: { target } }
- *     { kind: "uncertain",   payload: { target } }
- *
- *   The shared SyncState bridge (`document` event `tui:sync-changed`,
- *   fan-out from the global subscription) is what every per-target
- *   controller listens to. We do NOT re-implement state caching here.
- *
- * ## :target mode click behavior
- *
- *   - `toggle()` POSTs to `/sync/toggle` and returns. NO local write,
- *     NO optimistic paint. The cable broadcast (which lands in
- *     milliseconds on localhost) drives the repaint via the
- *     `tui:sync-changed` document event.
- *
- * ## :tst mode behavior
- *
- *   - Listens for `tui:sync-changed` (target === "app") to flip
- *     between active and idle.
- *   - Listens for `tui:cable-activity` (Sidekiq stats); shimmer driven
- *     by busy>0 || enqueued>0 || retry>0.
- *   - Listens for `tui:sync-paused` and `tui:sync-uncertain` document
- *     events (dispatched by the global cable bridge when it receives
- *     kind:"pause" / kind:"uncertain" envelopes from A8).
- *   - Click is a no-op in :tst mode.
+ * @see app/components/tui/sync_indicator_component.rb
+ * @scramble-source sessions_scramble_controller.js (same chars + frame pattern)
  */
-export default class extends Controller {
-  static values = {
-    mode: { type: String, default: "tst" },
-    target: String,
-    parentTarget: String,
-    idle: String,
-    active: String,
-    syncing: String,
-    mixed: String,
-    paused: String,
-    uncertain: String,
-    disconnected: String
-  }
 
-  static COOL_DOWN_MS = 1000
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+const SCRAMBLE_FRAMES = 8
+const FRAME_INTERVAL_MS = 30
+
+function randomChar() {
+  return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+}
+
+/** Scramble a single character from whatever is currently in `element.textContent`
+ *  to `targetGlyph`, then call `onDone` when settled. Returns the interval id
+ *  so the caller can cancel mid-flight if a faster transition arrives. */
+function scrambleGlyph(element, targetGlyph, onDone) {
+  let frame = 0
+  const interval = setInterval(() => {
+    frame++
+    if (frame >= SCRAMBLE_FRAMES) {
+      clearInterval(interval)
+      element.textContent = `[${targetGlyph}]`
+      if (onDone) onDone()
+    } else {
+      element.textContent = `[${randomChar()}]`
+    }
+  }, FRAME_INTERVAL_MS)
+  return interval
+}
+
+export default class extends Controller {
+  static values = { state: { type: String, default: "synced" } }
+  static SETTLE_MS = 300
 
   connect() {
-    this._coolDownTimer = null
-    this._cableDisconnected = false
-    // Per-target enabled cache, hydrated from the SSR class on the
-    // host element and updated on every cable broadcast we observe.
-    // No localStorage reads anywhere.
-    this._enabledByTarget = window.__pitoSyncStateCache = window.__pitoSyncStateCache || {}
-    if (this.isTargetMode()) {
-      // Seed cache from the SSR state (class `is-accent` is paired with
-      // [x] = enabled in our `_paint`). Cheap, idempotent.
-      const hostSaysEnabled = this.element.textContent.includes("[x]")
-      if (this.hasTargetValue && this._enabledByTarget[this.targetValue] === undefined) {
-        this._enabledByTarget[this.targetValue] = hostSaysEnabled
-      }
-    }
-
-    this._boundSyncChanged  = this.onSyncChanged.bind(this)
-    this._boundActivity     = this.onActivity.bind(this)
-    this._boundSyncPaused   = this.onSyncPaused.bind(this)
-    this._boundSyncUncertain = this.onSyncUncertain.bind(this)
-    document.addEventListener("tui:sync-changed",   this._boundSyncChanged)
-    document.addEventListener("tui:cable-activity", this._boundActivity)
-    document.addEventListener("tui:sync-paused",    this._boundSyncPaused)
-    document.addEventListener("tui:sync-uncertain", this._boundSyncUncertain)
+    this._onActivity = this.handleActivity.bind(this)
+    this._onSyncChanged = this.handleSyncChanged.bind(this)
+    document.addEventListener("tui:cable-activity", this._onActivity)
+    document.addEventListener("tui:sync-changed", this._onSyncChanged)
+    this._settleTimer = null
+    this._scrambleInterval = null
+    this._currentGlyph = " "
+    this.applyState(this.stateValue)
   }
 
   disconnect() {
-    document.removeEventListener("tui:sync-changed",   this._boundSyncChanged)
-    document.removeEventListener("tui:cable-activity", this._boundActivity)
-    document.removeEventListener("tui:sync-paused",    this._boundSyncPaused)
-    document.removeEventListener("tui:sync-uncertain", this._boundSyncUncertain)
-    if (this._coolDownTimer) {
-      clearTimeout(this._coolDownTimer)
-      this._coolDownTimer = null
-    }
+    document.removeEventListener("tui:cable-activity", this._onActivity)
+    document.removeEventListener("tui:sync-changed", this._onSyncChanged)
+    if (this._settleTimer) clearTimeout(this._settleTimer)
+    if (this._scrambleInterval) clearInterval(this._scrambleInterval)
   }
 
-  // ─── mode detection ───────────────────────────────────────────────
-  isTargetMode() {
-    return this.hasModeValue && this.modeValue === "target"
+  handleActivity() {
+    if (this.stateValue === "disconnected") return
+    this.applyState("syncing")
+    if (this._settleTimer) clearTimeout(this._settleTimer)
+    this._settleTimer = setTimeout(() => this.applyState("synced"), this.constructor.SETTLE_MS)
   }
 
-  isTstMode() {
-    return !this.isTargetMode()
-  }
-
-  // ─── :target mode click handler ───────────────────────────────────
-  //
-  // 2026-05-25 (sync-rebuild) — POST + return. Server cascades the
-  // write and broadcasts the new state per cascaded target; the
-  // resulting `tui:sync-changed` events re-paint every affected VC.
-  toggle(event) {
-    if (!this.isTargetMode()) return
-    if (event) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-    if (!this.hasTargetValue) return
-    const target = this.targetValue
-    const csrfMeta = document.querySelector('meta[name="csrf-token"]')
-    const headers = { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }
-    if (csrfMeta) headers["X-CSRF-Token"] = csrfMeta.content
-    fetch(`/sync/toggle?target=${encodeURIComponent(target)}`, {
-      method: "POST",
-      headers,
-      credentials: "same-origin"
-    })
-
-    // 2026-05-24 (sync-rebuild) — surface a centered TST notice on
-    // toggle. The panel title comes from the closest panel's
-    // `data-panel-title` attr; the next-enabled value is derived
-    // optimistically (we know the toggle direction client-side) so
-    // the notice fires immediately and does not wait for the cable
-    // round-trip. The glyph repaint still waits for the broadcast.
-    const optimisticNextEnabled = !this._cachedEnabled(target)
-    const panelTitle = this._closestPanelTitle()
-    const message = this._buildNoticeMessage(optimisticNextEnabled, panelTitle)
-    if (message) {
-      document.dispatchEvent(new CustomEvent("tui:notice", {
-        detail: { message, severity: "info" }
-      }))
-    }
-  }
-
-  _cachedEnabled(target) {
-    const cached = this._enabledByTarget[target]
-    return cached === undefined ? true : cached
-  }
-
-  // Walks up from the host element to the nearest panel and reads its
-  // `data-panel-title` attr. Returns null when not found.
-  _closestPanelTitle() {
-    if (!this.element || !this.element.closest) return null
-    const panel = this.element.closest('[data-tui-cursor-target="panel"][data-panel-title]')
-    if (!panel) return null
-    const title = panel.dataset.panelTitle
-    return typeof title === "string" && title.length > 0 ? title : null
-  }
-
-  // Reads the resolved i18n string for a target toggle out of the
-  // `<meta name="pito-notices">` payload. Layer-cake fallback:
-  // scoped message → bare message → null.
-  _buildNoticeMessage(nextEnabled, panelTitle) {
-    const meta = document.querySelector('meta[name="pito-notices"]')
-    if (!meta) return null
-    let map
-    try { map = JSON.parse(meta.content) } catch (_) { return null }
-    if (!map || typeof map !== "object") return null
-    if (panelTitle) {
-      const tmpl = nextEnabled ? map.sync_resumed_for : map.sync_paused_for
-      if (typeof tmpl === "string" && tmpl.length > 0) {
-        return tmpl.replace(/%\{title\}/g, panelTitle)
-      }
-    }
-    const bare = nextEnabled ? map.sync_resumed : map.sync_paused
-    return typeof bare === "string" && bare.length > 0 ? bare : null
-  }
-
-  // Listen for sibling / parent / master toggles. The upstream emitter
-  // is the sync-state cable bridge (see `pito_actions.js`) — it
-  // dispatches one `tui:sync-changed` per cascaded target the server wrote.
-  onSyncChanged(event) {
-    const changed = event && event.detail && event.detail.target
-    if (changed === undefined || changed === null) return
-    const nextEnabled = event.detail.enabled
-    if (typeof nextEnabled === "boolean") {
-      this._enabledByTarget[changed] = nextEnabled
-    }
-    if (this.isTargetMode()) {
-      const isSelf   = changed === this.targetValue
-      const isMaster = changed === "app"
-      if (isSelf || isMaster) {
-        this._paint(this._computeTargetState())
-      }
-    } else if (this.isTstMode()) {
-      if (changed === "app") {
-        if (nextEnabled === false) {
-          this.setIdle()
-        } else {
-          this.setActive()
-        }
-      }
-    }
-  }
-
-  // Sidekiq-aware activity handler. Only Sidekiq stats drive the
-  // active/idle state in :tst mode.
-  onActivity(event) {
-    if (!this.isTstMode()) return
-    const detail = event && event.detail || {}
-    const { kind, payload } = detail
-    if (kind !== "sidekiq" && kind !== "data") return
-    if (this.sidekiqActive(payload)) {
-      if (this._coolDownTimer) {
-        clearTimeout(this._coolDownTimer)
-        this._coolDownTimer = null
-      }
-      this.setActive()
-    } else {
-      if (this._coolDownTimer) clearTimeout(this._coolDownTimer)
-      this._coolDownTimer = setTimeout(() => {
-        this.setIdle()
-        this._coolDownTimer = null
-      }, this.constructor.COOL_DOWN_MS)
-    }
-  }
-
-  // ─── :target mode state computation ───────────────────────────────
-  //
-  // Server owns top-down cascade. JS only reads its own target's
-  // enabled flag plus the parent and master guards.
-  _computeTargetState() {
-    if (this._cableDisconnected) return "disconnected"
-    const selfEnabled = this._cachedEnabled(this.targetValue)
-    if (!selfEnabled) return "idle"
-    if (this.hasParentTargetValue && this.parentTargetValue) {
-      const parentEnabled = this._cachedEnabled(this.parentTargetValue)
-      if (!parentEnabled) return "idle"
-    }
-    if (!this._cachedEnabled("app")) return "idle"
-    return "active"
-  }
-
-  // ─── paused handler (cable kind: "pause") ────────────────────────
-  //
-  // Dispatched by the global cable bridge when it receives a
-  // `kind: "pause"` envelope from Pito::CableBroadcaster (A8).
-  // Paints the indicator muted (gray) — the user deliberately paused.
-  onSyncPaused(event) {
-    const changed = event && event.detail && event.detail.target
-    if (changed === undefined || changed === null) return
-    if (this.isTargetMode()) {
-      if (changed === this.targetValue || changed === "app") {
-        this.setPaused()
-      }
-    } else if (this.isTstMode()) {
-      if (changed === "app") this.setPaused()
-    }
-  }
-
-  // ─── uncertain handler (cable kind: "uncertain") ──────────────────
-  //
-  // Dispatched by the global cable bridge when it receives a
-  // `kind: "uncertain"` envelope (also handles legacy kind: "mixed").
-  // Paints the indicator accent with `[-]` glyph — system state,
-  // not a user action; still in accent voice.
-  onSyncUncertain(event) {
-    const changed = event && event.detail && event.detail.target
-    if (changed === undefined || changed === null) return
-    if (this.isTargetMode()) {
-      if (changed === this.targetValue || changed === "app") {
-        this.setUncertain()
-      }
-    } else if (this.isTstMode()) {
-      if (changed === "app") this.setUncertain()
-    }
-  }
-
-  _paint(state) {
-    const word = this.wordFor(state) || this.wordFor("idle")
-    if (typeof word === "string" && word.length > 0) {
-      this.element.textContent = word
-    }
-    const COLORS = ["is-accent", "is-muted", "is-pink", "is-accent-pale", "is-warn"]
-    COLORS.forEach((cls) => this.element.classList.remove(cls))
+  handleSyncChanged(event) {
+    const state = event && event.detail && event.detail.state
+    if (!state) return
     if (state === "disconnected") {
-      this.element.classList.add("is-pink")
-    } else if (state === "paused") {
-      // paused → muted (gray). User deliberately paused; not an action in accent voice.
-      this.element.classList.add("is-muted")
-    } else {
-      // idle / active / syncing / uncertain → all use accent per
-      // "actions are always accent" rule (2026-05-24 lock).
-      this.element.classList.add("is-accent")
-    }
-    if (state === "syncing") {
-      this.element.classList.add("tui-shimmer")
-    } else {
-      this.element.classList.remove("tui-shimmer")
+      if (this._settleTimer) clearTimeout(this._settleTimer)
+      this.applyState("disconnected")
+    } else if (state === "synced" && this.stateValue === "disconnected") {
+      this.applyState("synced")
     }
   }
 
-  setActive()       { this._paint("active") }
-  setSyncing()      { this._paint("syncing") }
-  setIdle()         { this._paint("idle") }
-  setDisconnected() { this._paint("disconnected") }
-  setPaused()       { this._paint("paused") }
-  setUncertain()    { this._paint("uncertain") }
+  applyState(s) {
+    this.stateValue = s
+    const box = this.element.querySelector(".tui-sync-indicator__box")
+    if (!box) return
 
-  // ─── helpers ──────────────────────────────────────────────────────
-  sidekiqActive(payload) {
-    if (!payload || typeof payload !== "object") return false
-    const b = parseInt(payload.busy || 0, 10) || 0
-    const e = parseInt(payload.enqueued || 0, 10) || 0
-    const r = parseInt(payload.retry || 0, 10) || 0
-    return b > 0 || e > 0 || r > 0
-  }
+    const glyph = s === "syncing" ? "x" : (s === "disconnected" ? "!" : " ")
 
-  wordFor(stateName) {
-    if (stateName === "idle")         return this.idleValue
-    if (stateName === "active")       return this.activeValue
-    if (stateName === "syncing")      return this.syncingValue || this.activeValue
-    if (stateName === "paused")       return this.pausedValue || this.mixedValue
-    // "uncertain" and legacy "mixed" both map to the uncertain display string.
-    if (stateName === "uncertain")    return this.uncertainValue || this.mixedValue
-    if (stateName === "mixed")        return this.mixedValue || this.uncertainValue
-    if (stateName === "disconnected") return this.disconnectedValue
-    return stateName
+    // Skip scramble if glyph hasn't changed.
+    if (glyph === this._currentGlyph) {
+      this.element.classList.remove("is-synced", "is-syncing", "is-disconnected")
+      this.element.classList.add(`is-${s}`)
+      return
+    }
+
+    // Cancel any in-flight scramble before starting a new one.
+    if (this._scrambleInterval) {
+      clearInterval(this._scrambleInterval)
+      this._scrambleInterval = null
+    }
+
+    const previousGlyph = this._currentGlyph
+    this._currentGlyph = glyph
+
+    // Apply class immediately so shimmer/color transitions start right away.
+    this.element.classList.remove("is-synced", "is-syncing", "is-disconnected")
+    this.element.classList.add(`is-${s}`)
+
+    // Run the scramble on the box.
+    this._scrambleInterval = scrambleGlyph(box, glyph, () => {
+      this._scrambleInterval = null
+    })
   }
 }

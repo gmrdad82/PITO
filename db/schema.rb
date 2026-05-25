@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_25_190010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -59,40 +59,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.jsonb "scopes", default: [], null: false
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["expires_at"], name: "index_api_tokens_on_expires_at"
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
-    t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
   create_table "app_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "home_rows", default: "[{\"cols\":3,\"panels\":[\"channels_overview\",\"latest_videos\",\"games_releasing\"]},{\"cols\":2,\"panels\":[\"notifications_feed\",\"calendar\"],\"ratios\":[40,60]},{\"cols\":2,\"panels\":[\"stack\",{\"stack\":[\"notifications\",\"security\"]}],\"ratios\":[60,40]}]"
     t.string "key"
-    t.boolean "master_sync_paused", default: false, null: false
     t.boolean "notifications_send_all", default: false, null: false
     t.boolean "notifications_send_daily_digest", default: false, null: false
     t.boolean "reindex_running", default: false, null: false
     t.datetime "reindex_started_at"
+    t.datetime "totp_disabled_at"
+    t.datetime "totp_enabled_at"
+    t.integer "totp_last_used_step"
+    t.text "totp_seed_encrypted"
     t.datetime "updated_at", null: false
     t.text "value"
     t.index ["key"], name: "index_app_settings_on_key", unique: true
-  end
-
-  create_table "auth_audit_logs", force: :cascade do |t|
-    t.bigint "acting_user_id", null: false
-    t.integer "action", null: false
-    t.datetime "created_at", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.integer "source_surface", null: false
-    t.bigint "target_id", null: false
-    t.string "target_type", null: false
-    t.datetime "updated_at", null: false
-    t.index ["acting_user_id"], name: "index_auth_audit_logs_on_acting_user_id"
-    t.index ["action"], name: "index_auth_audit_logs_on_action"
-    t.index ["created_at"], name: "index_auth_audit_logs_on_created_at"
-    t.index ["source_surface"], name: "index_auth_audit_logs_on_source_surface"
-    t.index ["target_type", "target_id"], name: "index_auth_audit_logs_on_target_type_and_target_id"
   end
 
   create_table "bulk_operation_items", force: :cascade do |t|
@@ -126,7 +111,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.boolean "all_day", default: false, null: false
     t.bigint "channel_id"
     t.datetime "created_at", null: false
-    t.bigint "created_by_user_id"
     t.text "description"
     t.datetime "ends_at"
     t.integer "entry_type", null: false
@@ -150,7 +134,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.index "entry_type, ((source_ref ->> 'game_id'::text))", name: "index_calendar_entries_unique_game_source_ref", unique: true, where: "((entry_type = 3) AND (source_ref IS NOT NULL))"
     t.index "entry_type, ((source_ref ->> 'video_id'::text))", name: "index_calendar_entries_unique_video_source_ref", unique: true, where: "((entry_type = ANY (ARRAY[1, 2])) AND (source_ref IS NOT NULL))"
     t.index ["channel_id"], name: "index_calendar_entries_on_channel_id", where: "(channel_id IS NOT NULL)"
-    t.index ["created_by_user_id"], name: "index_calendar_entries_on_created_by_user_id", where: "(created_by_user_id IS NOT NULL)"
     t.index ["ends_at"], name: "index_calendar_entries_on_ends_at", where: "(ends_at IS NOT NULL)"
     t.index ["entry_type", "starts_at"], name: "index_calendar_entries_on_entry_type_and_starts_at"
     t.index ["entry_type"], name: "index_calendar_entries_on_entry_type"
@@ -170,7 +153,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
 
   create_table "channel_change_logs", force: :cascade do |t|
     t.datetime "changed_at", null: false
-    t.bigint "changed_by_user_id", null: false
     t.bigint "channel_id", null: false
     t.datetime "created_at", null: false
     t.string "field", null: false
@@ -178,7 +160,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.string "old_value"
     t.datetime "updated_at", null: false
     t.index ["changed_at"], name: "index_channel_change_logs_on_changed_at"
-    t.index ["changed_by_user_id"], name: "index_channel_change_logs_on_changed_by_user_id"
     t.index ["channel_id"], name: "index_channel_change_logs_on_channel_id"
   end
 
@@ -433,7 +414,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.bigint "channel_id", null: false
     t.datetime "completed_at"
     t.datetime "created_at", null: false
-    t.bigint "enqueued_by_id", null: false
     t.jsonb "error_payload"
     t.integer "failed_videos", default: 0, null: false
     t.integer "imported_videos", default: 0, null: false
@@ -443,13 +423,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.datetime "updated_at", null: false
     t.index ["channel_id", "status"], name: "index_import_jobs_on_channel_id_and_status"
     t.index ["channel_id"], name: "index_import_jobs_on_channel_id"
-    t.index ["enqueued_by_id"], name: "index_import_jobs_on_enqueued_by_id"
     t.index ["status", "created_at"], name: "index_import_jobs_on_status_and_created_at"
   end
 
   create_table "milestone_rules", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "created_by_user_id"
     t.integer "direction", default: 0, null: false
     t.boolean "enabled", default: true, null: false
     t.datetime "fired_at"
@@ -461,7 +439,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.string "slug", null: false
     t.decimal "threshold", precision: 20, scale: 4, null: false
     t.datetime "updated_at", null: false
-    t.index ["created_by_user_id"], name: "index_milestone_rules_on_created_by_user_id", where: "(created_by_user_id IS NOT NULL)"
     t.index ["enabled"], name: "index_milestone_rules_on_enabled"
     t.index ["fired_at"], name: "index_milestone_rules_on_fired_at"
     t.index ["metric"], name: "index_milestone_rules_on_metric"
@@ -483,7 +460,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.text "body"
     t.string "category", default: "system", null: false
     t.datetime "created_at", null: false
-    t.bigint "created_by_user_id"
     t.string "dedup_key"
     t.datetime "discord_delivered_at"
     t.jsonb "event_payload", default: {}, null: false
@@ -502,7 +478,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.string "url"
     t.index ["category"], name: "index_notifications_on_category"
     t.index ["created_at"], name: "index_notifications_on_created_at"
-    t.index ["created_by_user_id"], name: "index_notifications_on_created_by_user_id", where: "(created_by_user_id IS NOT NULL)"
     t.index ["event_type", "dedup_key"], name: "index_notifications_unique_dedup", unique: true, where: "(dedup_key IS NOT NULL)"
     t.index ["event_type", "source_calendar_entry_id", "fires_at"], name: "index_notifications_unique_calendar_event", unique: true, where: "(source_calendar_entry_id IS NOT NULL)"
     t.index ["event_type"], name: "index_notifications_on_event_type"
@@ -620,12 +595,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.text "user_agent"
-    t.bigint "user_id", null: false
     t.index ["browser"], name: "index_sessions_on_browser"
     t.index ["device"], name: "index_sessions_on_device"
     t.index ["state"], name: "index_sessions_on_state"
     t.index ["token_digest"], name: "index_sessions_on_token_digest", unique: true
-    t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
   create_table "top_videos_windows", force: :cascade do |t|
@@ -653,26 +626,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "used_at"
-    t.bigint "user_id", null: false
     t.index ["used_at"], name: "index_totp_backup_codes_on_used_at"
-    t.index ["user_id"], name: "index_totp_backup_codes_on_user_id"
-  end
-
-  create_table "users", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "last_digest_run_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.datetime "last_login_at"
-    t.string "password_digest", null: false
-    t.string "time_zone", default: "Etc/UTC", null: false
-    t.datetime "totp_disabled_at"
-    t.datetime "totp_enabled_at"
-    t.bigint "totp_last_used_step"
-    t.text "totp_seed_encrypted"
-    t.datetime "updated_at", null: false
-    t.citext "username", null: false
-    t.index ["last_digest_run_at"], name: "index_users_on_last_digest_run_at"
-    t.index ["last_login_at"], name: "index_users_on_last_login_at"
-    t.index ["username"], name: "index_users_on_username", unique: true
   end
 
   create_table "video_change_logs", force: :cascade do |t|
@@ -1023,11 +977,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.integer "http_status"
     t.string "outcome", null: false
     t.integer "units", null: false
-    t.bigint "user_id"
     t.bigint "youtube_connection_id"
     t.index ["client_kind", "created_at"], name: "index_youtube_api_calls_on_kind_time"
     t.index ["outcome", "created_at"], name: "index_youtube_api_calls_on_outcome_time"
-    t.index ["user_id"], name: "index_youtube_api_calls_on_user_id"
     t.index ["youtube_connection_id", "created_at"], name: "index_youtube_api_calls_on_connection_time"
     t.index ["youtube_connection_id"], name: "index_youtube_api_calls_on_youtube_connection_id"
   end
@@ -1044,25 +996,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
     t.text "refresh_token"
     t.jsonb "scopes", default: [], null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["google_subject_id"], name: "index_youtube_connections_on_google_subject_id", unique: true
-    t.index ["user_id"], name: "index_youtube_connections_on_user_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "api_tokens", "users"
-  add_foreign_key "auth_audit_logs", "users", column: "acting_user_id"
   add_foreign_key "bulk_operation_items", "bulk_operations"
   add_foreign_key "bulk_operation_items", "videos"
   add_foreign_key "calendar_entries", "calendar_entries", column: "parent_entry_id", on_delete: :nullify
   add_foreign_key "calendar_entries", "channels", on_delete: :cascade
   add_foreign_key "calendar_entries", "games", on_delete: :cascade
   add_foreign_key "calendar_entries", "milestone_rules", on_delete: :nullify
-  add_foreign_key "calendar_entries", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "calendar_entries", "videos", on_delete: :cascade
   add_foreign_key "channel_change_logs", "channels", on_delete: :cascade
-  add_foreign_key "channel_change_logs", "users", column: "changed_by_user_id", on_delete: :restrict
   add_foreign_key "channel_dailies", "channels", on_delete: :cascade
   add_foreign_key "channel_window_summaries", "channels", on_delete: :cascade
   add_foreign_key "channels", "youtube_connections"
@@ -1076,23 +1022,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
   add_foreign_key "games", "games", column: "version_parent_id", on_delete: :nullify
   add_foreign_key "games", "genres", column: "primary_genre_id", on_delete: :nullify
   add_foreign_key "import_jobs", "channels", on_delete: :cascade
-  add_foreign_key "import_jobs", "users", column: "enqueued_by_id", on_delete: :restrict
-  add_foreign_key "milestone_rules", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "notifications", "calendar_entries", column: "source_calendar_entry_id", on_delete: :cascade
   add_foreign_key "notifications", "milestone_rules", column: "source_milestone_rule_id", on_delete: :nullify
-  add_foreign_key "notifications", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
   add_foreign_key "playlist_videos", "playlists"
   add_foreign_key "playlist_videos", "videos"
   add_foreign_key "playlists", "channels"
   add_foreign_key "rejected_video_imports", "channels", on_delete: :cascade
-  add_foreign_key "rejected_video_imports", "users", column: "rejected_by_id", on_delete: :restrict
-  add_foreign_key "sessions", "users"
   add_foreign_key "top_videos_windows", "channels", on_delete: :cascade
   add_foreign_key "top_videos_windows", "videos", on_delete: :cascade
-  add_foreign_key "totp_backup_codes", "users"
-  add_foreign_key "video_change_logs", "users", column: "changed_by_user_id", on_delete: :nullify
   add_foreign_key "video_change_logs", "videos", on_delete: :cascade
   add_foreign_key "video_chapters", "videos", on_delete: :cascade
   add_foreign_key "video_dailies", "videos", on_delete: :cascade
@@ -1102,11 +1041,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
   add_foreign_key "video_daily_by_operating_systems", "videos", on_delete: :cascade
   add_foreign_key "video_daily_by_subscribed_statuses", "videos", on_delete: :cascade
   add_foreign_key "video_daily_by_traffic_sources", "videos", on_delete: :cascade
-  add_foreign_key "video_diffs", "users", column: "resolved_by_user_id", on_delete: :nullify
   add_foreign_key "video_diffs", "videos", on_delete: :cascade
   add_foreign_key "video_end_screens", "videos", on_delete: :cascade
   add_foreign_key "video_game_links", "games", on_delete: :cascade
-  add_foreign_key "video_game_links", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "video_game_links", "videos", on_delete: :cascade
   add_foreign_key "video_retentions", "videos", on_delete: :cascade
   add_foreign_key "video_stats", "videos"
@@ -1116,7 +1053,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_170000) do
   add_foreign_key "video_window_summaries", "videos", on_delete: :cascade
   add_foreign_key "videos", "channels"
   add_foreign_key "videos", "youtube_connections"
-  add_foreign_key "youtube_api_calls", "users"
   add_foreign_key "youtube_api_calls", "youtube_connections"
-  add_foreign_key "youtube_connections", "users"
 end

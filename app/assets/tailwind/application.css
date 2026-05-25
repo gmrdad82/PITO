@@ -1107,47 +1107,14 @@ button.bracketed .bl {
 .pito-sub-panel__hint.is-danger  { color: var(--color-danger); }
 .pito-sub-panel__hint.is-muted   { color: var(--color-muted); }
 
-/* Phase 1D (2026-05-24) — Tui::SyncIndicatorComponent in `:target` mode.
-   Replaces the deleted .pito-pause-control. Renders as a `<button>` so
-   Enter / Space toggle naturally. Border = 0, transparent bg so the
-   section-bg shows through the title-actions border slot consistently
-   with sibling actions like `[reindex]`. Color comes from the
-   tui-transition controller's per-kind COLOR_CLASS map (is-muted /
-   is-pink etc.) plus the kind-detection on `.tui-sync-word`. */
-.tui-sync-word--target {
-  background: transparent;
-  border: 0;
-  /* 2026-05-24 (padding fix) — zero horizontal padding. The title-actions
-     slot already provides `padding: 0 6px` + `gap: 1ch` between adjacent
-     children; the extra `padding-left: 4px` on this button stacked an
-     extra blank ch worth of whitespace flush against the left pipe
-     border in user testing. Idle / hover / focus states do not need the
-     internal padding either since the focus tint paints on the host
-     element itself with the breathing room the slot already provides. */
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-  line-height: 1;
-  color: inherit;
-}
-.tui-sync-word--target:focus-visible {
-  outline: 1px solid var(--section-accent, var(--color-link));
-  outline-offset: 1px;
-}
-
-/* Restrict shimmer to the "sync" word portion (chars 5+). The first
-   four characters of every sync display string are the checkbox+space
-   prefix (`[ ] ` / `[x] ` / `[!] `) — they should NOT shimmer per the
-   2026-05-24 spec. The tui-transition controller breaks the host text
-   into per-char `.tt-char` cells; we re-establish a solid color on the
-   first 4 cells when the host has `.tui-shimmer`. */
-.tui-sync-word.tui-shimmer .tt-char:nth-child(-n+4) {
-  background: none !important;
-  -webkit-background-clip: initial !important;
-  background-clip: initial !important;
-  -webkit-text-fill-color: currentColor !important;
-  color: var(--section-accent-home);
-  animation: none !important;
+/* === tui-sync-indicator (3-state, 2026-05-25) === */
+.tui-sync-indicator { font-family: monospace; font-size: 13px; display: inline-flex; gap: 0.25ch; }
+.tui-sync-indicator.is-synced       { color: var(--color-muted); }
+.tui-sync-indicator.is-syncing      { color: var(--section-accent); animation: tui-sync-shimmer 1.2s ease-in-out infinite; }
+.tui-sync-indicator.is-disconnected { color: var(--color-danger); }
+@keyframes tui-sync-shimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
 }
 
 /* 2026-05-24 (pipe-chrome unify) — when a panel / sub-panel / dialog
@@ -6713,16 +6680,8 @@ dialog.tui-size-guard-dialog::backdrop {
   animation: tui-shimmer-flow var(--tui-trn-shimmer-cycle-ms, 1600ms) linear infinite;
 }
 
-/* sync word slot.
-   2026-05-24 — min-width: 13ch dropped. The previous reservation was
-   intended to keep the TST cell at a fixed width across the 4 states
-   ("[ ] sync" 8 chars, "[x] sync" 8, "[-] sync" 8, "[!] sync" 8 —
-   all 8 chars; 13ch was overkill). With panels/sub-panels also
-   mounting the VC inside narrow title-actions slots, the min-width
-   produced a 5ch padding gap to the left of `[ ] sync`. Drop it. */
-.tui-sync-word { color: var(--section-accent-home); }
-.tui-sync-word.is-muted { color: var(--color-muted); }
-.tui-sync-word.is-pink  { color: var(--color-danger); }
+/* sync word slot — legacy .tui-sync-word rules removed 2026-05-25.
+   Replaced by .tui-sync-indicator (3-state) earlier in this file. */
 
 /* date time line */
 .tui-date-time { color: var(--color-muted); }
@@ -7291,37 +7250,9 @@ a.cal-filter-chip:visited {
   color: var(--color-muted);
 }
 
-/* === tui-sync-indicator paused/uncertain === */
-/*
- * A3 (2026-05-25) — paused + uncertain states for Tui::SyncIndicatorComponent.
- *
- * Both states render `[-] sync` as the display text. They are distinguished
- * by color class applied to the host `.tui-sync-word` element:
- *
- *   .is-muted  → paused   (user deliberately paused; gray, not in accent voice)
- *   .is-accent → uncertain (system-derived mixed state; stays in accent voice)
- *
- * The `.is-muted` class is shared with other tui-transition-painted elements.
- * No new class is introduced — the existing `is-muted` / `is-accent` tokens
- * already exist in the tui-transition color table.
- *
- * The rules below make `.tui-sync-word` honor `.is-muted` for the paused
- * state. The `.is-accent` path is already covered by the existing
- * `.tui-sync-word` default rules elsewhere in this file.
- */
-
-/* Paused sync indicator — muted (gray). Explicitly not accent because
-   a paused target is not an operable action; it's an informational state. */
-.tui-sync-word.is-muted {
-  color: var(--color-muted);
-}
-
-/* Uncertain sync indicator — accent (same as active / idle / syncing).
-   Rule is declarative for documentation; the existing `.is-accent` rule
-   already handles this, but naming it explicitly makes the intent clear. */
-.tui-sync-word.is-accent {
-  color: var(--section-accent);
-}
+/* === tui-sync-word paused/uncertain — removed 2026-05-25 ===
+   Dead rules (.tui-sync-word.is-muted / .is-accent) deleted with the
+   multi-state sync machine. 3-state indicator lives under .tui-sync-indicator. */
 
 /* === panel border-top split pipe === */
 /*
@@ -7488,4 +7419,115 @@ body > main::-webkit-scrollbar {
 }
 .tui-page-scroll-indicator .tui-scroll-indicator {
   right: 0;
+}
+
+/* === pito-auth-dialog ===
+   Z3 (2026-05-25) — full-viewport, non-dismissible TOTP login overlay.
+   Rendered by Pito::AuthDialogComponent when Current.session.nil?.
+
+   Strategy: a fixed `position: fixed; inset: 0` overlay div (not a native
+   `<dialog>`) so we never accidentally allow the browser's built-in dialog
+   dismiss behaviour (Esc, backdrop click). The overlay sits above all panel
+   chrome via `z-index: 1000` (above the sticky header at z-index: 100 and
+   the TST at z-index: 100). The backdrop is a semi-opaque Dracula dark layer
+   so the structural chrome skeleton is faintly visible underneath.
+
+   The dialog box itself is centered, max-width 320px, monospace font,
+   with a single accent-colored border (var(--section-accent)) matching the
+   bracketed-action convention.
+
+   Input: full-width, monospace, centered text, outlined on focus in accent.
+   Submit: bracketed action button in section accent.
+   Error: muted danger line above input.
+   Hint: muted small text below submit for no-enrollment state.
+   Toggle: small muted button to reveal backup-code field. */
+
+.pito-auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pito-auth-dialog {
+  background: var(--color-bg);
+  border: 1px solid var(--section-accent);
+  max-width: 320px;
+  width: 100%;
+  padding: 20px 24px;
+}
+
+.pito-auth-dialog__title {
+  color: var(--section-accent);
+  font-size: 13px;
+  font-weight: normal;
+  margin: 0 0 14px;
+  letter-spacing: 0.02em;
+}
+
+.pito-auth-dialog__error {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.pito-auth-dialog__field {
+  margin-bottom: 10px;
+}
+
+.pito-auth-dialog__input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--color-bg-alt, var(--color-bg));
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 5px 8px;
+  text-align: center;
+  letter-spacing: 0.1em;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.pito-auth-dialog__input:focus {
+  border-color: var(--section-accent);
+}
+
+.pito-auth-dialog__actions {
+  margin: 12px 0 10px;
+}
+
+.pito-auth-dialog__submit {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  color: var(--section-accent);
+}
+
+.pito-auth-dialog__toggle {
+  margin: 6px 0 0;
+}
+
+.pito-auth-dialog__toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-muted);
+  text-decoration: underline;
+}
+
+.pito-auth-dialog__hint {
+  color: var(--color-muted);
+  font-size: 12px;
+  margin: 10px 0 0;
+  line-height: 1.5;
 }

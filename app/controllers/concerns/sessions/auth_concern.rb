@@ -1,23 +1,15 @@
-# Phase 12 — Step A (6a-sessions-and-login-ui.md) — controller-level
-# cookie-session auth.
+# Z2d (2026-05-25) — controller-level cookie-session auth.
 #
-# Replaces the implicit-pin `before_action :set_current_tenant_and_user`
-# with a real auth check: every HTML request must arrive with a valid
-# `pito_session` cookie. Successful resolution populates
-# `Current.session / .user`. Unauthenticated requests are
-# redirected to `/login` (with the intended URL stashed in a signed
-# cookie for post-login redirect).
+# Replaces the old username+password flow. The only entry point to a
+# live session is `POST /login` (TOTP code or backup code).
 #
-# Phase 8 — tenant drop. `Current.tenant` is gone; the concern no
-# longer pins it.
+# Successful resolution populates `Current.session`. There is no
+# `Current.user` — the User model is gone (Z1). Every controller that
+# previously gated on `Current.user.present?` now gates on
+# `Current.session.present?`.
 #
-# Allow-listed actions (the login form, the action-screen confirmation
-# pages for unauthenticated entry points, the OAuth /authorize screen
-# pre-login, etc.) declare `allow_anonymous` at the class level. Those
-# actions skip the redirect so they can render their own form.
-#
-# `Api::*` controllers do NOT include this concern — they continue to
-# use `Api::AuthConcern` (bearer-only). The two surfaces stay separate.
+# `Api::*` controllers do NOT include this concern — they use
+# `Api::AuthConcern` (bearer-only). The two surfaces stay separate.
 module Sessions
   module AuthConcern
     extend ActiveSupport::Concern
@@ -25,26 +17,8 @@ module Sessions
     INTENDED_URL_COOKIE = :pito_intended_url
     INTENDED_URL_TTL    = 10.minutes
 
-    # Phase 29 — Unit A2. The mandatory-2FA gate's allowlist. These
-    # routes are themselves part of completing TOTP enrollment (or are
-    # the logout escape hatch); the gate must NOT redirect them or the
-    # user is trapped in a redirect loop. Matched by exact
-    # `"METHOD path"` string against `request.method` + `request.path`.
-    # `/up` (health) is outside this concern entirely and not listed.
-    #
-    # Per CLAUDE.md "Hard rules" — the allowlist is minimal: TOTP-setup
-    # routes plus logout. The redirect target is the enrollment view
-    # itself (`/settings/security/totp`); every other route, including
-    # the `/settings` hub, stays gated until enrollment is confirmed.
-    TOTP_SETUP_ALLOWLIST = [
-      "GET /settings/security/totp",  # totps#new — enrollment view (QR + codes + confirm)
-      "POST /settings/security/totp", # totps#create — atomic finalize
-      "DELETE /session"               # sessions#destroy — log out
-    ].freeze
-
     included do
       before_action :authenticate_session!
-      before_action :require_totp_configured!
       around_action :reset_current_after_request
 
       class_attribute :_anonymous_allowed_actions, default: [].freeze
@@ -69,7 +43,6 @@ module Sessions
 
       if result.success?
         Current.session = result.session
-        Current.user    = result.session.user
         result.session.touch_activity!
         return
       end
@@ -87,39 +60,6 @@ module Sessions
 
     def anonymous_action?
       self.class._anonymous_allowed_actions.include?(action_name.to_sym)
-    end
-
-    # Phase 29 — Unit A2. The mandatory-2FA gate. Runs immediately
-    # after `authenticate_session!`. An authenticated user who has not
-    # configured TOTP is redirected to the enrollment view
-    # (`/settings/security/totp`) per the CLAUDE.md "Hard rules"
-    # contract. They cannot reach any other screen — including the
-    # `/settings` hub — until enrollment is confirmed
-    # (`totp_enabled_at` stamped, `totp_disabled_at` nil).
-    #
-    # Browser-only (R3): this concern is included by
-    # `ApplicationController`; `Api::AuthConcern` authenticates bearer
-    # credentials, not browser users, and is NOT gated — a token
-    # cannot "set up TOTP", and the browser user who minted the token
-    # is themselves gated.
-    #
-    # Belt-and-suspenders early returns:
-    #   - anonymous action  → no `Current.user` to gate.
-    #   - `Current.user` nil → `authenticate_session!` already redirected.
-    #   - `totp_configured?` → nothing to enforce.
-    #   - allowlisted route  → part of completing setup, or logout.
-    def require_totp_configured!
-      return if anonymous_action?
-      return if Current.user.nil?
-      return if Current.user.totp_configured?
-      return if totp_setup_allowlisted?
-
-      redirect_to settings_security_totp_path,
-                  alert: "set up two-factor authentication to continue."
-    end
-
-    def totp_setup_allowlisted?
-      TOTP_SETUP_ALLOWLIST.include?("#{request.request_method} #{request.path}")
     end
 
     def stash_intended_url

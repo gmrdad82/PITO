@@ -46,7 +46,10 @@ class ApplicationController < ActionController::Base
   # requests fall back to `Etc/UTC` so the render-layer helpers stay
   # nil-safe on the login form and OAuth pre-login screens.
   def set_user_time_zone
-    Time.zone = Current.user&.time_zone.presence || "Etc/UTC"
+    # Z1: User model gone. Time zone is now fixed to Etc/UTC for all
+    # requests (single-user, self-hosted; zone preference can be stored
+    # on AppSetting if needed in the future).
+    Time.zone = "Etc/UTC"
   end
 
   def render_not_found

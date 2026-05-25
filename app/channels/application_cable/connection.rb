@@ -2,20 +2,18 @@
 #
 # Identifies the cable connection by `current_user` so per-panel
 # channels can authorize subscriptions (e.g. `StatusBarChannel`
-# rejects unauthenticated subscribers; future per-channel /per-game
-# scoped channels will use the same identity to enforce ownership).
+# rejects unauthenticated subscribers).
 #
 # Auth path mirrors the HTTP layer (`Sessions::AuthConcern`): the
 # signed `:pito_session` cookie carries a session plaintext;
-# `Sessions::Authenticator` resolves it to a `Session` record; the
-# session's `user` becomes the cable identity.
+# `Sessions::Authenticator` resolves it to a `Session` record;
+# presence of a valid session = authenticated.
 #
-# Pito remains a single-install multi-user app (ADR 0003), so this
-# identity is for AUTH GATING only — not for data scoping. Channels
-# that broadcast install-wide snapshots still stream from a single
-# global broadcasting; the connection-level `identified_by
-# :current_user` simply gives every channel a uniform hook to reject
-# unauthenticated clients.
+# Z1 (2026-05-25): User model gone. `find_verified_user` now returns
+# the `Session` object itself (not session.user which no longer exists).
+# All channels guard on `current_user.present?` — the naming is
+# preserved for ActionCable API compatibility; semantically it is
+# "current_session". The identifier is a non-nil object = connected.
 module ApplicationCable
   class Connection < ActionCable::Connection::Base
     identified_by :current_user
@@ -30,10 +28,10 @@ module ApplicationCable
       result = Sessions::Authenticator.call(request)
       return reject_unauthorized_connection unless result.success?
 
-      user = result.session.user
-      return reject_unauthorized_connection unless user
-
-      user
+      # Return the session itself as the cable identity (User is gone).
+      # Channels that call `current_user.present?` get a truthy value
+      # when authenticated, nil/false when not — same contract as before.
+      result.session
     end
   end
 end

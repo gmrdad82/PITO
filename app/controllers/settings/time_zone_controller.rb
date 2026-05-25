@@ -23,17 +23,13 @@ class Settings::TimeZoneController < ApplicationController
   def update
     new_tz = params[:time_zone].to_s
 
-    if Current.user.update(time_zone: new_tz)
-      respond_to do |format|
-        format.html { redirect_to settings_path, notice: t("settings.time_zone.flash.saved") }
-        format.any  { head :no_content }
-      end
-    else
-      message = Current.user.errors[:time_zone].first || t("settings.time_zone.flash.invalid")
-      respond_to do |format|
-        format.html { redirect_to settings_path, alert: message }
-        format.any  { render plain: message, status: :unprocessable_content }
-      end
+    # Z1: User model gone. Time zone is now a no-op (fixed to Etc/UTC
+    # in ApplicationController#set_user_time_zone). This endpoint is
+    # preserved for the Stimulus timezone-detect controller which silently
+    # POST-and-ignores; it always returns 204 to avoid JS errors.
+    respond_to do |format|
+      format.html { redirect_to settings_path, notice: t("settings.time_zone.flash.saved") }
+      format.any  { head :no_content }
     end
   end
 end

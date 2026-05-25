@@ -38,9 +38,7 @@ class CalendarEntry < ApplicationRecord
              class_name: "CalendarEntry",
              optional: true
   belongs_to :milestone_rule,  optional: true
-  belongs_to :created_by_user,
-             class_name: "User",
-             optional: true
+  # Z1-ext: created_by_user_id FK to users dropped (migration 20260525190002).
 
   has_many :child_entries,
            class_name: "CalendarEntry",

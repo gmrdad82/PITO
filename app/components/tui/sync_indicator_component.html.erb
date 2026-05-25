@@ -1,21 +1,10 @@
-<%# Tui::SyncIndicatorComponent — checkbox+word sync indicator.
-    See component class for the 4-state contract + 2-mode rendering.
-
-    Host carries class `.tui-sync-word` (kind hook for tui-transition's
-    detectKind) plus an optional `--target` modifier for the clickable
-    variant. Both `:tst` and `:target` modes carry the same data-attrs
-    via root_data_attrs; the only structural difference is `<button>`
-    vs `<span>`. Shimmer applies to the host element; CSS narrows the
-    visible shimmer to the word portion (see `.tui-sync-word.tui-shimmer
-    .tt-char:nth-child(-n+4)` in application.css). %>
-<% if target_mode? %>
-  <%= content_tag :button, display_value,
-        class: "tui-sync-word tui-sync-word--target tui-sync-word--id-#{instance_outlet_id}",
-        type: "button",
-        aria: { label: aria_label },
-        data: root_data_attrs %>
-<% else %>
-  <%= content_tag :span, display_value,
-        class: "tui-sync-word tui-sync-word--id-#{instance_outlet_id}",
-        data: root_data_attrs %>
-<% end %>
+<%# Tui::SyncIndicatorComponent — 3-state sync indicator for TST.
+    States: synced (muted [ ] sync) / syncing (accent [x] sync + shimmer) /
+    disconnected (danger [!] sync). JS controller drives state transitions
+    via pito:cable-activity + pito:cable:disconnected + pito:cable:connected. %>
+<span class="tui-sync-indicator"
+      data-controller="tui-sync-indicator"
+      data-tui-sync-indicator-state-value="<%= initial_state %>">
+  <span class="tui-sync-indicator__box" aria-hidden="true">[<%= glyph_for(initial_state) %>]</span>
+  <span class="tui-sync-indicator__label">sync</span>
+</span>

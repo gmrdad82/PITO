@@ -10,6 +10,7 @@
       class: "pane pito-pane pito-panel pito-panel--security",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <% if helpers.tui_authenticated? %>
   <%= render Tui::PanelFieldsetComponent.new(data: { controller: "sessions-bulk-revoke" }) do %>
     <%= render(Sessions::TableComponent.new(
       sessions: sessions,
@@ -62,5 +63,6 @@
         action_method: :post
       ) %>
     <% end %>
+  <% end %>
   <% end %>
 <% end %>

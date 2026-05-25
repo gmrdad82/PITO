@@ -56,9 +56,10 @@ class NotificationsFeedController < ApplicationController
   end
 
   def enforce_rate_limit
-    return unless Current.user
+    return unless Current.session
 
-    lock_key = "notifications_feed:bulk:user:#{Current.user.id}"
+    # Z1: User model gone. Lock key scoped to the session token instead.
+    lock_key = "notifications_feed:bulk:session:#{Current.session.token_digest}"
     return if Rails.cache.write(lock_key, 1, expires_in: RATE_LIMIT_TTL, unless_exist: true)
 
     respond_to do |format|

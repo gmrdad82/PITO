@@ -60,27 +60,87 @@ bin/test path/...    # focused spec run
 bundle exec rubocop  # lint
 ```
 
-## Auth
+## Authentication (2026-05-25)
 
-- **Web:** username + password + mandatory TOTP. Browser only. Post-login
-  redirect via `Sessions::AuthConcern` to `/settings/security/totp` if
-  the user hasn't enrolled. `Current.user` carries the authenticated user.
-  `User.last_login_at` is stamped on TOTP success — used for "since last
-  login" deltas on Home.
-- **MCP + CLI:** bearer tokens scoped to the user. Mandatory-2FA gate
-  exempt by design (a bearer credential cannot complete TOTP enrollment).
-- **YouTube channel access:** OAuth2 per channel. Google `client_id` +
-  `client_secret` in `Rails.application.credentials.google_oauth`. Each
-  `Channel` row has a nullable FK to `youtube_connections`.
+### Single-user model
+
+No `User` model. No password. pito has exactly one owner. TOTP seed and
+enrollment timestamp live on the `AppSetting` singleton row
+(`totp_seed`, `totp_enrolled_at`). `Current.session` carries the live
+session; `Current.user` is gone.
+
+### Login flow
+
+- `GET /` always serves the root layout (no redirect to `/login`).
+- When `Current.session.nil?`, an **auth dialog** overlays the root — a
+  `Tui::AuthDialogComponent` rendered in the layout. No dedicated login
+  page exists.
+- The user enters a 6-digit TOTP code, or toggles to backup-code mode
+  and enters an 8-character backup code.
+- `POST /login` → `SessionsController#create` verifies via:
+  - `Pito::Auth::TotpVerifier` (reads `AppSetting.totp_seed`)
+  - `Pito::Auth::BackupCodeConsumer` (consumes one stored backup code)
+- On success: `Session` row created, opaque cookie set, page reload.
+  Panels hydrate; cable subscriptions begin.
+- On failure: 422 with a generic "login failed" message (no code leak).
+
+### Enrollment
+
+Rake-only. No web UI.
+
+```
+bin/rails pito:auth:enroll
+```
+
+Prints the `otpauth://` URI, an ASCII QR code for any authenticator app,
+and 10 backup codes (stored as HMAC-SHA256 digests in `AppSetting`).
+Re-running re-seeds — prior backup codes are invalidated.
+
+### Wire format (TUI / CLI)
+
+`POST /login` accepts `application/x-www-form-urlencoded`:
+
+- TOTP path: `code=<6-digit>`
+- Backup path: `backup_code=<8-char>`
+
+Response:
+
+- `302` redirect on success (session cookie set in `Set-Cookie`).
+- `422` with a generic "login failed" body on failure.
+
+Session cookie is an opaque token. The `Session` row stores the
+HMAC-SHA256 digest — the raw token is never persisted.
+
+### YouTube channel access
+
+OAuth2 per channel. `client_id` + `client_secret` in
+`Rails.application.credentials.google_oauth`. Each `Channel` row has a
+nullable FK to `youtube_connections`.
+
+### Dropped in this sweep (2026-05-25)
+
+- `User` model (username, password\_digest, totp\_secret, last\_login\_at)
+- `AuthAuditLog` model
+- `Compositable` concern
+- `Login::TotpChallengesController`
+- `Settings::Security::TotpsController`
+- Mandatory-2FA gate
+- Password handling
+- `Pito::SyncState` service
+- `master_sync_paused` `AppSetting` column
+- `:pause_target` / `:resume_target` / `:toggle_master_sync` action bus entries
+- Space `p` leader binding
+- Sync-pause help group
 
 ## Datastore
 
-- **Postgres 17** — primary store. Single-install, multi-user — no
-  `tenant_id` columns. Anyone authenticated has full read/write access.
+- **Postgres 17** — primary store. Single-install, single-owner — no
+  `tenant_id` columns. The authenticated session has full read/write access.
 - **pgvector** — embedding storage for Voyage-AI-vectorized fields.
 - **pgcrypto** — column-level encryption via Rails 8 active record
   encryption.
-- **citext** — case-insensitive uniqueness (`users.username`).
+- **citext** — case-insensitive text (retained for future use; `users`
+  table dropped).
 - **Redis 7** — Sidekiq queue + Rails cache.
 - **Meilisearch** — keyword search.
 - **Filesystem volume:**
@@ -91,20 +151,15 @@ bundle exec rubocop  # lint
 
 ## Models
 
-### User
-
-Auth-only owner of sessions and tokens. Columns:
-
-- `id`, `username` (citext, unique, NOT NULL), `password_digest`,
-  `totp_secret`, `totp_enrolled_at`, **`last_login_at`** (added for Home
-  deltas), `created_at`, `updated_at`
-
 ### Session
 
-Issued per browser login. Columns:
+Issued per login. Columns:
 
-- `id`, `user_id`, `last_seen_at`, `ip` (inet), `device`, `browser`,
+- `id`, `token_digest` (HMAC-SHA256 of the opaque cookie token),
+  `last_seen_at`, `ip` (inet), `device`, `browser`,
   `created_at`, `updated_at`
+
+No `user_id` FK — there is only one owner. `User` model dropped.
 
 ### Channel
 
@@ -219,72 +274,43 @@ when rendered. Re-renders re-subscribe automatically.
 
 **Envelope:** `{ kind: <string>, payload: <hash>, ts: <ISO8601> }`.
 
-## Sync state
+## Sync indicator (2026-05-25)
 
-Controls whether a panel (or the entire app) actively receives cable
-broadcasts. Persisted in `AppSetting` rows — no localStorage, no
-session flags.
+Visual-only indicator in the TST (top status area). Reports cable
+activity state to the owner. No pause, no toggle, no master switch.
 
-### Storage
+### States (3 only)
 
-N separate `AppSetting` keys, value `"yes"` (enabled, default) /
-`"no"` (disabled). An absent key means enabled.
+| State | Style | Meaning |
+|---|---|---|
+| `synced` | muted | Cable connected; no in-flight activity |
+| `syncing` | accent + shimmer | Cable active (panel broadcast, sub-panel broadcast, or Sidekiq stats in flight) |
+| `disconnected` | danger (red) | Cable disconnected event received |
 
-| Key pattern | Scope |
-|---|---|
-| `sync.app` | Global master switch |
-| `sync.<screen>.<panel>` | Per-panel per-screen |
-| `sync.<screen>.<panel>.<sub_panel>` | Per-sub-panel |
+### Timing
 
-### Cascade — strict top-down only
+- `syncing` triggers on any cable activity on any panel, sub-panel, or
+  `pito:status_bar` stream.
+- `synced` returns 300 ms after the last activity (trailing-edge debounce).
+- `disconnected` triggers immediately on a cable disconnect event.
+  Clears to `synced` on reconnect.
 
-Toggling a parent writes the same value to ALL descendants. Toggling a
-child writes only itself. No bottom-up aggregation.
+### Placement
 
-- `cascade_targets("app")` → master + every panel + every sub-panel
-- `cascade_targets("home.stack")` → stack + 4 sub-panels (Meilisearch /
-  Voyage AI / Postgres / Assets)
-- `cascade_targets("home.notifications_feed")` → just itself (no children)
-
-### Registry
-
-`Pito::SyncTargets` (`app/services/pito/sync_targets.rb`) — holds
-`PANELS_BY_SCREEN` and `PARENTS_TO_CHILDREN`. Source of truth for the
-cascade map; `SyncController` and `Pito::CableBroadcaster` both read it.
-
-### Endpoint
-
-`POST /sync/toggle?target=<key>` → `SyncController#toggle` — reads
-current value, computes next, cascades writes, broadcasts cable per
-cascaded target on `pito:sync_state`. Returns `head :no_content`.
-
-### Cable suppression
-
-`Pito::CableBroadcaster.broadcast_panel` reads `AppSetting` before
-broadcasting. Drops if any of the following is `"no"`:
-
-- `sync.<target>`
-- any ancestor of `<target>`
-- `sync.app`
+Single instance in the TST only. Not repeated in panels or sub-panels.
+No click handler. No interactivity.
 
 ### Client
 
-`tui_sync_indicator_controller.js` — POSTs on click + listens for
-`pito:sync_state` cable broadcasts (bridged via the global
-`pito_sync_state_bridge.js`) + paints glyph via direct `textContent`
-swap. No localStorage anywhere.
+`tui_sync_indicator_controller.js` — listens to cable activity events
+bridged via `pito_sync_state_bridge.js`. Paints the indicator via direct
+`textContent` / class swap. No localStorage. No POSTs.
 
-### First paint
+### Dropped
 
-Server reads `AppSetting` at render time. `Tui::SyncIndicatorComponent`
-initializer calls `AppSetting.sync_enabled?(target)` and derives the
-initial `[ ]` / `[x]` glyph. HTML lands with the correct state — no
-flash-of-wrong-state.
-
-### TUI parity
-
-Ratatui client reads the same `AppSetting` values via the same API
-endpoint. No separate sync-state storage for the CLI.
+`Pito::SyncState`, `SyncController`, `POST /sync/toggle`, the
+`sync.app` / `sync.<panel>` `AppSetting` keys, master-toggle Space `p`
+binding, and all cascade / suppression logic are removed.
 
 ## Background jobs
 

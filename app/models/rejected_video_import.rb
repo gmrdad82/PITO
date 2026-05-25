@@ -15,7 +15,6 @@ class RejectedVideoImport < ApplicationRecord
   YOUTUBE_VIDEO_ID_REGEX = /\A[A-Za-z0-9_-]{11}\z/
 
   belongs_to :channel
-  belongs_to :rejected_by, class_name: "User"
 
   validates :youtube_video_id,
             presence: true,

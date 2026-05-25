@@ -22,9 +22,6 @@
 # logged, not raised). Both login paths funnel through `create_for!` →
 # `create!` → this callback, so no controller-level duplication needed.
 class Session < ApplicationRecord
-  belongs_to :user
-
-  validates :user_id, presence: true
   validates :token_digest, presence: true, uniqueness: true
 
   ACTIVITY_DEBOUNCE = 5.minutes
@@ -69,13 +66,12 @@ class Session < ApplicationRecord
   # because both funnel through `Session.create_for!` → `Session.create!`.
   after_create :broadcast_session_created
 
-  # Mints a new session row for `user`, returns `[record, plaintext]`.
+  # Mints a new session row, returns `[record, plaintext]`.
   # Plaintext is shown once and goes into the signed cookie; `token_digest`
   # is what the database stores. Mirrors `ApiToken.generate!`.
-  def self.create_for!(user:, ip: nil, user_agent: nil)
+  def self.create_for!(ip: nil, user_agent: nil)
     plaintext = SecureRandom.urlsafe_base64(32)
     record = create!(
-      user: user,
       token_digest: Pito::TokenDigest.call(plaintext),
       ip: ip,
       user_agent: user_agent,

@@ -56,15 +56,6 @@ en:
           items:
             sort_next_column: "cycle to next sort column"
             sort_reverse: "reverse active sort direction"
-        sync_pause:
-          title: "sync / pause"
-          items:
-            toggle_master_sync: "toggle home-wide sync master switch"
-            toggle_panel_pause: "pause / resume the focused panel's sync"
-            sync_state_idle: "sync idle (running, waiting for next tick)"
-            sync_state_active: "sync active (currently polling)"
-            sync_state_paused: "sync paused (manually suspended)"
-            sync_state_disconnected: "sync disconnected (cable lost)"
         calendar:
           title: "calendar"
           items:

@@ -25,6 +25,7 @@
       class: "pane pane--wide pito-pane pito-pane--full pito-panel pito-panel--stack",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <% if helpers.tui_authenticated? %>
   <%= render Tui::PanelFieldsetComponent.new do %>
     <%# 2x2 sub-panel grid — see `.pito-stack-grid` in application.css. %>
     <div class="pito-stack-grid">
@@ -59,4 +60,5 @@
     action_method: :post,
     action_variant: :danger
   ) %>
+  <% end %>
 <% end %>

@@ -1,8 +1,7 @@
 # Reusable 6-box segmented input for a TOTP code.
 #
-# Used by both the 2FA enrollment page (`settings/security/totps/new`)
-# and the post-password login challenge page
-# (`login/totp_challenges/show`). The visual pattern is the same
+# Used by the TOTP login form (`sessions/new`) and any future
+# enrollment surface. The visual pattern is the same
 # Slack-style segmented input that lives on the layout-level TOTP
 # re-verification dialog (`shared/_totp_verification_modal`) — six
 # 28px boxes, monospace bold, link-color focus ring — extracted here
@@ -43,8 +42,7 @@ class TotpCodeInputComponent < ViewComponent::Base
   # @param field [Symbol, String] form-param name carried on the hidden
   #   field that holds the concatenated 6-digit value. Backend
   #   controllers read this as `params[field]`. Defaults to `:code`
-  #   since both current consumers (`Login::TotpChallengesController`
-  #   and `Settings::Security::TotpsController`) read `params[:code]`.
+  #   since `SessionsController#create` reads `params[:code]`.
   # @param autofocus [Boolean] when true, the first box renders with
   #   `autofocus` so the page lands with the caret already in the
   #   leftmost cell. Defaults to true — both consumer pages are

@@ -9,9 +9,6 @@
 # job ships in this phase.
 class VideoDiff < ApplicationRecord
   belongs_to :video
-  belongs_to :resolved_by_user,
-             class_name: "User",
-             optional: true
 
   validates :detected_at, presence: true
   validate :payload_is_hash

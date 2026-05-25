@@ -15,7 +15,7 @@ class ChannelChangeLog < ApplicationRecord
   FIELDS = %w[title handle].freeze
 
   belongs_to :channel
-  belongs_to :changed_by_user, class_name: "User"
+  # Z1-ext: changed_by_user_id FK to users dropped (migration 20260525190002).
 
   validates :field, presence: true, inclusion: { in: FIELDS }
   validates :new_value, presence: true

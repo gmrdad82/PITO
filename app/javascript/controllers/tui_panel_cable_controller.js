@@ -32,6 +32,13 @@ import { createConsumer } from "@rails/actioncable"
  * client-side check eliminates the source of every drift bug where
  * the server and the localStorage layer disagreed about state.
  *
+ * Z3 (2026-05-25) — auth gate. When `document.body.dataset.tuiAuthenticated`
+ * is "no", the controller skips cable subscription entirely. The
+ * strategy is full-page reload on successful POST /login: the server
+ * re-renders the layout with `data-tui-authenticated="yes"` and
+ * Stimulus reconnects all panel controllers, at which point this guard
+ * passes and subscriptions begin normally.
+ *
  * @contract see docs/architecture.md § Cable channel grammar
  */
 export default class extends Controller {
@@ -41,6 +48,11 @@ export default class extends Controller {
   }
 
   connect() {
+    // Z3 — skip cable subscription when unauthenticated.
+    if (document.body.dataset.tuiAuthenticated !== "yes") {
+      return
+    }
+
     this.consumer = createConsumer()
     this.subscription = this.consumer.subscriptions.create(
       { channel: "Pito::PanelChannel", screen: this.screenValue, name: this.nameValue },

@@ -3,7 +3,7 @@ module Tui
   #
   # SPACE in NORMAL mode opens a which-key style popup listing the
   # supported leader actions. The user types a single next-key (`h`,
-  # `v`, `g`, `?`, `:`, `q`, `a`) → action fires → dialog closes.
+  # `v`, `g`, `s`, `?`, `:`, `q`, `a`) → action fires → dialog closes.
   # Esc closes. This is the clean rebuild after the 1700-line nested-
   # submenu / flat-key / compact-mode prior controller was deemed
   # spaghetti; nesting is gone, prefix-accumulator is gone, page-actions
@@ -40,24 +40,13 @@ module Tui
   class LeaderMenuComponent < ViewComponent::Base
     DIALOG_ID = "tui-leader-menu".freeze
 
-    # 2026-05-24 — `s` entry added: `Space s` toggles TST sync. The
-    # entry fires the `:toggle_tst_sync` registered action which flips
-    # the master sync switch (one flag covers every screen). The TST
-    # sync indicator reads and persists state server-side via
-    # `Pito::SyncState.pause_master!` / `resume_master!`.
-    #
-    # 2026-05-25 (collapse-to-master) — `p` entry: `Space p` triggers
-    # `:toggle_master_sync` for the master sync indicator. Only the
-    # master TST `[ ] sync` indicator exists; per-panel sync indicators
-    # have been removed. dispatch_method resolves via the
-    # `tui:leader:toggle_pause` custom event which the
-    # tui_sync_indicator_controller intercepts.
+    # 2026-05-24 — `s` entry added: `Space s` toggles TST sync.
+    # 2026-05-25 — `p` entry dropped (toggle_pause / collapse-to-master removed).
     DEFAULT_ENTRIES = [
       { key: "h", label_key: "tui.leader.entries.h.label",       path: "/" },
       { key: "v", label_key: "tui.leader.entries.v.label",       path: "/videos" },
       { key: "g", label_key: "tui.leader.entries.g.label",       path: "/games" },
       { key: "s", label_key: "tui.leader.entries.s.label",       action_name: "toggle_tst_sync" },
-      { key: "p", label_key: "tui.leader.entries.p.label",       dispatch_method: "toggle_pause" },
       { key: "?", label_key: "tui.leader.entries.help.label",    dispatch_method: "open_help" },
       { key: ":", label_key: "tui.leader.entries.command.label", dispatch_method: "open_command" },
       { key: "q", label_key: "tui.leader.entries.q.label",       path: "/session", path_method: "delete" },

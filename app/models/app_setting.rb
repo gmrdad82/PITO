@@ -24,11 +24,15 @@
 #
 # Related:
 #   Pito::HomeRowsConfig  — value object: default / validate! / normalize
-#   Pito::SyncTargets     — sync target catalog + cascade rules
-#   Pito::SyncState       — service layer for sync broadcasts
 
 class AppSetting < ApplicationRecord
   encrypts :value, deterministic: true
+
+  # Z1 (2026-05-25) — TOTP seed moved here from the dropped `users` table.
+  # The singleton row is now the sole TOTP carrier for the single owner.
+  # `encrypts` uses Active Record Encryption; the plaintext seed is what
+  # `rotp` consumes; the encrypted envelope is stored in `totp_seed_encrypted`.
+  encrypts :totp_seed_encrypted
 
   validates :key, presence: true, uniqueness: { case_sensitive: false }
   validates :value, presence: true
@@ -56,9 +60,8 @@ class AppSetting < ApplicationRecord
   #   "yes" → enabled (default when the row is absent)
   #   "no"  → user-disabled
   #
-  # The full target catalog + cascade rules live in `Pito::SyncTargets`.
-  # The toggle controller + the cable broadcaster suppression layer both
-  # call into these two helpers; nothing else reads the rows directly.
+  # The sync toggle controller calls these helpers directly; the per-panel
+  # suppression gate was removed in Z2e (2026-05-25) with Pito::SyncTargets.
   SYNC_KEY_PREFIX = "sync.".freeze
 
   def self.sync_enabled?(target)
@@ -205,32 +208,6 @@ class AppSetting < ApplicationRecord
     singleton_row.update!(reindex_running: false, reindex_started_at: nil)
   end
 
-  # 2026-05-25 (collapse-to-master) — master sync pause flag.
-  #
-  # `master_sync_paused` is a boolean column on the singleton row. When true
-  # all sync activity (background jobs, cable broadcasts) is suppressed.
-  # Replaces the prior `paused_targets` JSON array (which held per-panel /
-  # per-sub-panel pause state — now gone).
-  #
-  # `master_sync_paused?` — returns true when the master pause is active.
-  # `pause_master!`        — sets the flag to true, atomically.
-  # `resume_master!`       — clears the flag, atomically.
-  #
-  # Callers use `Pito::SyncState` instead of calling these directly; the
-  # service layer owns broadcasts.
-
-  def self.master_sync_paused?
-    singleton_row.master_sync_paused
-  end
-
-  def self.pause_master!
-    singleton_row.update!(master_sync_paused: true)
-  end
-
-  def self.resume_master!
-    singleton_row.update!(master_sync_paused: false)
-  end
-
   # ── Home layout config ────────────────────────────────────────────────────
   #
   # `home_rows` is a :text column on the singleton row holding a JSON-encoded
@@ -275,5 +252,45 @@ class AppSetting < ApplicationRecord
     row.home_rows_config = arr
     row.save!
     row
+  end
+
+  # ── TOTP (Z1 — 2026-05-25) ───────────────────────────────────────────────
+  #
+  # The owner's TOTP state is stored on the singleton row. These class-level
+  # helpers are the canonical API; no caller reads the columns directly.
+  #
+  # `totp_enabled?`          — true iff a seed is present and not disabled.
+  # `enroll_totp!(seed:)`    — stamps enrollment; clears any prior disable stamp.
+  # `disable_totp!`          — clears seed + backup codes + stamps disabled_at.
+  # `totp_seed`              — decrypted plaintext seed (nil when not enrolled).
+
+  def self.totp_enabled?
+    row = singleton_row
+    row.totp_enabled_at.present? && row.totp_disabled_at.nil?
+  end
+
+  def self.enroll_totp!(seed:)
+    row = singleton_row
+    row.update!(
+      totp_seed_encrypted: seed,
+      totp_enabled_at: Time.current,
+      totp_disabled_at: nil,
+      totp_last_used_step: nil
+    )
+  end
+
+  def self.disable_totp!
+    row = singleton_row
+    TotpBackupCode.delete_all
+    row.update!(
+      totp_seed_encrypted: nil,
+      totp_enabled_at: nil,
+      totp_disabled_at: Time.current,
+      totp_last_used_step: nil
+    )
+  end
+
+  def self.totp_seed
+    singleton_row.totp_seed_encrypted
   end
 end

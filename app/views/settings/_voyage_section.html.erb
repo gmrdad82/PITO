@@ -89,40 +89,47 @@
      end %>
   <% _voyage_rows = _voyage_dir == "asc" ? _voyage_rows : _voyage_rows.reverse %>
 
-  <table class="tui-table tui-table--stack">
-    <thead>
-      <%# Server-side sort headers. `sort_link_to` emits
-          `<a class="sort-asc">` / `<a class="sort-desc">` on the
-          active column; CSS `:has(> a.sort-asc)` picks up the V4
-          underline on first paint without client JS. %>
-      <tr data-tui-focusable="voyage_header"
-          data-tui-focusable-key="voyage_header"
-          data-tui-focusable-style="inert">
-        <th class="tui-table__th tui-table__th--left sortable">
-          <%= sort_link_to(t("settings.voyage.col_collection"), "collection", current_sort: _voyage_sort, current_dir: _voyage_dir, sort_param: "voyage_sort", dir_param: "voyage_dir") %>
-        </th>
-        <th class="tui-table__th tui-table__th--right num sortable">
-          <%= sort_link_to(t("settings.voyage.col_embedded"), "embedded", current_sort: _voyage_sort, current_dir: _voyage_dir, sort_param: "voyage_sort", dir_param: "voyage_dir") %>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <%# FB-188 (2026-05-23) — only the embedded-coverage rows
-          (games_embedded + bundles_embedded) participate in j/k focus. %>
-      <% _voyage_rows.each do |vr| %>
-        <tr class="tui-table__row"
-            data-tui-focusable="<%= vr[:key] %>"
-            data-tui-focusable-key="<%= vr[:key] %>"
-            data-tui-focusable-style="row"
-            data-tui-cursor-target="row">
-          <td class="tui-table__td"><%= vr[:label] %></td>
-          <td class="tui-table__td tui-table__td--right num">
-            <%= render Tui::SegmentedBarComponent.new(percent: vr[:pct], segments: 10) %><span><%= number_with_delimiter(vr[:count]) %></span>/<span><%= number_with_delimiter(vr[:total]) %></span>
-          </td>
+  <%# Z7b (2026-05-25) — Turbo Frame wrapper so column-header sort
+      clicks reload only this sub-panel's table, not the full page.
+      The frame id is stable and unique per sub-panel. The
+      `sort_link_to` calls below pass `frame: "stack_voyage_frame"`
+      so Turbo targets this frame on every sort click. %>
+  <turbo-frame id="stack_voyage_frame">
+    <table class="tui-table tui-table--stack">
+      <thead>
+        <%# Server-side sort headers. `sort_link_to` emits
+            `<a class="sort-asc">` / `<a class="sort-desc">` on the
+            active column; CSS `:has(> a.sort-asc)` picks up the V4
+            underline on first paint without client JS. %>
+        <tr data-tui-focusable="voyage_header"
+            data-tui-focusable-key="voyage_header"
+            data-tui-focusable-style="inert">
+          <th class="tui-table__th tui-table__th--left sortable">
+            <%= sort_link_to(t("settings.voyage.col_collection"), "collection", current_sort: _voyage_sort, current_dir: _voyage_dir, sort_param: "voyage_sort", dir_param: "voyage_dir", frame: "stack_voyage_frame") %>
+          </th>
+          <th class="tui-table__th tui-table__th--right num sortable">
+            <%= sort_link_to(t("settings.voyage.col_embedded"), "embedded", current_sort: _voyage_sort, current_dir: _voyage_dir, sort_param: "voyage_sort", dir_param: "voyage_dir", frame: "stack_voyage_frame") %>
+          </th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <%# FB-188 (2026-05-23) — only the embedded-coverage rows
+            (games_embedded + bundles_embedded) participate in j/k focus. %>
+        <% _voyage_rows.each do |vr| %>
+          <tr class="tui-table__row"
+              data-tui-focusable="<%= vr[:key] %>"
+              data-tui-focusable-key="<%= vr[:key] %>"
+              data-tui-focusable-style="row"
+              data-tui-cursor-target="row">
+            <td class="tui-table__td"><%= vr[:label] %></td>
+            <td class="tui-table__td tui-table__td--right num">
+              <%= render Tui::SegmentedBarComponent.new(percent: vr[:pct], segments: 10) %><span><%= number_with_delimiter(vr[:count]) %></span>/<span><%= number_with_delimiter(vr[:total]) %></span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </turbo-frame>
 
   <%# Info table — NOT sortable. No `<thead>`, no sortable-table
       controller. Pure key/value rows. Small top margin separates it

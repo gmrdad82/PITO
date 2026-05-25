@@ -8,10 +8,10 @@
   <% rollup = Pito::Analytics::ViewerTimeRollup.new.call(
        scope: :channel,
        id: channel.id,
-       tz: (Current.user&.time_zone.presence || "Etc/UTC")
+       tz: "Etc/UTC"
      ) %>
   <%= render(ViewerTimeHeatmapComponent.new(
         data: rollup,
-        tz: (Current.user&.time_zone.presence || "Etc/UTC")
+        tz: "Etc/UTC"
       )) %>
 </section>

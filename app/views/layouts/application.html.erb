@@ -72,59 +72,11 @@
         semantic. %>
     <meta name="pito:section" content="<%= current_section %>">
 
-    <%# 2026-05-16 — mandatory-2FA gate signal for global keydown
-        controllers. When an authenticated user is in the
-        `!totp_configured?` state, the enrollment modal auto-opens on
-        `/settings` and every other route bounces back to it via
-        `Sessions::AuthConcern#require_totp_configured!`. While the
-        gate is active, NO global keyboard shortcut should fire — the
-        leader-menu (SPACE) and the per-page `/`/`s`/`-` shortcuts
-        are all suppressed via the document keydown listeners mounted
-        by the `keyboard` and `leader-menu` controllers. (2026-05-17
-        — the `theme` controller's keydown listener was removed in
-        the legacy-keyboard-shortcut sweep along with the `t` keybind;
-        theme toggling is now click-only.) The keydown handlers read
-        this meta tag LIVE on every keypress and early-return when
-        `content="yes"`. The enrollment form's own keys (typing the
-        6-digit code, Tab, Enter) are unaffected — they're either
-        native browser behaviour on a focused `<input>` or already
-        gated by the controllers' editable-target guard.
-
-        Why a `<meta>` in `<head>` rather than a `<body data-…>`
-        attribute or an inline `<body>` `<script>`:
-          * Body data-attribute went stale after Turbo Drive
-            navigations away from `/settings`: the new body rendered
-            `data-enroll-totp-gate="no"` server-side, but a live
-            `document.body.dataset.enrollTotpGate` read kept returning
-            the prior page's value. Root cause never fully isolated
-            (likely a Stimulus mutation-observer timing edge case
-            crossed with the body-attribute carry-over); switching
-            surfaces was cheaper than debugging it.
-          * Inline `<script>` as the first child of `<body>` was the
-            next attempt — Turbo's `activateNewBodyScriptElements`
-            recreates scripts so the global SHOULD be re-set on every
-            navigation. In practice keybindings stayed dead on both
-            link-click Turbo Drive navigation AND the post-login
-            redirect, suggesting either the script didn't re-execute
-            or the controllers' `connect()` didn't re-fire on the new
-            body — either failure mode left the gate check reading a
-            stale `window.__pitoEnrollTotpGate` (or a never-bound
-            keydown listener entirely).
-          * A `<meta>` in `<head>` is the most stable surface: Turbo's
-            `mergeProvisionalElements` diffs head children by
-            `isEqualNode`, so when the `content` flips from `"yes"`
-            to `"no"` (or vice versa) the old meta is removed and the
-            new meta is appended — guaranteed-fresh per page. The
-            controllers read the meta live inside `onKeydown` so the
-            check honours the most recent head merge without needing
-            any per-controller cache, Turbo lifecycle listener, or
-            Stimulus connect/disconnect re-bind.
-        The meta tag renders unconditionally (defaults to `"no"` on
-        the login screen and for authenticated users with TOTP
-        configured) so a missing tag never silently flips the gate
-        open or shut. %>
-    <% enroll_totp_gate_active = Current.user.present? && !Current.user.totp_configured? %>
-    <meta name="pito-enroll-totp-gate" content="<%= enroll_totp_gate_active ? "yes" : "no" %>">
+    <%# Z1 (2026-05-25) — pito-enroll-totp-gate meta tag removed.
+        Enrollment is now Rake-only (`bin/rails pito:auth:enroll`).
+        There is no web enrollment flow and no "user with TOTP not yet
+        configured" state. The gate machinery and all Current.user
+        references here are gone. %>
 
     <%# Unified keybindings schema — single source of truth for the
         leader-menu popup AND the Rust pito CLI's leader overlay,
@@ -242,7 +194,14 @@
       only replaced the cascade SOURCE, not the cascade itself. The
       `background` inline overrides any prior body bg fallback so the
       Ruby-picked literal hex paints the canvas. %>
+  <%# Z3 (2026-05-25) — `data-tui-authenticated` stamps the auth state on body
+      so the `tui-panel-cable` Stimulus controller can skip cable subscriptions
+      when the session is absent. "yes" / "no" per the project boundary convention.
+      On successful POST /login, SessionsController redirects to root_path (full
+      reload), which re-renders this attribute as "yes" so panels subscribe
+      naturally without any in-place JS event. %>
   <body data-section="<%= current_section %>"
+        data-tui-authenticated="<%= Current.session.present? ? "yes" : "no" %>"
         style="--section-accent: <%= pito_section_accent %>; --color-section-accent: <%= pito_section_accent %>; background: <%= pito_section_bg %>;"
         data-controller="keyboard notifications-modal tui-leader-menu flat-key timezone-detect webhook-help-modal dialog-scroll-lock sortable-keys tui-cursor tui-panel-nav"
         <%# `data-keybindings-page-key` exposes the YAML key (e.g.
@@ -254,8 +213,7 @@
             powers `KeybindingsReferenceComponent`. Absent attribute
             (nil page key) = no page-actions section. %>
         <% if (kb_page_key = keybindings_page_key) %>data-keybindings-page-key="<%= kb_page_key %>"<% end %>
-        <% if Current.user.present? %>data-timezone-detect-stored-value="<%= Current.user.time_zone %>"
-        data-timezone-detect-url-value="<%= settings_time_zone_path %>"
+        <% if Current.session.present? %>data-timezone-detect-url-value="<%= settings_time_zone_path %>"
         data-timezone-detect-csrf-value="<%= form_authenticity_token %>"<% end %>>
     <%# FB-81 page-load splash REMOVED. Existed only to mask the FOUT
         moment during the font swap. System-mono-only renders with no
@@ -319,6 +277,16 @@
       <% end %>
       <%= yield %>
     </main>
+
+    <%# Z3 (2026-05-25) — Auth dialog overlay. Renders unconditionally when
+        Current.session is nil so the root layout always serves. The dialog
+        sits above all panel chrome via z-index 1000. Panels render their
+        chrome skeleton but gate their body content via `tui_authenticated?`.
+        On successful POST /login, the controller redirects to root_path so
+        a full reload re-renders this without the dialog and panels show live data. %>
+    <% unless Current.session.present? %>
+      <%= render Pito::AuthDialogComponent.new %>
+    <% end %>
 
     <%# Page-level scroll indicator — lives OUTSIDE <main> so <main>'s
         overflow-y: auto cannot clip the right-edge glyphs. Fixed-positioned
@@ -465,7 +433,7 @@
         partial only renders when an authenticated user is present
         — there is no surface for the modal on the login / OAuth
         consent screens. %>
-    <% if Current.user.present? %>
+    <% if Current.session.present? %>
       <%= render "shared/totp_verification_modal" %>
     <% end %>
 

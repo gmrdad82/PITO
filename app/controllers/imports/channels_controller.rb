@@ -91,7 +91,6 @@ class Imports::ChannelsController < ApplicationController
 
       job = ImportJob.create!(
         channel: channel,
-        enqueued_by: Current.user,
         status: :queued
       )
       # `perform_in` (not `perform_async`) — see SUBSCRIPTION_GRACE
@@ -164,7 +163,7 @@ class Imports::ChannelsController < ApplicationController
           youtube_video_id: video.youtube_video_id
         ) do |row|
           row.rejected_at = Time.current
-          row.rejected_by = Current.user
+          # Z1: User model gone; rejected_by FK dropped in Z1-ext migration.
         end
         video.destroy!
         @rejected += 1
@@ -185,9 +184,10 @@ class Imports::ChannelsController < ApplicationController
   # Per-user 5-second cache lock. `unless_exist: true` is atomic on the
   # Redis cache store and on the test in-memory store.
   def rate_limited?
-    return false unless Current.user
+    return false unless Current.session
 
-    lock_key = "imports:enqueue:user:#{Current.user.id}"
+    # Z1: User model gone. Lock key scoped to session token instead.
+    lock_key = "imports:enqueue:session:#{Current.session.token_digest}"
     !Rails.cache.write(lock_key, 1, expires_in: ENQUEUE_RATE_LIMIT_TTL, unless_exist: true)
   end
 

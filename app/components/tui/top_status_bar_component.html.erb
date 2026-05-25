@@ -36,7 +36,7 @@
       </span>
       <span class="sb-progress-counter" data-tui-status-bar-target="progressCounter"><%= progress_counter %></span>
     <% end %>
-    <%= render Tui::SyncIndicatorComponent.new(state: sync_state) %>
+    <%= render Tui::SyncIndicatorComponent.new %>
     <span class="sb-pipe">|</span>
     <%= render Tui::DateTimeComponent.new %>
   </div>

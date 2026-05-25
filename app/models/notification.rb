@@ -48,9 +48,7 @@ class Notification < ApplicationRecord
   belongs_to :source_milestone_rule,
              class_name: "MilestoneRule",
              optional: true
-  belongs_to :created_by_user,
-             class_name: "User",
-             optional: true
+  # Z1-ext: created_by_user_id FK to users dropped (migration 20260525190002).
 
   # Rails 8.1 — defensive: lock the enum-backing column types.
   attribute :kind, :integer

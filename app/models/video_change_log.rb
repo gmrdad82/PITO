@@ -34,9 +34,6 @@ class VideoChangeLog < ApplicationRecord
   }
 
   belongs_to :video
-  belongs_to :changed_by_user,
-             class_name: "User",
-             optional: true
 
   validates :field, presence: true, inclusion: { in: FIELDS }
   validates :changed_at, presence: true

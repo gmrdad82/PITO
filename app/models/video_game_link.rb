@@ -6,8 +6,8 @@
 #   via migration (R1).
 # - `is_primary` is a hint for analytics weighting (Phase 13). Multiple
 #   primaries per Video are allowed (master-agent decision #2).
-# - `created_by_user_id` audit column populated from `Current.user`
-#   on create (master-agent decision #4).
+# - `created_by_user_id` audit column — Z1-ext: FK dropped, column gone
+#   after migration 20260525190002. Callback is now a no-op.
 # - `after_commit :recompute_game_footage_cache` (on create AND destroy)
 #   keeps `Game#hours_of_footage_cached` in sync with the linked Video
 #   durations.
@@ -18,7 +18,6 @@ class VideoGameLink < ApplicationRecord
 
   belongs_to :video
   belongs_to :game, optional: true
-  belongs_to :created_by_user, class_name: "User", optional: true
 
   validate :exactly_one_target
   validates :game_id, uniqueness: { scope: :video_id, allow_nil: true }
@@ -46,9 +45,11 @@ class VideoGameLink < ApplicationRecord
     end
   end
 
+  # Z1-ext: User model gone. created_by_user_id column will be removed
+  # by migration 20260525190002; this callback is now a no-op stub until
+  # the column is dropped and the before_validation is removed.
   def stamp_created_by_user
-    return if created_by_user_id.present?
-    self.created_by_user_id = Current.user&.id
+    # no-op — user FK dropped in Z1-ext migration
   end
 
   # Game-side cache. Sums `Game#videos`'s `duration_seconds` after

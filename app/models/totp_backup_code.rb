@@ -14,8 +14,6 @@
 # `1` / `I` / `L` / `B` / `8`); the alphabet is owned by the enroller
 # service, not the model, because the model only ever sees the digest.
 class TotpBackupCode < ApplicationRecord
-  belongs_to :user
-
   validates :code_digest, presence: true
 
   scope :unused, -> { where(used_at: nil) }

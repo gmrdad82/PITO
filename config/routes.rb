@@ -30,28 +30,6 @@ Rails.application.routes.draw do
   post "/login",   to: "sessions#create"
   delete "/session", to: "sessions#destroy", as: :session_logout
 
-  # Phase 29 — Unit A2. Reset-password-via-2FA surface. pito does not
-  # run SMTP, so there is no email-based recovery; this is the only
-  # self-service browser recovery path. `new` renders the username +
-  # code form; `create` verifies the username + a live TOTP code OR a
-  # backup code (single-use, consumed) and mints a short-lived signed
-  # reset marker; `edit` renders the set-password form behind that
-  # marker; `update` applies the new password, revokes every session,
-  # and redirects to `/login` (does NOT auto-log-in). Anonymous —
-  # the user is not logged in. Throttled in `rack_attack.rb`.
-  get   "/password/reset",      to: "password_resets#new",    as: :password_reset
-  post  "/password/reset",      to: "password_resets#create"
-  get   "/password/reset/edit", to: "password_resets#edit",   as: :edit_password_reset
-  patch "/password/reset",      to: "password_resets#update"
-
-  # Post-password TOTP gate. GET renders the 6-digit input form (with
-  # a backup-code fallback); POST accepts either a 6-digit code or an
-  # 8-char backup code, activates the session on success, and rotates
-  # the session token (LD-12). POST without a pre-auth marker returns
-  # 401. The marker is minted by `SessionsController#create` when the
-  # password verified and the user has TOTP enabled.
-  get    "/login/totp",      to: "login/totp_challenges#show",   as: :login_totp
-  post   "/login/totp",      to: "login/totp_challenges#create"
 
   # Phase 12 — Step B (6b-doorkeeper-oauth-server.md). Doorkeeper mounts
   # `/oauth/authorize`, `/oauth/token`, `/oauth/revoke`, `/oauth/introspect`.
@@ -508,42 +486,10 @@ Rails.application.routes.draw do
          constraints: { ids: %r{[0-9,]+} }
 
     # Security surface. `resource` (singular) so the URL is
-    # `/settings/security` (one dashboard per logged-in user). Post-
-    # Phase-25 rollback the dashboard is 2FA-status only — the recent-
-    # attempts table, auto-block list, and per-attempt detail surfaces
-    # are gone along with the new-location approval flow. The TOTP
-    # enrollment routes stay live.
+    # `/settings/security` (one dashboard per the logged-in owner). Post-
+    # Z1 the TOTP enrollment routes are gone — enrollment is now
+    # operator-only via `bin/rails pito:auth:enroll`.
     resource :security, only: %i[show], controller: "security"
-    namespace :security do
-      # Phase 32 follow-up (2026-05-16). 2FA / TOTP cleanup.
-      #
-      # The web surface collapsed to a single focused enrollment view.
-      # Mandatory-2FA means there is no "manage" page, no `[disable]`
-      # web action, and no `[manage backup codes]` control — those
-      # capabilities live in operator-only rake tasks
-      # (`pito:user:reset_totp` and `pito:user:regenerate_backup_codes`).
-      #
-      # Two routes:
-      #
-      #   - `totps#new`    (GET /settings/security/totp) — renders the
-      #                    2-row enrollment view. Generates a fresh
-      #                    seed + backup-code draft per load and
-      #                    stashes it in `Rails.cache` (NOT in the
-      #                    user row). Non-resumable.
-      #   - `totps#create` (POST /settings/security/totp) — atomic
-      #                    finalize. Reads the cached draft, verifies
-      #                    the 6-digit code, and only on success
-      #                    persists `totp_seed_encrypted` +
-      #                    `totp_enabled_at` + backup-code rows in a
-      #                    single transaction.
-      #
-      # The dropped surfaces — `totp/show`, `totp/confirm`,
-      # `totp/disable`, `totp_backup_codes/*` — are gone. The
-      # one-shot QR + codes render on `new`; finalization is `create`;
-      # disable + backup-code rotation are operator-only.
-      get  "totp", to: "totps#new",    as: :totp
-      post "totp", to: "totps#create"
-    end
 
     # Phase 26 — 01a. Timezone foundation. Singular `resource` so the
     # URL is `/settings/time_zone` (one stored zone per logged-in
@@ -613,23 +559,11 @@ Rails.application.routes.draw do
   # block above).
   get "/settings/youtube", to: redirect("/channels", status: 301)
 
-  # 2026-05-25 (sync-rebuild) — the single mutation endpoint for the
-  # server-side sync state. Replaces every `localStorage.setItem` call
-  # the JS sync layer used to fire. `target=` query param carries the
-  # dot-namespaced sync target (`app`, `home.<panel>`, or
-  # `home.<panel>.<sub_panel>`); see `Pito::SyncTargets` for the
-  # full universe.
+  # Z2e (2026-05-25) — sync toggle: enables/disables a named target's cable
+  # broadcasts via AppSetting. `target=` query param carries the dot-namespaced
+  # target key (e.g. `app`, `home.stack`). Pause / resume routes removed
+  # alongside the deleted multi-state sync machine.
   post "sync/toggle", to: "sync#toggle", as: :sync_toggle
-
-  # 2026-05-25 (pause-from-sync) — explicit pause / resume endpoints.
-  # Distinct from toggle: these pause without disabling sync entirely.
-  # The `[-] sync` indicator reflects paused state; the user can resume
-  # without losing the enabled/disabled preference.
-  # `target=` follows the same dot-namespaced convention as `/sync/toggle`.
-  # Routed to `SyncController#pause` / `SyncController#resume` (same
-  # controller as the `/sync/toggle` action — no namespace module prefix).
-  post "pito/sync/pause",  to: "sync#pause",  as: :pito_sync_pause
-  post "pito/sync/resume", to: "sync#resume", as: :pito_sync_resume
 
   # 2026-05-25 — Pito::CalendarController navigation endpoints.
   #

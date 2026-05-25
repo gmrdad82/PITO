@@ -6,6 +6,7 @@
       class: "pane pito-pane pito-panel pito-panel--notifications-feed",
       **panel_data do %>
   <span class="pito-pane__title"><%= title %></span>
+  <% if helpers.tui_authenticated? %>
   <span class="pito-pane__title-actions">
     <%= form_with url: mark_read_notifications_feed_index_path,
           method: :post,
@@ -23,4 +24,5 @@
       <span class="color-muted">notifications feed body removed — pending rebuild</span>
     <% end %>
   </turbo-frame>
+  <% end %>
 <% end %>

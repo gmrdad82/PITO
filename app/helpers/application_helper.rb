@@ -33,15 +33,9 @@ module ApplicationHelper
   # the navbar and the settings page proper. Covered surfaces and the
   # controllers that produce them:
   #   - `settings/*`                            — Settings::*Controller
-  #     (includes `settings/security/totps`, `settings/webhooks/*`,
-  #     `settings/sessions/*`, `settings/discord_webhooks`,
-  #     `settings/slack_webhooks`, `settings/user`,
-  #     `settings/time_zone`, `settings/notification_toggles`,
-  #     `settings/security`)
-  #   - `login/totp_challenges`                 — Login::TotpChallengesController
-  #     (post-password TOTP step at `/login/totp`)
-  #   - `password_resets`                       — PasswordResetsController
-  #     (`/password/reset` family)
+  #     (includes `settings/security`, `settings/webhooks/*`,
+  #     `settings/sessions/*`, `settings/time_zone`,
+  #     `settings/notification_toggles`)
   #   - `doorkeeper/*`                          — Doorkeeper engine
   #     (`/oauth/authorize`, `/oauth/token`, `/oauth/revoke`,
   #     `/oauth/introspect`, `/oauth/applications` admin)
@@ -55,9 +49,7 @@ module ApplicationHelper
 
     path = controller_path
 
-    if path == "login/totp_challenges" ||
-       path == "password_resets" ||
-       path == "oauth/registrations" ||
+    if path == "oauth/registrations" ||
        path == "youtube_connections/oauth_callbacks" ||
        path.start_with?("settings", "doorkeeper/")
       return "settings"
@@ -71,6 +63,22 @@ module ApplicationHelper
     else
       "home"
     end
+  end
+
+  # Z3 (2026-05-25) — Auth gate helper for panel body rendering.
+  #
+  # Returns true when a valid session is present (Current.session is set).
+  # Panel templates wrap their body content in `if helpers.tui_authenticated?`
+  # so unauthenticated renders expose only the panel chrome skeleton — no
+  # live data, no cable subscriptions. The layout-level `Pito::AuthDialogComponent`
+  # overlays the full viewport in the unauthenticated case; this helper
+  # prevents data leakage through panel bodies while the dialog is open.
+  #
+  # The JS counterpart is `document.body.dataset.tuiAuthenticated` — the
+  # layout stamps this attribute so `tui-panel-cable` can skip cable
+  # subscriptions when unauthenticated.
+  def tui_authenticated?
+    Current.session.present?
   end
 
   # 2026-05-18 — Mobile-nav abbreviated labels dropped per user

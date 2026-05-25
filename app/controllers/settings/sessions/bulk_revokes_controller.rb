@@ -87,7 +87,9 @@ class Settings::Sessions::BulkRevokesController < ApplicationController
   def scoped_targets
     ids = parse_ids
     return Session.none if ids.empty?
-    Current.user.sessions.where(id: ids).to_a
+    # Z1: User model gone; sessions are not scoped by user_id (dropped FK).
+    # Single-user app — any session row is the owner's session.
+    Session.where(id: ids).to_a
   end
 
   def audit_revoke(session, by:)

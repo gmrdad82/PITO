@@ -3,10 +3,12 @@
 # gives pito access to one or more YouTube channels." See
 # `docs/plans/beta/09-login-with-google-drop/specs/01-google-identity-rename.md`.
 #
-# One row per (User, Google account) pair. The schema permits a User to
-# hold multiple connections — `User has_many :youtube_connections` — so a
-# single pito account holder can connect multiple Google accounts (one
-# grant per account; each grant covers one or more channels).
+# One row per connected Google account. A single pito install can hold
+# multiple connections (one grant per Google account; each grant covers
+# one or more channels).
+#
+# Z1 — User model dropped; `user_id` column removed from
+# `youtube_connections`.
 #
 # `google_subject_id` is install-wide unique (the upstream Google ID is
 # globally unique on its own — Phase 8 dropped the tenant-scoped
@@ -17,8 +19,6 @@
 # writes a JSON-encoded ciphertext blob. Deterministic encryption is
 # NOT used — tokens are not searchable.
 class YoutubeConnection < ApplicationRecord
-  belongs_to :user
-
   # Phase 7C disconnect-lifecycle decision (preserved): channels outlive
   # the connection. Destroying the connection nullifies the FK on
   # surviving channels so the user can re-connect later without losing

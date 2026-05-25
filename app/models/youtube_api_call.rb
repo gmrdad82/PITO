@@ -4,8 +4,8 @@
 # collapses retries into the single row that reflects the eventual
 # success/failure (locked decision).
 class YoutubeApiCall < ApplicationRecord
-  belongs_to :user, optional: true
   # Phase 9 — GoogleIdentity → YoutubeConnection rename (ADR 0006).
+  # Z1 — User model dropped; `user_id` column removed from `youtube_api_calls`.
   belongs_to :youtube_connection, optional: true
 
   # Phase 13.2 — Analytics sync engine adds the `analytics_v2` kind for

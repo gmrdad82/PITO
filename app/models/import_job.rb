@@ -19,7 +19,7 @@
 # Rails-side association mirrors that contract.
 class ImportJob < ApplicationRecord
   belongs_to :channel
-  belongs_to :enqueued_by, class_name: "User"
+  # Z1-ext: enqueued_by_id FK to users dropped (migration 20260525190002).
 
   # Rails 8.1 — defensive: lock the enum-backing column type.
   attribute :status, :integer

@@ -32,7 +32,8 @@ module Pito
 
     def current_iana
       @current_iana ||= begin
-        zone = Current.user&.time_zone.presence || "Etc/UTC"
+        # Z1: User model gone; time zone fixed to Etc/UTC (ApplicationController#set_user_time_zone).
+        zone = "Etc/UTC"
         ActiveSupport::TimeZone[zone]&.tzinfo&.name || zone
       end
     end

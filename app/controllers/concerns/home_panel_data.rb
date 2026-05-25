@@ -98,46 +98,56 @@ module HomePanelData
   # `Pito::HomeRowComponent`, forwarding this hash as `panel_data:`.
   # The HomeRowComponent splats the matching sub-hash into each panel's
   # initializer via `kwargs_for(key)`.
+  #
+  # Z3 (2026-05-25) — unauthenticated path. When `Current.session.nil?`,
+  # the data before_actions are skipped so all ivars are nil. Safe defaults
+  # are used so panel ViewComponent initializers receive valid (empty) values.
+  # Panel bodies are gated by `helpers.tui_authenticated?` so nil data is
+  # never actually rendered.
   def assemble_home_panel_data
+    install_tz = Rails.application.config.x.pito.timezone
+    tz         = ActiveSupport::TimeZone[install_tz] || ActiveSupport::TimeZone["UTC"]
+    fallback_today = Time.current.in_time_zone(tz).to_date
+
     @home_panel_data = {
       "games_releasing"    => {},
       "notifications_feed" => {},
       "calendar"           => {
-        entries:    @calendar_entries,
-        buckets:    @calendar_buckets,
-        grid:       @calendar_grid,
-        today:      @calendar_today,
-        year:       @calendar_year,
-        month:      @calendar_month,
+        entries:    @calendar_entries    || [],
+        buckets:    @calendar_buckets    || {},
+        grid:       @calendar_grid       || home_calendar_month_grid(fallback_today.year, fallback_today.month),
+        today:      @calendar_today      || fallback_today,
+        year:       @calendar_year       || fallback_today.year,
+        month:      @calendar_month      || fallback_today.month,
         raw_filter: @calendar_raw_filter,
         category:   @calendar_category
       },
       "stack"              => {
-        postgres_status:          @postgres_status,
-        postgres_table_breakdown: @postgres_table_breakdown,
-        search_healthy:           @search_healthy,
-        search_stats:             @search_stats,
-        search_per_index_stats:   @search_per_index_stats,
-        voyage_configured:        @voyage_configured,
-        storage_status:           @storage_status,
-        assets_breakdown:         @assets_breakdown,
-        meilisearch_sort:         @meilisearch_sort,
-        meilisearch_dir:          @meilisearch_dir,
-        voyage_sort:              @voyage_sort,
-        voyage_dir:               @voyage_dir,
-        postgres_sort:            @postgres_sort,
-        postgres_dir:             @postgres_dir,
-        assets_sort:              @assets_sort,
-        assets_dir:               @assets_dir
+        postgres_status:          @postgres_status          || { connected: false, adapter: "postgresql", database: nil, version: nil },
+        postgres_table_breakdown: @postgres_table_breakdown || [],
+        search_healthy:           @search_healthy           || false,
+        search_stats:             @search_stats             || { version: nil },
+        search_per_index_stats:   @search_per_index_stats   || [],
+        voyage_configured:        @voyage_configured         || false,
+        storage_status:           @storage_status           || { path: nil, present: false, writable: false, size_bytes: 0, file_count: 0 },
+        assets_breakdown:         @assets_breakdown         || [],
+        meilisearch_sort:         @meilisearch_sort         || MEILISEARCH_DEFAULT_SORT,
+        meilisearch_dir:          @meilisearch_dir          || MEILISEARCH_DEFAULT_DIR,
+        voyage_sort:              @voyage_sort              || VOYAGE_DEFAULT_SORT,
+        voyage_dir:               @voyage_dir               || VOYAGE_DEFAULT_DIR,
+        postgres_sort:            @postgres_sort            || POSTGRES_DEFAULT_SORT,
+        postgres_dir:             @postgres_dir             || POSTGRES_DEFAULT_DIR,
+        assets_sort:              @assets_sort              || ASSETS_DEFAULT_SORT,
+        assets_dir:               @assets_dir               || ASSETS_DEFAULT_DIR
       },
       "notifications"      => {
         discord_webhook: @discord_webhook,
         slack_webhook:   @slack_webhook
       },
       "security"           => {
-        sessions:      @sessions,
-        sessions_sort: @sessions_sort,
-        sessions_dir:  @sessions_dir
+        sessions:      @sessions      || Session.none,
+        sessions_sort: @sessions_sort || SESSIONS_DEFAULT_SORT,
+        sessions_dir:  @sessions_dir  || SESSIONS_DEFAULT_DIR
       }
     }
   end
@@ -146,12 +156,16 @@ module HomePanelData
   # Security panel. Active (non-revoked) rows only; revoked rows stay
   # in the DB for audit. Falls back to `Session.none` when the request
   # has no authenticated user.
+  # Z3 (2026-05-25) — `Current.user` is gone (Z1); guard on `Current.session`
+  # instead. When unauthenticated (session nil), return Session.none so the
+  # security panel renders an empty table skeleton behind the auth overlay.
+  # When authenticated, load all active sessions ordered by the requested sort.
   def set_security_panel_data
     @sessions_sort = sanitized_sessions_sort_key
     @sessions_dir  = sanitized_sessions_dir
     @sessions =
-      if Current.user.present?
-        Current.user.sessions.active_sessions.order(sessions_sort_clause)
+      if Current.session.present?
+        Session.active_sessions.order(sessions_sort_clause)
       else
         Session.none
       end

@@ -147,25 +147,6 @@ Rails.application.config.after_initialize do
     scope: :global
   )
 
-  # 2026-05-25 (collapse-to-master) — master sync toggle.
-  #
-  # `:toggle_master_sync` is a client-side action; the JS dispatcher reads
-  # the current master pause state from the TST indicator element and POSTs
-  # to `/pito/sync/pause` or `/pito/sync/resume` accordingly (no target
-  # param needed — master is implicit). Registered here so the `:` palette
-  # can surface a "toggle master sync" entry.
-  #
-  # scope: :global — master sync toggle applies on every screen.
-  Pito::ActionRegistry.define(
-    :toggle_master_sync,
-    path: -> { "#" },
-    method: :get,
-    confirmation: nil,
-    i18n_key: "tui.commands.toggle_master_sync",
-    cable_panel: nil,
-    scope: :global
-  )
-
   # 2026-05-25 — Pito::Calendar::MonthGridComponent navigation actions.
   #
   # Four GET actions drive Turbo Frame navigation in the home calendar panel.
