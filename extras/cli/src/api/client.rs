@@ -41,8 +41,6 @@ pub trait PitoClient {
     /// Returns true if auth succeeded.
     fn authenticate(&self, code: &str) -> Result<bool>;
 
-    /// Fetch live Sidekiq status from GET /status.json.
-    fn get_status(&self) -> Result<StatusData>;
 }
 
 /// Per-bulk-operation bookkeeping for the mock client. We need to remember the
@@ -766,15 +764,6 @@ impl PitoClient for MockClient {
         Ok(true) // mock always succeeds
     }
 
-    fn get_status(&self) -> Result<StatusData> {
-        Ok(StatusData {
-            connected: true,
-            sidekiq_busy: 0,
-            sidekiq_enqueued: 3,
-            sidekiq_retry: 1,
-            sidekiq_dead: 0,
-        })
-    }
 }
 
 #[cfg(test)]

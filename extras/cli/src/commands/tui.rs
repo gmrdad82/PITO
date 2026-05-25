@@ -116,7 +116,7 @@ fn run_loop<C: PitoClient>(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>
 
         // Poll cable channel for status updates (non-blocking)
         while let Ok(sd) = cable_rx.try_recv() {
-            app.status_data = sd;
+            app.update_status_data(sd);
         }
 
         if last_draw.elapsed() >= tick_rate {

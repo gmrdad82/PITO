@@ -138,20 +138,34 @@ pub fn render<C: PitoClient>(frame: &mut Frame, app: &mut App<C>) {
 
     // Time tick + scramble before immutable borrow
     let now_str = app.scrambled_time();
+    // Sidekiq scramble before immutable borrow
+    let sidekiq_str = app.scrambled_sidekiq();
 
     let sd = &app.status_data;
-    let conn_fg = if sd.connected { theme.success } else { theme.danger };
-    let mut st = vec![Span::styled("connected", Style::default().fg(conn_fg))];
+    let (conn_label, conn_fg) = if sd.connected {
+        ("connected", theme.success)
+    } else {
+        ("disconnected", theme.danger)
+    };
+    let mut st = vec![Span::styled(conn_label, Style::default().fg(conn_fg))];
     let mut right: Vec<Span> = Vec::new();
     right.push(Span::styled("Sidekiq", Style::default().fg(theme.muted)));
     right.push(Span::raw(" "));
-    right.push(Span::styled(format!("b{}", sd.sidekiq_busy), Style::default().fg(if sd.sidekiq_busy > 0 { theme.success } else { theme.muted })));
-    right.push(Span::raw(" "));
-    right.push(Span::styled(format!("e{}", sd.sidekiq_enqueued), Style::default().fg(if sd.sidekiq_enqueued > 0 { theme.orange } else { theme.muted })));
-    right.push(Span::raw(" "));
-    right.push(Span::styled(format!("r{}", sd.sidekiq_retry), Style::default().fg(if sd.sidekiq_retry > 0 { theme.danger } else { theme.muted })));
-    right.push(Span::raw(" "));
-    right.push(Span::styled(format!("d{}", sd.sidekiq_dead), Style::default().fg(if sd.sidekiq_dead > 0 { theme.purple } else { theme.muted })));
+    // Parse scrambled/displayed string back into colored spans
+    for (idx, part) in sidekiq_str.split(' ').enumerate() {
+        if part.is_empty() { continue; }
+        let prefix = &part[..1];
+        let val: u64 = part[1..].parse().unwrap_or(0);
+        let fg = match prefix {
+            "b" => if val > 0 { theme.success } else { theme.muted },
+            "e" => if val > 0 { theme.orange } else { theme.muted },
+            "r" => if val > 0 { theme.danger } else { theme.muted },
+            "d" => if val > 0 { theme.purple } else { theme.muted },
+            _ => theme.muted,
+        };
+        if idx > 0 { right.push(Span::raw(" ")); }
+        right.push(Span::styled(part, Style::default().fg(fg)));
+    }
     right.push(Span::styled(" · ", Style::default().fg(theme.muted)));
     right.push(Span::styled(now_str, Style::default().fg(theme.cyan)));
 

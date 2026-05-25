@@ -57,7 +57,6 @@ pub const SYNC_POLL_INTERVAL: Duration = Duration::from_millis(500);
 pub const SYNC_POLL_DEADLINE: Duration = Duration::from_secs(10);
 pub const OPERATION_POLL_INTERVAL: Duration = Duration::from_millis(500);
 pub const OPERATION_POLL_DEADLINE: Duration = Duration::from_secs(30);
-pub const STATUS_POLL_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Clone)]
 pub struct SyncPolling {
@@ -117,9 +116,8 @@ pub struct App<C: PitoClient> {
     pub sync_polling: Option<SyncPolling>,
     pub operation_progress: Option<OperationProgress>,
 
-    // Status polling
+    // Status data (populated via cable WebSocket)
     pub status_data: StatusData,
-    pub last_status_poll: Instant,
 
     // Datetime tick (1 Hz)
     pub last_time_update: Instant,
@@ -127,6 +125,12 @@ pub struct App<C: PitoClient> {
     pub display_time_string: String,
     pub scramble_tick: u8,
     pub scramble_total: u8,
+
+    // Sidekiq scramble (triggered on cable status update)
+    pub cached_sidekiq_str: String,
+    pub display_sidekiq_str: String,
+    pub sidekiq_scramble_tick: u8,
+    pub sidekiq_scramble_total: u8,
 
     // Footage detail (salvaged)
     pub footage_detail_state: Option<FootageDetailState>,
@@ -163,12 +167,15 @@ status_data: StatusData {
                 sidekiq_retry: 0,
                 sidekiq_dead: 0,
             },
-            last_status_poll: Instant::now(),
             last_time_update: Instant::now(),
             cached_time_string: String::new(),
             display_time_string: String::new(),
             scramble_tick: 0,
             scramble_total: 15,
+            cached_sidekiq_str: String::new(),
+            display_sidekiq_str: String::new(),
+            sidekiq_scramble_tick: 0,
+            sidekiq_scramble_total: 15,
             footage_detail_state: None,
             footage_detail_rects: None,
             terminal_capability: TerminalCapability::TextOnly,
@@ -259,15 +266,60 @@ status_data: StatusData {
         }
     }
 
-    /// Poll GET /status.json every [`STATUS_POLL_INTERVAL`]. Errors are
-    /// silently discarded — the status bar shows the last successful data.
-    pub fn poll_status(&mut self) {
-        if self.last_status_poll.elapsed() < STATUS_POLL_INTERVAL {
-            return;
+    /// Format the current Sidekiq data as the display string ("b{N} e{N} r{N} d{N}").
+    fn format_sidekiq_str(&self) -> String {
+        format!(
+            "b{} e{} r{} d{}",
+            self.status_data.sidekiq_busy,
+            self.status_data.sidekiq_enqueued,
+            self.status_data.sidekiq_retry,
+            self.status_data.sidekiq_dead,
+        )
+    }
+
+    /// Update status data from cable (or HTTP poll) and trigger a scramble
+    /// animation if the Sidekiq values changed.
+    pub fn update_status_data(&mut self, data: crate::api::models::StatusData) {
+        self.status_data = data;
+        let new_str = self.format_sidekiq_str();
+        if new_str != self.display_sidekiq_str {
+            self.cached_sidekiq_str = new_str;
+            self.sidekiq_scramble_tick = self.sidekiq_scramble_total;
         }
-        self.last_status_poll = Instant::now();
-        if let Ok(data) = self.client.get_status() {
-            self.status_data = data;
+    }
+
+    /// Compute the displayed Sidekiq string, scrambling during transitions.
+    /// Returns the string that should be rendered for the current frame.
+    pub fn scrambled_sidekiq(&mut self) -> String {
+        if self.cached_sidekiq_str.is_empty() {
+            // First call — set initial string without scramble
+            self.cached_sidekiq_str = self.format_sidekiq_str();
+            self.display_sidekiq_str = self.cached_sidekiq_str.clone();
+            return self.display_sidekiq_str.clone();
+        }
+
+        if self.sidekiq_scramble_tick > 0 {
+            self.sidekiq_scramble_tick -= 1;
+            let progress = (self.sidekiq_scramble_total - self.sidekiq_scramble_tick) as f64
+                / self.sidekiq_scramble_total as f64;
+            let scrambled: String = self.cached_sidekiq_str
+                .chars()
+                .enumerate()
+                .map(|(i, c)| {
+                    if i >= self.display_sidekiq_str.len() { return c; }
+                    let old = self.display_sidekiq_str.chars().nth(i).unwrap_or(c);
+                    if c == old { return c; }
+                    if fastrand::f64() < progress * 0.7 + 0.3 { return c; }
+                    let set = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                    let idx = fastrand::usize(..set.len());
+                    set.chars().nth(idx).unwrap_or(c)
+                })
+                .collect();
+            self.display_sidekiq_str = scrambled;
+            self.display_sidekiq_str.clone()
+        } else {
+            self.display_sidekiq_str = self.cached_sidekiq_str.clone();
+            self.display_sidekiq_str.clone()
         }
     }
 

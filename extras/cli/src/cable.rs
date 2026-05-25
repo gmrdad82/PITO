@@ -17,8 +17,15 @@ pub fn spawn(base_url: &str, tx: mpsc::Sender<StatusData>) {
 
     thread::spawn(move || {
         loop {
-            let result = try_connect(&ws_url, &tx);
-            eprintln!("[cable] disconnected: {:?}", result.err());
+            let _ = try_connect(&ws_url, &tx);
+            // Connection lost — tell UI to show disconnected (red) state
+            let _ = tx.send(StatusData {
+                connected: false,
+                sidekiq_busy: 0,
+                sidekiq_enqueued: 0,
+                sidekiq_retry: 0,
+                sidekiq_dead: 0,
+            });
             thread::sleep(Duration::from_secs(3));
         }
     });
