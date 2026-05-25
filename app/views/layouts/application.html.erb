@@ -54,9 +54,9 @@
   <div id="app">
     <div id="terminal"></div>
     <div id="status-bar">
-      <span id="sb-conn"></span>
+      <span id="sb-conn" class="sb-connected">connected</span>
       <div class="sb-right">
-        <span class="sb-label" id="sb-sk-label"></span>
+        <span class="sb-label">Sidekiq</span>
         <span class="sb-val b" id="sb-b">b0</span>
         <span class="sb-val e" id="sb-e">e0</span>
         <span class="sb-val r" id="sb-r">r0</span>
@@ -79,8 +79,8 @@
     let lastFormatted='',scrambleTimeout=null;
 
     function formatTime(d){
-      return days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate()+' · '+
-        String(d.getHours()).padStart(2,'0')+'·'+String(d.getMinutes()).padStart(2,'0');
+      return days[d.getDay()].substring(0,3)+', '+months[d.getMonth()].substring(0,3)+' '+d.getDate()+' · '+
+        String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
     }
 
     function scrambleSettleStep(from,to,step,totalSteps){
@@ -111,9 +111,7 @@
     setInterval(animateTime,1000);
     animateTime();
 
-    // ── i18n labels ───────────────────────────────────────────────────
-    // Labels set by cable consumer in app.js when it receives status_bar payload
-    document.getElementById('sb-sk-label').textContent='sidekiq';
+    // "Sidekiq" label is static in HTML
   </script>
 </body>
 </html>
