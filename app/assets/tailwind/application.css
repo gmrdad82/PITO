@@ -7835,4 +7835,11 @@ body > main {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* 2026-05-25 — hide native scrollbar; rely on Tui::ScrollIndicatorComponent
+     mounted at the top of <main> for the visible scroll affordance. */
+  scrollbar-width: none;             /* Firefox */
+  -ms-overflow-style: none;          /* IE / legacy Edge */
+}
+body > main::-webkit-scrollbar {
+  display: none;                     /* Chromium / Safari */
 }
