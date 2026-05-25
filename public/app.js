@@ -9236,358 +9236,264 @@ ${h2.join(`
       init_xterm();
       init_addon_fit();
       init_addon_web_links();
-      var T = {
-        bg: "#1a1b26",
-        fg: "#c0caf5",
-        muted: "#565f89",
-        accent: "#7aa2f7",
-        green: "#9ece6a",
-        red: "#f7768e",
-        orange: "#ff9e64",
-        yellow: "#e0af68",
-        purple: "#bb9af7",
-        border: "#292e42",
-        cyan: "#1abc9c",
-        sbarBg: "#16171f"
-      };
-      var term = new Dl({
-        cursorBlink: true,
-        cursorStyle: "bar",
-        fontSize: 14,
-        fontFamily: 'ui-monospace, "Cascadia Code", "Source Code Pro", Consolas, monospace',
-        lineHeight: 1,
-        scrollback: 1e4,
-        allowProposedApi: true,
-        theme: {
-          background: T.bg,
-          foreground: T.fg,
-          cursor: T.fg,
-          selectionBackground: "#33467c",
-          black: T.bg,
-          red: T.red,
-          green: T.green,
-          yellow: T.yellow,
-          blue: T.accent,
-          magenta: T.purple,
-          cyan: T.cyan,
-          white: T.fg,
-          brightBlack: T.muted,
-          brightRed: "#ff9e9e",
-          brightGreen: "#b9f27c",
-          brightYellow: "#ffc777",
-          brightBlue: "#7dcfff",
-          brightMagenta: "#c099ff",
-          brightCyan: "#86e1fc",
-          brightWhite: "#ffffff"
-        }
-      });
+      var T = { bg: "#1a1b26", fg: "#c0caf5", mu: "#565f89", ac: "#7aa2f7", gr: "#9ece6a", rd: "#f7768e", or: "#ff9e64", bd: "#292e42", sb: "#16171f" };
+      var term = new Dl({ cursorBlink: true, cursorStyle: "bar", fontSize: 16, fontFamily: 'ui-monospace,"Cascadia Code","Source Code Pro",Consolas,monospace', lineHeight: 1, scrollback: 1e4, allowProposedApi: true, theme: { background: T.bg, foreground: T.fg, cursor: T.fg, selectionBackground: "#33467c", black: T.bg, red: T.rd, green: T.gr, yellow: T.or, blue: T.ac, magenta: T.rd, cyan: T.gr, white: T.fg, brightBlack: T.mu, brightRed: "#ff9e9e", brightGreen: "#b9f27c", brightYellow: "#ffc777", brightBlue: "#7dcfff", brightMagenta: "#c099ff", brightCyan: "#86e1fc", brightWhite: "#ffffff" } });
       var fit = new o();
       term.loadAddon(fit);
       term.loadAddon(new L2());
       term.open(document.getElementById("terminal"));
+      term.attachCustomKeyEventHandler((e) => {
+        if (e.type === "keydown" && e.key === "Tab") {
+          e.preventDefault();
+          sidebarOpen = !sidebarOpen;
+          draw();
+          return false;
+        }
+        return true;
+      });
       var CSI = "\x1B[";
-      var cu = (r, c2) => CSI + r + ";" + c2 + "H";
-      var clr = () => CSI + "2K";
-      var sgr = (n) => CSI + n + "m";
       var c256 = (r, g2, b2) => CSI + "38;2;" + r + ";" + g2 + ";" + b2 + "m";
-      var bg256 = (r, g2, b2) => CSI + "48;2;" + r + ";" + g2 + ";" + b2 + "m";
-      function rgb(s15) {
+      var cbg = (r, g2, b2) => CSI + "48;2;" + r + ";" + g2 + ";" + b2 + "m";
+      var R = CSI + "0m";
+      var B2 = CSI + "1m";
+      var co2 = (s15) => {
         const m = s15.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-        return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [192, 202, 245];
-      }
-      function c(s15) {
-        const [r, g2, b2] = rgb(s15);
-        return c256(r, g2, b2);
-      }
-      function bg(s15) {
-        const [r, g2, b2] = rgb(s15);
-        return bg256(r, g2, b2);
-      }
-      var R = sgr(0);
-      var B2 = sgr(1);
-      var D2 = sgr(2);
-      var M2 = c(T.muted);
-      var A = c(T.accent);
-      var G2 = c(T.green);
-      var RD = c(T.red);
-      var O = c(T.orange);
-      var F2 = c(T.fg);
-      function muted(s15) {
-        return M2 + s15 + R;
-      }
-      function accent(s15) {
-        return A + s15 + R;
-      }
-      function green(s15) {
-        return G2 + s15 + R;
-      }
-      function red(s15) {
-        return RD + s15 + R;
-      }
-      function orange(s15) {
-        return O + s15 + R;
-      }
-      function bold(s15) {
-        return B2 + s15 + R;
-      }
-      function w2(s15) {
-        term.write(s15);
-      }
+        if (!m) return CSI + "39m";
+        return c256(parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16));
+      };
+      var bo2 = (s15) => {
+        const m = s15.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+        if (!m) return CSI + "49m";
+        return cbg(parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16));
+      };
+      var S2 = (c, f2, b2) => (b2 ? bo2(b2) : "") + (f2 ? co2(f2) : "") + c + R;
       var channels = [];
       var sidebarOpen = true;
-      var mainLines = [];
       var statusData = null;
       var sidebarData = null;
-      var cols;
-      var rows;
-      function resize() {
-        cols = term.cols;
-        rows = term.rows;
-      }
-      var HEADER_H = 1;
-      var STATUS_H = 1;
-      var INPUT_H = 1;
-      var SIDEBAR_W = 36;
-      function mainH() {
-        return rows - HEADER_H - INPUT_H - STATUS_H;
-      }
-      function drawFrame() {
-        resize();
-        const sh = mainH();
-        w2(clr() + cu(1, 1) + bg(T.sbarBg) + F2);
-        const chanStr = channels.length > 0 ? channels.map((ch) => accent("@" + ch.channel_url)).join(" ") + " " : muted("no channels connected");
-        const hPad = Math.max(0, cols - chanStr.length - muted("pito").length - 2);
-        w2(chanStr + " ".repeat(hPad) + muted("pito") + R);
-        const visible = mainLines.slice(Math.max(0, mainLines.length - sh));
-        for (let i = 0; i < sh; i++) {
-          w2(cu(HEADER_H + 1 + i, 1) + clr());
-          if (i < visible.length) w2(F2 + visible[i] + R);
-        }
-        if (sidebarOpen && cols > SIDEBAR_W) {
-          const divider = cols - SIDEBAR_W - 1;
-          for (let i = 0; i < sh; i++) w2(cu(HEADER_H + 1 + i, divider + 1) + bg(T.border) + " " + R);
-          let sr2 = HEADER_H + 1;
-          w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "channels" + R);
-          if (sidebarData && sidebarData.channels) {
-            const sc2 = sidebarData.channels;
-            w2(cu(sr2++, cols - SIDEBAR_W) + green("  " + sc2.total) + M2 + " total" + R);
-            w2(cu(sr2++, cols - SIDEBAR_W) + A + "  " + sc2.starred + M2 + " starred" + R);
-          } else if (channels.length > 0) {
-            channels.slice(0, 6).forEach((ch) => {
-              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  @" + ch.channel_url + R);
-            });
-          } else {
-            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (none)" + R);
-          }
-          sr2++;
-          w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "videos" + R);
-          if (sidebarData && sidebarData.recent_videos && sidebarData.recent_videos.length > 0) {
-            sidebarData.recent_videos.slice(0, 6).forEach((v3) => {
-              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  " + v3.youtube_video_id.substring(0, 12) + " " + green(v3.views) + R);
-            });
-          } else {
-            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /videos)" + R);
-          }
-          sr2++;
-          w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "games" + R);
-          if (sidebarData && sidebarData.upcoming_games && sidebarData.upcoming_games.length > 0) {
-            sidebarData.upcoming_games.slice(0, 6).forEach((g2) => {
-              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  " + g2 + R);
-            });
-          } else {
-            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /games)" + R);
-          }
-        }
-        const ir2 = rows - STATUS_H - 1;
-        w2(clr() + cu(ir2, 1) + bg(T.sbarBg) + F2 + accent("> ") + cmdBuffer + R);
-        w2(clr() + cu(rows, 1) + bg(T.sbarBg) + F2);
-        if (statusData && statusData.connected) {
-          const sk = statusData.sidekiq;
-          const ts2 = statusData.timestamp ? new Date(statusData.timestamp).toLocaleTimeString() : (/* @__PURE__ */ new Date()).toLocaleTimeString();
-          const bar = green("\u25CF") + " " + muted("connected") + "  " + muted("sidekiq") + " " + green("b" + (sk.enqueued ?? 0)) + " " + orange("e" + (sk.retry ?? 0)) + " " + red("r" + (sk.dead ?? 0)) + " " + muted("d" + (sk.scheduled ?? 0));
-          w2(bar + " ".repeat(Math.max(0, cols - bar.replace(/\x1b\[[0-9;]*m/g, "").length - ts2.length - 1)) + muted(ts2));
-        } else if (statusData && !statusData.connected) {
-          w2(red("\u25CF") + " " + red("disconnected"));
-        }
-        w2(R);
-      }
+      var log = [];
       var cmdBuffer = "";
-      var cmdHistory = [];
-      term.onData((data) => {
-        const code = data.charCodeAt(0);
-        if (code === 13) {
-          mainLines.push(accent("> ") + cmdBuffer);
-          if (cmdBuffer.trim()) {
-            cmdHistory.push(cmdBuffer);
-            exec(cmdBuffer.trim());
+      var SW = 30;
+      function draw() {
+        const c = term.cols, r = term.rows;
+        if (c < 20 || r < 6) return;
+        const mw = c - (sidebarOpen ? SW + 1 : 0), sh = r - 3;
+        const out = [];
+        let h2 = "";
+        if (channels.length > 0) h2 = channels.map((ch) => S2("@" + ch.channel_url, T.ac)).join(" ") + " ";
+        out.push(S2((h2 + S2("pito", T.mu)).padEnd(c), T.fg, T.sb));
+        const vis = log.slice(Math.max(0, log.length - sh));
+        for (let i = 0; i < sh; i++) {
+          let l2 = i < vis.length ? S2(vis[i], T.fg) : "";
+          l2 = l2.padEnd(mw);
+          if (sidebarOpen && c > SW + 1) {
+            l2 += S2(" ", null, T.bd) + sbLine(i);
           }
+          out.push(l2);
+        }
+        out.push(S2(("> " + cmdBuffer).padEnd(c), T.fg, T.sb));
+        const sk = statusData && statusData.sidekiq ? statusData.sidekiq : { enqueued: 0, retry: 0, dead: 0, scheduled: 0 };
+        const conn = statusData && statusData.connected !== false;
+        let sl2 = "";
+        sl2 += (conn ? S2("\u25CF", T.gr) : S2("\u25CF", T.rd)) + " ";
+        sl2 += S2("connected  sidekiq ", T.mu);
+        sl2 += S2("b" + sk.enqueued, T.gr) + " " + S2("e" + sk.retry, T.or) + " " + S2("r" + sk.dead, T.rd) + " " + S2("d" + sk.scheduled, T.mu);
+        const time = (/* @__PURE__ */ new Date()).toLocaleTimeString();
+        sl2 += S2(time.padStart(c - sl2.replace(/\x1b\[[0-9;]*m/g, "").length - time.length), T.mu);
+        out.push(S2(sl2, T.fg, T.sb));
+        term.write(CSI + "H" + out.join("\r\n") + CSI + "0J");
+      }
+      function sbLine(i) {
+        const sw = SW;
+        if (i === 0) return S2("channels".padEnd(sw), T.ac) + B2;
+        if (i === 1) {
+          if (sidebarData && sidebarData.channels && sidebarData.channels.length > 0) {
+            const t = sidebarData.channels.length;
+            const s15 = sidebarData.channels.filter((x) => x.star).length;
+            return S2(("  " + t + " total  " + s15 + " starred").padEnd(sw), T.mu);
+          } else if (channels.length > 0) {
+            return S2(("  @" + channels[0].channel_url).padEnd(sw), T.mu);
+          }
+          return S2("  (none)".padEnd(sw), T.mu);
+        }
+        if (i >= 2 && i < 7 && sidebarData && sidebarData.channels && i - 2 < sidebarData.channels.length) {
+          const ch = sidebarData.channels[i - 2];
+          return S2(("  @" + ch.channel_url + " " + gr3(ch.video_count || 0) + "v").padEnd(sw), T.mu);
+        }
+        if (i === 8) return S2("videos".padEnd(sw), T.ac) + B2;
+        if (i >= 9 && i < 14 && sidebarData && sidebarData.recent_videos && i - 9 < sidebarData.recent_videos.length) {
+          const v3 = sidebarData.recent_videos[i - 9];
+          return S2(("  " + (v3.youtube_video_id || "").substring(0, 10) + " " + gr3(v3.views || 0)).padEnd(sw), T.mu);
+        }
+        if (i === 15) return S2("games".padEnd(sw), T.ac) + B2;
+        if (i >= 16 && i < 21 && sidebarData && sidebarData.upcoming_games && i - 16 < sidebarData.upcoming_games.length) {
+          const g2 = sidebarData.upcoming_games[i - 16];
+          return S2(("  " + (g2.title || g2) + " " + mu(g2.release_date || "")).padEnd(sw), T.mu);
+        }
+        return " ".repeat(sw);
+      }
+      function gr3(n) {
+        return S2(String(n || 0), T.gr);
+      }
+      function mu(s15) {
+        return S2(s15 || "", T.mu);
+      }
+      term.onData((d) => {
+        const k2 = d.charCodeAt(0);
+        if (k2 === 13) {
+          log.push(S2("> " + cmdBuffer, T.ac));
+          if (cmdBuffer.trim()) exec(cmdBuffer.trim());
           cmdBuffer = "";
-          drawFrame();
-        } else if (code === 127) {
+          draw();
+        } else if (k2 === 127) {
           cmdBuffer = cmdBuffer.slice(0, -1);
-          drawFrame();
-        } else if (code === 9) {
-          sidebarOpen = !sidebarOpen;
-          drawFrame();
-        } else if (data >= " " && data <= "~") {
-          cmdBuffer += data;
-          drawFrame();
+          draw();
+        } else if (d >= " " && d <= "~") {
+          cmdBuffer += d;
+          draw();
         }
       });
-      async function exec(cmd) {
-        if (cmd.startsWith("/")) await apiCmd(cmd.slice(1));
-        else if (cmd === "help") mainLines.push(muted("  /help /status /channels /videos /auth /reindex /games /config"));
-        else if (cmd === "clear") mainLines.length = 0;
-        else mainLines.push(muted("  unknown: " + cmd + " \u2014 try /help"));
-        drawFrame();
+      function exec(c) {
+        if (c.startsWith("/")) apiCmd(c.slice(1));
+        else if (c === "help") log.push(S2("  /help /status /channels /videos /auth /reindex /games /config", T.mu));
+        else if (c === "clear") log.length = 0;
+        else log.push(S2("  unknown: " + c, T.mu));
+        draw();
       }
       async function apiCmd(cmd) {
-        const [action, ...args] = cmd.split(/\s+/);
-        switch (action) {
+        const [a, ...args] = cmd.split(/\s+/);
+        switch (a) {
           case "help":
-            mainLines.push(bold("commands:"));
-            mainLines.push("  " + accent("/status") + "     " + muted("dashboard"));
-            mainLines.push("  " + accent("/channels") + "   " + muted("list channels"));
-            mainLines.push("  " + accent("/videos") + "     " + muted("recent videos"));
-            mainLines.push("  " + accent("/auth") + "       " + muted("login (6-digit TOTP)"));
-            mainLines.push("  " + accent("/reindex") + "    " + muted("meilisearch|voyage"));
-            mainLines.push("  " + accent("/games") + "      " + muted("upcoming releases"));
-            mainLines.push("  " + accent("/config") + "     " + muted("show settings"));
-            mainLines.push("  Tab              " + muted("toggle sidebar"));
+            log.push(S2("commands:", T.fg) + B2);
+            ["status", "channels", "videos", "auth", "reindex", "games", "config"].forEach((x) => log.push("  " + S2("/" + x, T.ac)));
+            log.push("  Tab " + S2("toggle sidebar", T.mu));
             break;
           case "status":
             try {
-              const r = await fetch("/dashboard.json");
-              const d = await r.json();
-              mainLines.push(bold("dashboard:"));
-              mainLines.push("  channels  " + green(d.channel_count));
-              mainLines.push("  videos    " + green(d.video_count));
-              mainLines.push("  footage   " + green(d.footage_count));
+              const r = await f("/dashboard.json"), d = await r.json();
+              log.push(S2("dashboard:", T.fg) + B2);
+              log.push("  channels " + S2(d.channel_count, T.gr));
+              log.push("  videos   " + S2(d.video_count, T.gr));
+              log.push("  footage  " + S2(d.footage_count, T.gr));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "channels":
             try {
-              const r = await fetch("/channels.json");
-              const d = await r.json();
+              const r = await f("/channels.json"), d = await r.json();
               channels = d;
-              mainLines.push(bold("channels (" + d.length + "):"));
-              d.forEach((c2) => mainLines.push("  " + (c2.star ? accent("\u2605") : " ") + " " + accent(c2.channel_url)));
+              log.push(S2("channels (" + d.length + "):", T.fg) + B2);
+              d.forEach((c) => log.push("  " + (c.star ? S2("\u2605", T.ac) : " ") + " " + S2(c.channel_url, T.ac)));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "videos":
             try {
-              const r = await fetch("/videos.json");
-              const d = await r.json();
-              mainLines.push(bold("videos (" + d.length + "):"));
-              d.slice(0, 30).forEach((v3) => mainLines.push("  " + v3.youtube_video_id + " " + muted("\xB7") + " " + green(v3.views) + " views"));
+              const r = await f("/videos.json"), d = await r.json();
+              log.push(S2("videos (" + d.length + "):", T.fg) + B2);
+              d.slice(0, 30).forEach((v3) => log.push("  " + v3.youtube_video_id + " " + S2("\xB7", T.mu) + " " + S2(v3.views, T.gr) + " views"));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "auth":
             if (!args[0] || args[0].length !== 6) {
-              mainLines.push(muted("  usage: /auth <6-digit-code>"));
+              log.push(S2("  usage: /auth <6-digit-code>", T.mu));
               break;
             }
             try {
-              const r = await fetch("/login", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": csrf() }, body: "code=" + args[0], redirect: "manual" });
-              mainLines.push(r.ok || r.status === 302 ? green("  authenticated") : red("  login failed"));
+              const r = await f("/login", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": csrf() }, body: "code=" + args[0], redirect: "manual" });
+              log.push(r.ok || r.status === 302 ? S2("  authenticated", T.gr) : S2("  login failed", T.rd));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "reindex":
             if (!args[0] || !["meilisearch", "voyage"].includes(args[0])) {
-              mainLines.push(muted("  usage: /reindex meilisearch|voyage"));
+              log.push(S2("  usage: /reindex meilisearch|voyage", T.mu));
               break;
             }
             try {
-              const r = await fetch("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "reindex " + args[0] }) });
-              const d = await r.json();
-              mainLines.push(d.error ? red("  " + d.error) : green("  " + d.output));
+              const r = await f("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "reindex " + args[0] }) }), d = await r.json();
+              log.push(d.error ? S2("  " + d.error, T.rd) : S2("  " + d.output, T.gr));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "games":
             try {
-              const r = await fetch("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "games" }) });
-              const d = await r.json();
-              if (d.error) {
-                mainLines.push(red("  " + d.error));
-              } else {
-                mainLines.push(bold("upcoming games:"));
-                d.output.split("\n").forEach((l2) => mainLines.push("  " + l2));
+              const r = await f("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "games" }) }), d = await r.json();
+              if (d.error) log.push(S2("  " + d.error, T.rd));
+              else {
+                log.push(S2("games:", T.fg) + B2);
+                d.output.split("\n").forEach((l2) => log.push("  " + l2));
               }
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           case "config":
             try {
-              const r = await fetch("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "config" }) });
-              const d = await r.json();
-              if (d.error) {
-                mainLines.push(red("  " + d.error));
-              } else {
-                mainLines.push(bold("config:"));
-                d.output.split("\n").forEach((l2) => mainLines.push("  " + l2));
-              }
+              const r = await f("/commands/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() }, body: JSON.stringify({ command: "config" }) }), d = await r.json();
+              log.push(d.error ? S2("  " + d.error, T.rd) : S2("  " + d.output, T.gr));
             } catch (e) {
-              mainLines.push(red("  error: " + e.message));
+              log.push(S2("  error: " + e.message, T.rd));
             }
             break;
           default:
-            mainLines.push(muted("  unknown: /" + action + " \u2014 try /help"));
+            log.push(S2("  unknown: /" + a, T.mu));
         }
-        drawFrame();
+        draw();
+      }
+      async function f(url, opts) {
+        return fetch(url, opts);
       }
       function csrf() {
         const m = document.querySelector('meta[name="csrf-token"]');
         return m ? m.getAttribute("content") : "";
       }
-      async function fetchStatus() {
+      async function ps2() {
         try {
-          const r = await fetch("/status.json");
+          const r = await f("/status.json");
           statusData = await r.json();
         } catch (e) {
           statusData = { connected: false };
         }
-        drawFrame();
+        draw();
       }
-      async function fetchSidebar() {
+      async function psb() {
         try {
-          const r = await fetch("/sidebar.json");
+          const r = await f("/sidebar.json");
           sidebarData = await r.json();
         } catch (e) {
           sidebarData = null;
         }
-        drawFrame();
+        draw();
       }
       function boot() {
         fit.fit();
-        resize();
-        mainLines.push("");
-        mainLines.push(bold("pito") + "  " + muted("YouTube channel management"));
-        mainLines.push(muted("  type /help for commands, /auth <code> to login"));
-        mainLines.push(muted("  Tab toggles sidebar"));
-        mainLines.push("");
-        fetchStatus();
-        fetchSidebar();
-        setInterval(fetchStatus, 5e3);
-        setInterval(fetchSidebar, 3e4);
-        drawFrame();
+        if (term.cols < 20 || term.rows < 6) {
+          setTimeout(boot, 200);
+          return;
+        }
+        log.push("");
+        log.push(S2("pito", T.fg) + B2 + "  " + S2("YouTube channel management", T.mu));
+        log.push(S2("  type /help for commands, /auth <code> to login", T.mu));
+        log.push(S2("  Tab toggles sidebar", T.mu));
+        log.push("");
+        ps2();
+        psb();
+        draw();
+        setInterval(ps2, 5e3);
+        setInterval(psb, 3e4);
       }
       window.addEventListener("resize", () => {
         fit.fit();
-        resize();
-        drawFrame();
+        draw();
       });
-      setTimeout(boot, 100);
+      setTimeout(boot, 200);
     }
   });
   require_application();

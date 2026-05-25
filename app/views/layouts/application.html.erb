@@ -1,21 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pito</title>
-  <meta name="color-scheme" content="dark">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <link rel="stylesheet" href="/xterm.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; overflow: hidden; background: #1a1b26; }
-    #terminal { height: 100%; width: 100%; }
-  </style>
-</head>
-<body>
-  <div id="terminal"></div>
-  <script src="/app.js"></script>
-</body>
-</html>
+<html><head><meta charset="UTF-8"><title>pito</title>
+<meta name="color-scheme" content="dark">
+<%= csrf_meta_tags %>
+<link rel="stylesheet" href="/xterm.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;width:100%;overflow:hidden;background:#1a1b26}
+#terminal{height:100%;width:100%}
+</style>
+</head><body>
+<div id="terminal"></div>
+<script src="/app.js?v=<%= File.mtime(Rails.root.join('public/app.js')).to_i rescue 1 %>"></script>
+</body></html>

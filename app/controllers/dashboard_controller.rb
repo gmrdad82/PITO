@@ -1,6 +1,6 @@
 class DashboardController < ApplicationController
   # Home (/) — serves the xterm.js web shell for HTML requests, JSON for API.
-  allow_anonymous :index, :sidebar, :status
+  allow_anonymous :index, :sidebar, :status, :channel_analytics
 
   def index
     respond_to do |format|
@@ -25,6 +25,19 @@ class DashboardController < ApplicationController
     }
   end
 
+  # GET /analytics/channel/:id — time-series data for ASCII chart rendering
+  def channel_analytics
+    channel = Channel.find(params[:id])
+    dailies = channel.channel_dailies.order(date: :desc).limit(90).map do |d|
+      { date: d.date.to_s, views: d.views, watch_time_minutes: d.estimated_minutes_watched }
+    end
+    render json: {
+      channel_url: channel.channel_url,
+      dailies: dailies.reverse,
+      trend: compute_trend(dailies)
+    }
+  end
+
   # GET /sidebar.json — sidebar data for both web and TUI clients
   def sidebar
     render json: {
@@ -35,6 +48,25 @@ class DashboardController < ApplicationController
   end
 
   private
+
+  def compute_trend(dailies)
+    return "flat" if dailies.size < 14
+
+    recent  = dailies.last(7).sum { |d| d[:views] } / 7.0
+    earlier = dailies.first(dailies.size - 7).last(7).sum { |d| d[:views] } / 7.0
+
+    return "flat" if earlier.zero? && recent.zero?
+    return "up"   if earlier.zero?
+
+    pct = ((recent - earlier) / earlier.to_f) * 100
+    if pct > 5
+      "up"
+    elsif pct < -5
+      "down"
+    else
+      "flat"
+    end
+  end
 
   def dashboard_json
     {

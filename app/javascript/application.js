@@ -2,267 +2,140 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 
-// ── Tokyo Night palette ──────────────────────────────────────────
-const T = {
-  bg:      '#1a1b26', fg:      '#c0caf5', muted:   '#565f89',
-  accent:  '#7aa2f7', green:   '#9ece6a', red:     '#f7768e',
-  orange:  '#ff9e64', yellow:  '#e0af68', purple:  '#bb9af7',
-  border:  '#292e42', cyan:     '#1abc9c',
-  sbarBg:  '#16171f',
-};
-
-// ── Terminal ─────────────────────────────────────────────────────
-const term = new Terminal({
-  cursorBlink: true, cursorStyle: 'bar', fontSize: 14,
-  fontFamily: 'ui-monospace, "Cascadia Code", "Source Code Pro", Consolas, monospace',
-  lineHeight: 1.0, scrollback: 10000, allowProposedApi: true,
-  theme: {
-    background: T.bg, foreground: T.fg, cursor: T.fg, selectionBackground: '#33467c',
-    black: T.bg, red: T.red, green: T.green, yellow: T.yellow,
-    blue: T.accent, magenta: T.purple, cyan: T.cyan, white: T.fg,
-    brightBlack: T.muted, brightRed: '#ff9e9e', brightGreen: '#b9f27c',
-    brightYellow: '#ffc777', brightBlue: '#7dcfff', brightMagenta: '#c099ff',
-    brightCyan: '#86e1fc', brightWhite: '#ffffff',
-  },
-});
-
-const fit = new FitAddon();
-term.loadAddon(fit);
-term.loadAddon(new WebLinksAddon());
+const T={bg:'#1a1b26',fg:'#c0caf5',mu:'#565f89',ac:'#7aa2f7',gr:'#9ece6a',rd:'#f7768e',or:'#ff9e64',bd:'#292e42',sb:'#16171f'};
+const term=new Terminal({cursorBlink:true,cursorStyle:'bar',fontSize:16,fontFamily:'ui-monospace,"Cascadia Code","Source Code Pro",Consolas,monospace',lineHeight:1,scrollback:10000,allowProposedApi:true,theme:{background:T.bg,foreground:T.fg,cursor:T.fg,selectionBackground:'#33467c',black:T.bg,red:T.rd,green:T.gr,yellow:T.or,blue:T.ac,magenta:T.rd,cyan:T.gr,white:T.fg,brightBlack:T.mu,brightRed:'#ff9e9e',brightGreen:'#b9f27c',brightYellow:'#ffc777',brightBlue:'#7dcfff',brightMagenta:'#c099ff',brightCyan:'#86e1fc',brightWhite:'#ffffff'}});
+const fit=new FitAddon();term.loadAddon(fit);term.loadAddon(new WebLinksAddon());
 term.open(document.getElementById('terminal'));
+term.attachCustomKeyEventHandler(e=>{if(e.type==='keydown'&&e.key==='Tab'){e.preventDefault();sidebarOpen=!sidebarOpen;draw();return false;}return true;});
 
-// ── ANSI helpers ─────────────────────────────────────────────────
-const CSI = '\x1b[';
-const cu  = (r,c) => CSI + r + ';' + c + 'H';
-const clr = () => CSI + '2K';
-const sgr = (n) => CSI + n + 'm';
-const c256 = (r,g,b) => CSI + '38;2;' + r + ';' + g + ';' + b + 'm';
-const bg256 = (r,g,b) => CSI + '48;2;' + r + ';' + g + ';' + b + 'm';
+const CSI='\x1b[',c256=(r,g,b)=>CSI+'38;2;'+r+';'+g+';'+b+'m',cbg=(r,g,b)=>CSI+'48;2;'+r+';'+g+';'+b+'m';
+const R=CSI+'0m',B=CSI+'1m';
+const co=s=>{const m=s.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);if(!m)return CSI+'39m';return c256(parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16));};
+const bo=s=>{const m=s.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);if(!m)return CSI+'49m';return cbg(parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16));};
+const S=(c,f,b)=>(b?bo(b):'')+(f?co(f):'')+c+R;
 
-function rgb(s) { const m = s.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? [parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)] : [192,202,245]; }
-function c(s) { const [r,g,b] = rgb(s); return c256(r,g,b); }
-function bg(s) { const [r,g,b] = rgb(s); return bg256(r,g,b); }
-const R = sgr(0);
-const B = sgr(1), D = sgr(2);
-const M = c(T.muted), A = c(T.accent), G = c(T.green), RD = c(T.red), O = c(T.orange), F = c(T.fg);
+let channels=[],sidebarOpen=true,statusData=null,sidebarData=null,log=[],cmdBuffer='';
+const SW=30;
 
-function muted(s) { return M + s + R; }
-function accent(s) { return A + s + R; }
-function green(s) { return G + s + R; }
-function red(s) { return RD + s + R; }
-function orange(s) { return O + s + R; }
-function bold(s) { return B + s + R; }
-function w(s) { term.write(s); }
+function draw(){
+  const c=term.cols,r=term.rows;
+  if(c<20||r<6)return;
+  const mw=c-(sidebarOpen?SW+1:0),sh=r-3;
 
-// ── State ────────────────────────────────────────────────────────
-let channels = [];
-let sidebarOpen = true;
-const mainLines = [];
-let statusData = null;
-let sidebarData = null;
-
-// ── Layout ───────────────────────────────────────────────────────
-let cols, rows;
-function resize() { cols = term.cols; rows = term.rows; }
-const HEADER_H = 1, STATUS_H = 1, INPUT_H = 1;
-const SIDEBAR_W = 36;
-
-function mainH() { return rows - HEADER_H - INPUT_H - STATUS_H; }
-
-function drawFrame() {
-  resize();
-  const sh = mainH();
+  // Build output as array of lines
+  const out=[];
 
   // Header
-  w(clr() + cu(1,1) + bg(T.sbarBg) + F);
-  const chanStr = channels.length > 0
-    ? channels.map(ch => accent('@'+ch.channel_url)).join(' ') + ' '
-    : muted('no channels connected');
-  const hPad = Math.max(0, cols - chanStr.length - muted('pito').length - 2);
-  w(chanStr + ' '.repeat(hPad) + muted('pito') + R);
+  let h='';
+  if(channels.length>0)h=channels.map(ch=>S('@'+ch.channel_url,T.ac)).join(' ')+' ';
+  out.push(S((h+S('pito',T.mu)).padEnd(c),T.fg,T.sb));
 
-  // Main area
-  const visible = mainLines.slice(Math.max(0, mainLines.length - sh));
-  for (let i = 0; i < sh; i++) {
-    w(cu(HEADER_H + 1 + i, 1) + clr());
-    if (i < visible.length) w(F + visible[i] + R);
+  // Main + sidebar rows
+  const vis=log.slice(Math.max(0,log.length-sh));
+  for(let i=0;i<sh;i++){
+    let l=i<vis.length?S(vis[i],T.fg):'';
+    l=l.padEnd(mw);
+    if(sidebarOpen&&c>SW+1){
+      l+=S(' ',null,T.bd)+sbLine(i);
+    }
+    out.push(l);
   }
 
-  // Sidebar divider
-  if (sidebarOpen && cols > SIDEBAR_W) {
-    const divider = cols - SIDEBAR_W - 1;
-    for (let i = 0; i < sh; i++) w(cu(HEADER_H + 1 + i, divider + 1) + bg(T.border) + ' ' + R);
-    let sr = HEADER_H + 1;
-    w(cu(sr++, cols - SIDEBAR_W) + A + B + 'channels' + R);
-    if (sidebarData && sidebarData.channels) {
-      const sc = sidebarData.channels;
-      w(cu(sr++, cols - SIDEBAR_W) + green('  ' + sc.total) + M + ' total' + R);
-      w(cu(sr++, cols - SIDEBAR_W) + A + '  ' + sc.starred + M + ' starred' + R);
-    } else if (channels.length > 0) {
-      channels.slice(0,6).forEach(ch => { w(cu(sr++, cols - SIDEBAR_W) + M + '  @'+ch.channel_url + R); });
-    } else {
-      w(cu(sr++, cols - SIDEBAR_W) + M + '  (none)' + R);
-    }
-    sr++;
-    w(cu(sr++, cols - SIDEBAR_W) + A + B + 'videos' + R);
-    if (sidebarData && sidebarData.recent_videos && sidebarData.recent_videos.length > 0) {
-      sidebarData.recent_videos.slice(0,6).forEach(v => {
-        w(cu(sr++, cols - SIDEBAR_W) + M + '  ' + v.youtube_video_id.substring(0,12) + ' ' + green(v.views) + R);
-      });
-    } else {
-      w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /videos)' + R);
-    }
-    sr++;
-    w(cu(sr++, cols - SIDEBAR_W) + A + B + 'games' + R);
-    if (sidebarData && sidebarData.upcoming_games && sidebarData.upcoming_games.length > 0) {
-      sidebarData.upcoming_games.slice(0,6).forEach(g => { w(cu(sr++, cols - SIDEBAR_W) + M + '  ' + g + R); });
-    } else {
-      w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /games)' + R);
-    }
-  }
+  // Input
+  out.push(S(('> '+cmdBuffer).padEnd(c),T.fg,T.sb));
 
-  // Input line
-  const ir = rows - STATUS_H - 1;
-  w(clr() + cu(ir, 1) + bg(T.sbarBg) + F + accent('> ') + cmdBuffer + R);
+  // Status
+  const sk=statusData&&statusData.sidekiq?statusData.sidekiq:{enqueued:0,retry:0,dead:0,scheduled:0};
+  const conn=statusData&&statusData.connected!==false;
+  let sl='';
+  sl+=(conn?S('●',T.gr):S('●',T.rd))+' ';
+  sl+=S('connected  sidekiq ',T.mu);
+  sl+=S('b'+sk.enqueued,T.gr)+' '+S('e'+sk.retry,T.or)+' '+S('r'+sk.dead,T.rd)+' '+S('d'+sk.scheduled,T.mu);
+  const time=new Date().toLocaleTimeString();
+  sl+=S(time.padStart(c-sl.replace(/\x1b\[[0-9;]*m/g,'').length-time.length),T.mu);
+  out.push(S(sl,T.fg,T.sb));
 
-  // Status bar
-  w(clr() + cu(rows, 1) + bg(T.sbarBg) + F);
-  if (statusData && statusData.connected) {
-    const sk = statusData.sidekiq;
-    const ts = statusData.timestamp ? new Date(statusData.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
-    const bar = green('●') + ' ' + muted('connected') + '  ' + muted('sidekiq') + ' ' +
-      green('b' + (sk.enqueued ?? 0)) + ' ' + orange('e' + (sk.retry ?? 0)) + ' ' + red('r' + (sk.dead ?? 0)) + ' ' + muted('d' + (sk.scheduled ?? 0));
-    w(bar + ' '.repeat(Math.max(0, cols - bar.replace(/\x1b\[[0-9;]*m/g, '').length - ts.length - 1)) + muted(ts));
-  } else if (statusData && !statusData.connected) {
-    w(red('●') + ' ' + red('disconnected'));
-  }
-  w(R);
+  // Write all at once (no clear, just overwrite)
+  term.write(CSI+'H'+out.join('\r\n')+CSI+'0J');
 }
 
-// ── Command ──────────────────────────────────────────────────────
-let cmdBuffer = '';
-const cmdHistory = [];
+function sbLine(i){
+  // i is row index in main area (0-based)
+  const sw=SW;
+  if(i===0)return S('channels'.padEnd(sw),T.ac)+B;
+  if(i===1){
+    if(sidebarData&&sidebarData.channels&&sidebarData.channels.length>0){
+      const t=sidebarData.channels.length;
+      const s=sidebarData.channels.filter(x=>x.star).length;
+      return S(('  '+t+' total  '+s+' starred').padEnd(sw),T.mu);
+    }else if(channels.length>0){
+      return S(('  @'+channels[0].channel_url).padEnd(sw),T.mu);
+    }
+    return S('  (none)'.padEnd(sw),T.mu);
+  }
+  if(i>=2&&i<7&&sidebarData&&sidebarData.channels&&i-2<sidebarData.channels.length){
+    const ch=sidebarData.channels[i-2];
+    return S(('  @'+ch.channel_url+' '+gr(ch.video_count||0)+'v').padEnd(sw),T.mu);
+  }
+  if(i===8)return S('videos'.padEnd(sw),T.ac)+B;
+  if(i>=9&&i<14&&sidebarData&&sidebarData.recent_videos&&i-9<sidebarData.recent_videos.length){
+    const v=sidebarData.recent_videos[i-9];
+    return S(('  '+(v.youtube_video_id||'').substring(0,10)+' '+gr(v.views||0)).padEnd(sw),T.mu);
+  }
+  if(i===15)return S('games'.padEnd(sw),T.ac)+B;
+  if(i>=16&&i<21&&sidebarData&&sidebarData.upcoming_games&&i-16<sidebarData.upcoming_games.length){
+    const g=sidebarData.upcoming_games[i-16];
+    return S(('  '+(g.title||g)+' '+mu(g.release_date||'')).padEnd(sw),T.mu);
+  }
+  return ' '.repeat(sw);
+}
+function gr(n){return S(String(n||0),T.gr);}
+function mu(s){return S(s||'',T.mu);}
 
-term.onData(data => {
-  const code = data.charCodeAt(0);
-  if (code === 13) {
-    mainLines.push(accent('> ') + cmdBuffer);
-    if (cmdBuffer.trim()) { cmdHistory.push(cmdBuffer); exec(cmdBuffer.trim()); }
-    cmdBuffer = ''; drawFrame();
-  } else if (code === 127) { cmdBuffer = cmdBuffer.slice(0, -1); drawFrame(); }
-  else if (code === 9) { sidebarOpen = !sidebarOpen; drawFrame(); }
-  else if (data >= ' ' && data <= '~') { cmdBuffer += data; drawFrame(); }
+// ── Command ──────────────────────
+term.onData(d=>{
+  const k=d.charCodeAt(0);
+  if(k===13){log.push(S('> '+cmdBuffer,T.ac));if(cmdBuffer.trim())exec(cmdBuffer.trim());cmdBuffer='';draw();}
+  else if(k===127){cmdBuffer=cmdBuffer.slice(0,-1);draw();}
+  else if(d>=' '&&d<='~'){cmdBuffer+=d;draw();}
 });
-
-async function exec(cmd) {
-  if (cmd.startsWith('/')) await apiCmd(cmd.slice(1));
-  else if (cmd === 'help') mainLines.push(muted('  /help /status /channels /videos /auth /reindex /games /config'));
-  else if (cmd === 'clear') mainLines.length = 0;
-  else mainLines.push(muted('  unknown: ' + cmd + ' — try /help'));
-  drawFrame();
+function exec(c){
+  if(c.startsWith('/'))apiCmd(c.slice(1));
+  else if(c==='help')log.push(S('  /help /status /channels /videos /auth /reindex /games /config',T.mu));
+  else if(c==='clear')log.length=0;
+  else log.push(S('  unknown: '+c,T.mu));
+  draw();
 }
-
-async function apiCmd(cmd) {
-  const [action, ...args] = cmd.split(/\s+/);
-  switch (action) {
-    case 'help':
-      mainLines.push(bold('commands:'));
-      mainLines.push('  ' + accent('/status') + '     ' + muted('dashboard'));
-      mainLines.push('  ' + accent('/channels') + '   ' + muted('list channels'));
-      mainLines.push('  ' + accent('/videos') + '     ' + muted('recent videos'));
-      mainLines.push('  ' + accent('/auth') + '       ' + muted('login (6-digit TOTP)'));
-      mainLines.push('  ' + accent('/reindex') + '    ' + muted('meilisearch|voyage'));
-      mainLines.push('  ' + accent('/games') + '      ' + muted('upcoming releases'));
-      mainLines.push('  ' + accent('/config') + '     ' + muted('show settings'));
-      mainLines.push('  Tab              ' + muted('toggle sidebar'));
-      break;
-    case 'status':
-      try { const r = await fetch('/dashboard.json'); const d = await r.json();
-        mainLines.push(bold('dashboard:'));
-        mainLines.push('  channels  ' + green(d.channel_count));
-        mainLines.push('  videos    ' + green(d.video_count));
-        mainLines.push('  footage   ' + green(d.footage_count));
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'channels':
-      try { const r = await fetch('/channels.json'); const d = await r.json();
-        channels = d;
-        mainLines.push(bold('channels ('+d.length+'):'));
-        d.forEach(c => mainLines.push('  ' + (c.star ? accent('★') : ' ') + ' ' + accent(c.channel_url)));
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'videos':
-      try { const r = await fetch('/videos.json'); const d = await r.json();
-        mainLines.push(bold('videos ('+d.length+'):'));
-        d.slice(0,30).forEach(v => mainLines.push('  ' + v.youtube_video_id + ' ' + muted('·') + ' ' + green(v.views) + ' views'));
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'auth':
-      if (!args[0] || args[0].length !== 6) { mainLines.push(muted('  usage: /auth <6-digit-code>')); break; }
-      try { const r = await fetch('/login', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':csrf()}, body:'code='+args[0], redirect:'manual' });
-        mainLines.push((r.ok||r.status===302) ? green('  authenticated') : red('  login failed'));
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'reindex':
-      if (!args[0] || !['meilisearch','voyage'].includes(args[0])) { mainLines.push(muted('  usage: /reindex meilisearch|voyage')); break; }
-      try { const r = await fetch('/commands/execute', { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()}, body:JSON.stringify({command:'reindex '+args[0]}) });
-        const d = await r.json();
-        mainLines.push(d.error ? red('  '+d.error) : green('  '+d.output));
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'games':
-      try { const r = await fetch('/commands/execute', { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()}, body:JSON.stringify({command:'games'}) });
-        const d = await r.json();
-        if (d.error) { mainLines.push(red('  '+d.error)); }
-        else { mainLines.push(bold('upcoming games:')); d.output.split('\n').forEach(l => mainLines.push('  '+l)); }
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    case 'config':
-      try { const r = await fetch('/commands/execute', { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()}, body:JSON.stringify({command:'config'}) });
-        const d = await r.json();
-        if (d.error) { mainLines.push(red('  '+d.error)); }
-        else { mainLines.push(bold('config:')); d.output.split('\n').forEach(l => mainLines.push('  '+l)); }
-      } catch(e) { mainLines.push(red('  error: '+e.message)); }
-      break;
-    default:
-      mainLines.push(muted('  unknown: /'+action+' — try /help'));
+async function apiCmd(cmd){
+  const[a,...args]=cmd.split(/\s+/);
+  switch(a){
+    case'help':log.push(S('commands:',T.fg)+B);['status','channels','videos','auth','reindex','games','config'].forEach(x=>log.push('  '+S('/'+x,T.ac)));log.push('  Tab '+S('toggle sidebar',T.mu));break;
+    case'status':try{const r=await f('/dashboard.json'),d=await r.json();log.push(S('dashboard:',T.fg)+B);log.push('  channels '+S(d.channel_count,T.gr));log.push('  videos   '+S(d.video_count,T.gr));log.push('  footage  '+S(d.footage_count,T.gr));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'channels':try{const r=await f('/channels.json'),d=await r.json();channels=d;log.push(S('channels ('+d.length+'):',T.fg)+B);d.forEach(c=>log.push('  '+(c.star?S('★',T.ac):' ')+' '+S(c.channel_url,T.ac)));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'videos':try{const r=await f('/videos.json'),d=await r.json();log.push(S('videos ('+d.length+'):',T.fg)+B);d.slice(0,30).forEach(v=>log.push('  '+v.youtube_video_id+' '+S('·',T.mu)+' '+S(v.views,T.gr)+' views'));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'auth':if(!args[0]||args[0].length!==6){log.push(S('  usage: /auth <6-digit-code>',T.mu));break;}try{const r=await f('/login',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':csrf()},body:'code='+args[0],redirect:'manual'});log.push((r.ok||r.status===302)?S('  authenticated',T.gr):S('  login failed',T.rd));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'reindex':if(!args[0]||!['meilisearch','voyage'].includes(args[0])){log.push(S('  usage: /reindex meilisearch|voyage',T.mu));break;}try{const r=await f('/commands/execute',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()},body:JSON.stringify({command:'reindex '+args[0]})}),d=await r.json();log.push(d.error?S('  '+d.error,T.rd):S('  '+d.output,T.gr));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'games':try{const r=await f('/commands/execute',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()},body:JSON.stringify({command:'games'})}),d=await r.json();if(d.error)log.push(S('  '+d.error,T.rd));else{log.push(S('games:',T.fg)+B);d.output.split('\n').forEach(l=>log.push('  '+l));}}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    case'config':try{const r=await f('/commands/execute',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf()},body:JSON.stringify({command:'config'})}),d=await r.json();log.push(d.error?S('  '+d.error,T.rd):S('  '+d.output,T.gr));}catch(e){log.push(S('  error: '+e.message,T.rd));}break;
+    default:log.push(S('  unknown: /'+a,T.mu));
   }
-  drawFrame();
+  draw();
 }
+async function f(url,opts){return fetch(url,opts);}
+function csrf(){const m=document.querySelector('meta[name="csrf-token"]');return m?m.getAttribute('content'):'';}
 
-function csrf() { const m = document.querySelector('meta[name="csrf-token"]'); return m ? m.getAttribute('content') : ''; }
+// ── Polling (no clear — just redraw) ──
+async function ps(){try{const r=await f('/status.json');statusData=await r.json();}catch(e){statusData={connected:false};}draw();}
+async function psb(){try{const r=await f('/sidebar.json');sidebarData=await r.json();}catch(e){sidebarData=null;}draw();}
 
-// ── Polling ────────────────────────────────────────────────────────
-async function fetchStatus() {
-  try {
-    const r = await fetch('/status.json');
-    statusData = await r.json();
-  } catch (e) {
-    statusData = { connected: false };
-  }
-  drawFrame();
+// ── Boot ─────────────────────────
+function boot(){
+  fit.fit();
+  if(term.cols<20||term.rows<6){setTimeout(boot,200);return;}
+  log.push('');log.push(S('pito',T.fg)+B+'  '+S('YouTube channel management',T.mu));
+  log.push(S('  type /help for commands, /auth <code> to login',T.mu));
+  log.push(S('  Tab toggles sidebar',T.mu));log.push('');
+  ps();psb();draw();setInterval(ps,5000);setInterval(psb,30000);
 }
-
-async function fetchSidebar() {
-  try {
-    const r = await fetch('/sidebar.json');
-    sidebarData = await r.json();
-  } catch (e) {
-    sidebarData = null;
-  }
-  drawFrame();
-}
-
-// ── Boot ─────────────────────────────────────────────────────────
-function boot() {
-  fit.fit(); resize();
-  mainLines.push(''); mainLines.push(bold('pito') + '  ' + muted('YouTube channel management'));
-  mainLines.push(muted('  type /help for commands, /auth <code> to login'));
-  mainLines.push(muted('  Tab toggles sidebar')); mainLines.push('');
-  fetchStatus(); fetchSidebar();
-  setInterval(fetchStatus, 5000);
-  setInterval(fetchSidebar, 30000);
-  drawFrame();
-}
-window.addEventListener('resize', () => { fit.fit(); resize(); drawFrame(); });
-setTimeout(boot, 100);
+window.addEventListener('resize',()=>{fit.fit();draw();});
+setTimeout(boot,200);

@@ -123,6 +123,7 @@ Rails.application.routes.draw do
 
   # Analytics
   resource :analytics, only: :show, controller: "analytics"
+  get "analytics/channel/:id", to: "dashboard#channel_analytics", as: :analytics_channel
 
   # Video imports
   namespace :imports do
