@@ -244,7 +244,7 @@
       Ruby-picked literal hex paints the canvas. %>
   <body data-section="<%= current_section %>"
         style="--section-accent: <%= pito_section_accent %>; --color-section-accent: <%= pito_section_accent %>; background: <%= pito_section_bg %>;"
-        data-controller="keyboard notifications-modal tui-leader-menu flat-key timezone-detect webhook-help-modal dialog-scroll-lock sortable-keys keyboard-only tui-cursor tui-panel-nav"
+        data-controller="keyboard notifications-modal tui-leader-menu flat-key timezone-detect webhook-help-modal dialog-scroll-lock sortable-keys tui-cursor tui-panel-nav"
         <%# `data-keybindings-page-key` exposes the YAML key (e.g.
             `games_index`, `games_show`, `bundles_show`, `default`,
             or `nil` for deny-listed pages like /settings) so the
@@ -366,24 +366,6 @@
         document order mirrors usage frequency. Replaces the retired
         `Tui::HelpOverlayComponent`. %>
     <%= render Tui::HelpDialogComponent.new %>
-
-    <%# FB-172 (2026-05-21) — keyboard-only mode alert dialog. The
-        `keyboard-only` Stimulus controller (mounted on `<body>`)
-        intercepts every mouse interaction at the document capture phase
-        and spawns this dialog via `showModal()`. The OS cursor itself is
-        hidden via `body.keyboard-only { cursor: none }` in
-        `application.css`. Witty title `invalid input`; the second line
-        surfaces the `?` / `:` discoverability hint per the FB-172
-        contract. Mounted once globally so every screen shares the same
-        dialog node. %>
-    <%= render Tui::AlertDialogComponent.new(
-          id: "mouse-forbidden-alert",
-          title: t("tui.keyboard_only.title"),
-          message: [
-            t("tui.keyboard_only.message_line_1"),
-            t("tui.keyboard_only.message_line_2")
-          ]
-        ) %>
 
     <%# Phase 2A (2026-05-23) — viewport size-guard dialog. pito locks
         the body to `min-width: 1280px` / `min-height: 800px` (see

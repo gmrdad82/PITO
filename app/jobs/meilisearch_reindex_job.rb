@@ -1,12 +1,14 @@
 # FB-63 (2026-05-20) — Meilisearch-only reindex job.
 #
 # Half of the split that replaced the combined `ReindexAllJob`. Where
-# `VoyageReindexJob` (its sibling) re-embeds the Game + Bundle corpus
-# through Voyage AI, this job repushes the SAME corpus into the unified
+# `VoyageReindexJob` (its sibling) re-embeds the Game corpus through
+# Voyage AI, this job repushes the SAME corpus into the unified
 # `games_<env>` Meilisearch index. The two jobs are independently
 # triggerable from the Stack pane — each subsystem tile owns its own
 # `[reindex]` action so the operator can refresh Meilisearch documents
 # without burning Voyage API budget (or vice versa).
+#
+# R1 (2026-05-25) — bundle corpus removed; games only.
 #
 # Three-layer lock contract (unchanged from `ReindexAllJob`):
 #
@@ -23,15 +25,6 @@
 #             Stack pane's per-tile `[reindex]` link is rendered idle
 #             whenever the flag is clear and is hidden during a
 #             running reindex.
-#
-# Why Meilisearch is its own job. The per-row Meilisearch push is a
-# single HTTP call per document and Meilisearch does NOT rate-limit
-# operator-driven batch upserts, so the simplest correct shape is a
-# straight `find_each` over Game + Bundle that invokes the existing
-# `Game::MeilisearchIndexer.call(game)` /
-# `Bundle::MeilisearchIndexer.call(bundle)` service objects. Both
-# services already swallow + log per-row failures, so a single bad
-# document does not bomb the run.
 class MeilisearchReindexJob < ApplicationJob
   queue_as :search
   sidekiq_options lock: :until_executed, on_conflict: :log
@@ -50,12 +43,6 @@ class MeilisearchReindexJob < ApplicationJob
 
     Game.find_each do |game|
       Game::MeilisearchIndexer.call(game)
-    end
-
-    if defined?(Bundle) && Bundle.table_exists?
-      Bundle.find_each do |bundle|
-        Bundle::MeilisearchIndexer.call(bundle)
-      end
     end
   ensure
     AppSetting.clear_reindex_lock!

@@ -1,4 +1,4 @@
-<%# Phase 14 §3 — single row in the "linked games / bundles" table on
+<%# Phase 14 §3 — single row in the "linked games" table on
     the video edit form.
     Locals:
       link   the VideoGameLink row.
@@ -8,24 +8,18 @@
     through `/deletions/video_game_link/:id` so the action-screen
     pattern (no JS confirms — CLAUDE.md hard rule) gates the actual
     destroy.
+
+    R1 (2026-05-25) — bundle link type removed; only game links remain.
 %>
 <%
   target = link.target
-  target_label = if target.respond_to?(:title) && target.title.present?
-                   target.title
-                 elsif target.respond_to?(:name)
-                   target.name
-                 else
-                   "—"
-                 end
+  target_label = target&.title.presence || "—"
 %>
 <tr>
   <td><%= link.link_type %></td>
   <td>
     <% if target.is_a?(Game) %>
       <%= link_to target_label, game_path(target) %>
-    <% elsif target.is_a?(Bundle) %>
-      <%= link_to target_label, bundle_path(target) %>
     <% else %>
       <%= target_label %>
     <% end %>

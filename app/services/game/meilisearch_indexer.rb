@@ -7,12 +7,9 @@
 # index that the eventual `Game` Searchable surface will hit is the
 # one this service writes to.
 #
-# The same index ALSO holds Bundle documents (written by
-# `Bundle::MeilisearchIndexer`) — single corpus, one query at the UI
-# layer. The two record types are distinguished by the `kind`
-# discriminator (`"game"` vs `"bundle"`). Game docs keep their raw
-# numeric `id` as the primary key; Bundle docs use a namespaced
-# `"bundle_<id>"` (underscore — Meilisearch rejects `:` in doc ids).
+# R1 (2026-05-25) — bundles removed; this is now the sole document
+# type in the `games_<env>` index. The `kind` discriminator is always
+# `"game"`.
 #
 # First-write self-configures the index: on every call we update the
 # searchable + filterable + sortable attribute lists. Meilisearch's
@@ -35,7 +32,7 @@
 # Filterable attributes (for "filter by" support in the search
 # surface):
 #   id, igdb_id, igdb_slug, release_year, primary_genre_id, kind,
-#   bundle_id, game_count, developer_id, publisher_id, genre_ids.
+#   developer_id, publisher_id, genre_ids.
 #
 # `developer_id`, `publisher_id`, and `genre_ids` are arrays of ints
 # (a game can have multiple developers / publishers / genres). The
@@ -68,7 +65,7 @@ class Game
     # omnisearch local corpus stay in lockstep.
     SEARCHABLE_ATTRIBUTES = %w[title alternative_names summary developer_name publisher_name genre_names].freeze
     FILTERABLE_ATTRIBUTES = %w[
-      id igdb_id igdb_slug release_year primary_genre_id kind bundle_id game_count
+      id igdb_id igdb_slug release_year primary_genre_id kind
       developer_id publisher_id genre_ids
     ].freeze
     SORTABLE_ATTRIBUTES   = %w[release_year total_rating igdb_synced_at game_count].freeze
@@ -109,21 +106,17 @@ class Game
     def push_document(url)
       # 2026-05-18 (DR follow-up #2) — explicit `?primaryKey=id` is
       # MANDATORY. The document carries multiple `*_id` fields
-      # (`id`, `igdb_id`, `bundle_id`, `developer_id`, `publisher_id`,
+      # (`id`, `igdb_id`, `developer_id`, `publisher_id`,
       # `primary_genre_id`); when no primary key is configured on the
       # index, Meilisearch tries to infer one from the field names,
-      # sees the ambiguity, and rejects the ENTIRE batch with
-      # `index_primary_key_multiple_candidates_found`. The result was
+      # sees the ambiguity, and rejects the ENTIRE batch. The result was
       # 0 documents indexed even though every push returned 202 — the
-      # failure surfaces only when polling the task status, which the
-      # indexer does not do.
+      # failure surfaces only when polling the task status.
       #
       # The `?primaryKey=id` query param is idempotent: on the first
       # write it locks the index's primary key to `id`; subsequent
       # writes pass the same value, which Meilisearch accepts as a
-      # no-op. The same query param is also documented as the safe
-      # way to bootstrap an empty index that will later receive docs
-      # with non-trivial field shapes.
+      # no-op.
       uri = URI.parse("#{url}/indexes/#{index_name}/documents?primaryKey=id")
 
       request = Net::HTTP::Post.new(uri)

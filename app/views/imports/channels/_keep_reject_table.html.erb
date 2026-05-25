@@ -40,12 +40,12 @@
 
     <div class="modal-footer" style="margin-top: 12px;">
       <button type="submit" class="bracketed">[<span class="bl">keep</span>]</button>
-      <%= render(BracketedLinkComponent.new(label: "cancel", href: videos_path)) %>
+      <%= render(BracketedLinkComponent.new(label: "cancel", href: root_path)) %>
     </div>
   <% end %>
 <% else %>
   <p class="text-muted">no new videos to review.</p>
   <div class="modal-footer">
-    <%= render(BracketedLinkComponent.new(label: "back to videos", href: videos_path)) %>
+    <%= render(BracketedLinkComponent.new(label: "back to home", href: root_path)) %>
   </div>
 <% end %>

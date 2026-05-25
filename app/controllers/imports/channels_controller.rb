@@ -174,7 +174,7 @@ class Imports::ChannelsController < ApplicationController
     respond_to do |format|
       format.html do
         flash[:notice] = "kept #{@kept}, rejected #{@rejected}."
-        redirect_to videos_path
+        redirect_to root_path
       end
       format.json { render :update, formats: :json }
     end
@@ -194,7 +194,7 @@ class Imports::ChannelsController < ApplicationController
   def respond_rate_limited
     respond_to do |format|
       format.html do
-        redirect_to videos_path, alert: "try again in a moment."
+        redirect_to root_path, alert: "try again in a moment."
       end
       format.json do
         render json: { error: "rate_limited", retry_after_seconds: ENQUEUE_RATE_LIMIT_TTL.to_i },

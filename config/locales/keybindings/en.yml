@@ -56,10 +56,6 @@ en:
         logout: "logout"
         about: "about"
     modal_actions:
-      bundle:
-        rename: "rename bundle"
-      bundle_delete_confirm:
-        delete: "delete"
       webhook_help: {}
       revoke_confirm:
         revoke: "revoke session(s)"
@@ -79,12 +75,7 @@ en:
         switch: "Switch"
         steam: "Steam"
         add_game: "add game"
-        add_bundle: "add bundle"
       games_show:
-        search: "search"
-        sync: "sync"
-        delete: "delete"
-      bundles_show:
         search: "search"
         sync: "sync"
         delete: "delete"

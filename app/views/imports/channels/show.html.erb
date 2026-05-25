@@ -21,7 +21,7 @@
     <% else %>
       <%= render "imports/channels/progress", import_job: @import_job %>
       <div class="modal-footer" style="margin-top: 12px;">
-        <%= render(BracketedLinkComponent.new(label: "back to videos", href: videos_path)) %>
+        <%= render(BracketedLinkComponent.new(label: "back to home", href: root_path)) %>
       </div>
     <% end %>
   </div>

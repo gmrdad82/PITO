@@ -101,19 +101,9 @@ Rails.application.routes.draw do
        to: "channels/bulk_revokes#create",
        constraints: { ids: %r{[\d,]+} }
 
-  # C19b (2026-05-22) — 3-screen taxonomy consolidation. /channels folds
-  # into the /videos screen. The bare GET /channels redirects 301 to
-  # /videos. All channel sub-routes (show, destroy, history, analytics,
-  # star, bulk revoke, panes, etc.) remain reachable as functional
-  # endpoints — only the top-level screen URL was consolidated.
-  #
-  # Order matters: this redirect is declared BEFORE `resources :channels`
-  # so it wins the bare `/channels` match. The resource block still owns
-  # the `channels_path` named helper (which now resolves to `/channels`,
-  # which 301s to `/videos`). Controllers that `redirect_to channels_path`
-  # take a two-hop path through the redirect — acceptable until those
-  # call sites are migrated to point at the new screen directly.
-  get "/channels", to: redirect("/videos", status: 301)
+  # R2 (2026-05-25) — /videos screen removed. /channels formerly redirected
+  # to /videos; now redirects to / (home). The channels sub-routes stay.
+  get "/channels", to: redirect("/", status: 301)
   resources :channels, only: [ :index, :show, :destroy ] do
     collection do
       get :panes
@@ -161,55 +151,28 @@ Rails.application.routes.draw do
     resources :change_logs, only: :index, path: "history",
                             controller: "channels/change_logs"
   end
-  # Phase 12 — Path A2 retracted. Video gets back the writable subset
-  # of YouTube Data API v3 fields plus the four-item pre-publish
-  # checklist gating publish-state transitions. Edit / update fly the
-  # writable subset; publish / schedule are dedicated paths so the
-  # checklist gate cannot be bypassed.
-  resources :videos, only: [ :index, :show, :edit, :update, :destroy ] do
-    collection do
-      get :panes
-      # Phase 23 §23b — paginated index of every open VideoDiff
-      # (per locked Q3). Click a row → opens the per-video diff page.
-      get :diffs
-    end
+  # R2 (2026-05-25) — /videos screen removed. Index + edit + panes + diffs
+  # collection actions dropped. Video data surfaces via home panels
+  # (Pito::LatestVideosPanelComponent, Pito::ChannelsOverviewPanelComponent).
+  # Member routes retained for CLI / MCP JSON API surface.
+  resources :videos, only: [ :show, :destroy ] do
     member do
-      # Nested stats endpoint used by the pito CLI: /videos/:id/stats.json
-      # returns the per-day VideoStat rows for the video as a JSON array.
+      # Retained for the pito CLI: /videos/:id/stats.json
       get :stats
-      # Phase 12 — pre-publish checklist gate + publish / schedule
-      # actions. The GET renders a Turbo Frame partial; the PATCHes
-      # are the actual privacy_status transition surface.
+      # Retained for MCP / CLI — publish/schedule state transitions.
       get   :pre_publish_checklist
       patch :publish
       patch :schedule
-      # Phase 12 — `public` / `unlisted` → `private` direct path.
-      # Going down is free per Note 1 (no checklist needed). A
-      # dedicated action keeps the privacy_status flip outside the
-      # smuggle guard on `update`, which rejects any privacy_status
-      # mutation through the regular update path.
       patch :unpublish
-      # Phase 23 §23b + §23c — open-diff dialog. GET renders the
-      # three-column reconciliation page; PATCH consumes the per-
-      # field decisions form. JSON branch returns the same shape as
-      # the `video_diff_show` / `video_diff_apply` MCP tools.
+      # Retained for MCP / CLI — diff surface.
       get   :diff
       patch :apply_diff
     end
-    # Phase 14 §3 — game / bundle attribution links nested under the
-    # parent video. RESTful create / update / destroy; the bracketed
-    # `[remove]` button on the edit form routes through the shared
-    # `/deletions/video_game_link/:ids` action screen rather than
-    # hitting `destroy` directly (no JS confirms — CLAUDE.md hard rule).
+    # Game / bundle attribution links retained for MCP / CLI.
     resources :links, only: %i[create update destroy],
                       controller: "video_game_links"
 
-    # Phase 13.3 — Per-video analytics dashboard. Singular `resource`
-    # per master-agent decision. Two POST refresh endpoints:
-    # `analytics/refresh` enqueues `VideoAnalyticsSync` (V1-V8 minus
-    # V7), `analytics/retention/refresh` enqueues `VideoRetentionSync`
-    # (V7) — separated so the retention curve (recomputed-in-place)
-    # can be re-rolled independently.
+    # Per-video analytics retained for CLI / MCP.
     resource :analytics, only: :show, controller: "videos/analytics"
     post "analytics/refresh",
          to: "videos/analytics_refresh#create",
@@ -218,125 +181,28 @@ Rails.application.routes.draw do
          to: "videos/retention_refresh#create",
          as: :retention_refresh
   end
-  # Phase 4 — Project Workspace dropped 2026-05-21 (D18). Footage now
-  # attaches directly to Game; Timeline + ProjectReference were Project-
-  # only models so they were dropped alongside Projects.
-  # Phase 27 follow-up (2026-05-17) — `resources :collections` and the
-  # `:games_pane` member action were removed along with the Collection
-  # model. The `/games` page's former "collections shelf" is now a
-  # "bundles shelf"; the modal-pane fragment route lives on `:bundles`
-  # below (`get :games_pane`).
-  # Phase 14 §1 — IGDB-backed game model. `:search` (collection) is the
-  # type-ahead endpoint that POSTs to IGDB for matches; `:resync` is
-  # the per-game IGDB re-sync trigger. Existing CRUD remains.
-  resources :games, except: [ :edit, :update ] do
+  # R2 (2026-05-25) — /games screen removed. Game data surfaces via home
+  # panels (Pito::GamesReleasingPanelComponent, Pito::TopGamesPanelComponent).
+  # Game model + IGDB services stay. Resync + search retained for CLI / MCP.
+  resources :games, only: [ :show, :create, :destroy ] do
     collection do
+      # IGDB search typeahead — retained for CLI / MCP.
       get :search
-      # 2026-05-18 — omnisearch endpoint for the `/games` `/`-keyed
-      # search modal (`:games_search` mode). Returns local games +
-      # bundles (Meilisearch) AND IGDB hits as separate sections; the
-      # caller renders `_search_results_combined`. Distinct from the
-      # IGDB-only `:search` route above which still backs the
-      # `:game_index` modal (`[+]` button on `/games` chrome).
+      # IGDB omnisearch — retained for CLI / MCP.
       get :omnisearch
-      # Phase 28 §01a — local primaries typeahead source for the
-      # version-parent picker on the game edit page. Returns up to 20
-      # `{ id, title }` JSON rows matching `LOWER(title) ILIKE` the
-      # supplied `q` param. Primaries only (an edition cannot itself
-      # parent another edition); the current row is excluded.
+      # Version-parent typeahead — retained for CLI / MCP.
       get :version_parent_search
     end
     member do
       post :resync
     end
-    # Phase 27 — 01f. Per-platform ownership editor. Singular
-    # `resource` so the URL is `/games/:game_id/platform_ownerships/edit`
-    # (one ownership editor per game). Routes friendly — `:game_id`
-    # carries the slug because `Game#to_param` returns `igdb_slug`.
-    resource :platform_ownerships, only: %i[edit update],
-                                   module: :games
-
-    # 2026-05-17 — inline per-platform ownership matrix toggles on
-    # /games/:id. Each cell in the `OwnershipMatrixComponent` is a
-    # checkbox inside a tiny auto-submit form. The form posts to one
-    # of these two endpoints; the controller flips the join row (or
-    # the singular `played_platform_id` pointer) and redirects back
-    # to /games/:id with a flash naming the new state. Same posture
-    # as the `/settings/notification_toggles/:brand/:kind` auto-save
-    # endpoint (Phase D Discord/Slack toggles).
-    #
-    # `:platform` is the canonical slug — `ps`, `switch`, or `steam`
-    # (per `Platforms::ChipComponent::SLUG_BRAND`). Anything else
-    # 404s in the controller's allowlist check.
-    patch "ownership_toggles/:platform",
-          to: "games/ownership_toggles#ownership",
-          as: :ownership_toggle
-    patch "played_toggles/:platform",
-          to: "games/ownership_toggles#played",
-          as: :played_toggle
   end
-  # C19b (2026-05-22) — 3-screen taxonomy consolidation. /footages folds
-  # into the /games screen. Bare GET /footages redirects 301 to /games.
-  # Detail/sub-routes (`/footages/:id`, `/footages/:id/edit`,
-  # `/footages/:id/frames.json`, etc.) remain reachable.
-  get "/footages", to: redirect("/games", status: 301)
+  # R2 (2026-05-25) — /bundles and /games screens removed.
+  # Bundle + game controllers removed in prior R-tasks.
+  # /footages formerly redirected to /games. Now redirects to / (home).
+  get "/footages", to: redirect("/", status: 301)
   resources :footages, only: [ :index, :show, :edit, :update, :destroy ]
 
-  # Phase 14 §2 / Phase 27 follow-up (2026-05-17 + 2026-05-18) — Bundles
-  # + composite covers. The legacy `seed_from_igdb` action was removed
-  # along with the IGDB-source provenance columns. The 2026-05-18
-  # follow-up dropped the standalone `/bundles` index + `/bundles/new`
-  # surfaces: bundles are reachable ONLY via the `/games` bundle shelf
-  # + modal flow, so `index`, `new`, and `edit` actions are gone. What
-  # remains:
-  #   - show     : composite cover + member list (the modal links here
-  #                for `[ open ]`).
-  #   - create   : the `/games` bundles-shelf `[+]` button POSTs here.
-  #                Builds an `unnamed bundle` (auto-incremented when a
-  #                name collision exists) and renders a Turbo Stream
-  #                that appends the new tile to the shelf, swaps the
-  #                modal partial with auto-open wiring, and flashes a
-  #                notice.
-  #   - update   : modal inline-title-edit JSON PATCH (used by the
-  #                `inline-title-edit` Stimulus controller from the
-  #                `/games` bundles modal).
-  #   - destroy  : routes through `/deletions/bundle/:ids` per the "no
-  #                JS confirms" rule (called from `/games/:id`'s
-  #                `[delete]`).
-  #   - games_pane: Turbo Frame fragment that backs the `/games`
-  #                bundles modal grid.
-  # Members CRUD stays — used by the modal's add-member form.
-  # C19b (2026-05-22) — 3-screen taxonomy consolidation. /bundles folds
-  # into the /games screen (bundles already render as a shelf there).
-  # Bare GET /bundles redirects 301 to /games. Detail/sub-routes
-  # (`/bundles/:id`, `/bundles/:id/games_pane`, member CRUD, etc.) stay
-  # reachable — no index action existed before so no resources tweak.
-  get "/bundles", to: redirect("/games", status: 301)
-  resources :bundles, only: [ :show, :create, :update, :destroy ] do
-    member do
-      get :games_pane
-      # 2026-05-18 — omnisearch endpoint for the bundle modal's
-      # `[+]` "add member" trigger (`:bundle_add` mode). Returns local
-      # games (Meilisearch, with this bundle's existing members
-      # filtered out) AND IGDB hits as separate sections; the result
-      # row's `[add]` action POSTs `/bundles/:id/members` to associate
-      # the chosen game with this bundle.
-      get :search
-    end
-    resources :members, only: [ :create, :destroy ],
-                        controller: "bundle_members" do
-      collection do
-        # 2026-05-18 — `[add]` action for IGDB rows in the bundle modal
-        # `:bundle_add` omnisearch. The IGDB result is not in the
-        # library; this endpoint creates a Game stub (igdb_id + title
-        # pre-seed), associates it with the bundle as a new
-        # BundleMember, and enqueues `GameIgdbSync` to populate the
-        # rest of the metadata async. The two-step (sync IGDB into
-        # the library THEN add) is collapsed into one click.
-        post :from_igdb
-      end
-    end
-  end
 
   # Phase 27 follow-up (2026-05-17) — every cover-art asset is served
   # directly by Rails' static-file middleware via the

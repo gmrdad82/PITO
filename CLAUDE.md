@@ -284,11 +284,7 @@ unsaved-changes navigation guards.
 **Yes / no for external booleans.** Every URL param / JSON / MCP I/O /
 Rust wire boolean is `"yes"` / `"no"`. Convert at boundaries.
 
-**Mouse guard.** Keyboard-only. Real mouse activity (click, select,
-movement, viewport-enter) triggers `Tui::AlertDialogComponent`. Every
-action and feature must be operable via keyboard in NORMAL or INSERT
-mode (or both). Keyboard-fired clicks and programmatic Stimulus
-`.click()` pass through.
+**Keyboard-first.** Every action and feature must be operable via keyboard in NORMAL or INSERT mode. Mouse interaction is permitted but no feature MAY require it.
 
 **All copy via i18n.** All user-visible strings in
 `config/locales/**.yml`. The same YAML feeds the TUI.

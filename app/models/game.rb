@@ -37,13 +37,12 @@
 #   version_parent_id, version_title.
 #
 # Phase 27 follow-up (2026-05-17) — `collection_id` was dropped along
-# with the entire `Collection` model. Bundle membership (M2M through
-# `bundle_members`) replaces the single-pointer "collection" pattern.
+# with the entire `Collection` model.
 #
 # Ownership-sourced joins (NEVER touched by sync):
 #   game_platform_ownerships (per-platform ownership join — see
 #   `#owned_platforms` and the `.owned` / `.not_owned` /
-#   `.owned_on(slug)` scopes), bundle_members, video_game_links.
+#   `.owned_on(slug)` scopes), video_game_links.
 #
 # B7 (2026-05-25) — play_on helpers.
 #   `#play_on_ownership` → the GamePlatformOwnership where play_on=true,
@@ -75,10 +74,9 @@ class Game < ApplicationRecord
   friendly_id :igdb_slug, use: :finders
 
   # Phase 34 (2026-05-18) — pgvector neighbor lookups on the Voyage
-  # `summary_embedding` column. Powers `Game::SimilarGames` (a game's
-  # nearest neighbours) and `Bundle::SuggestedFor` (bundles whose
-  # centroid sits closest to a given game's vector). Distance is cosine
-  # (matches the `vector_cosine_ops` HNSW index in `db/schema.rb`).
+  # `summary_embedding` column. Powers `Game::SimilarGames` (similar
+  # games by vector cosine distance). Distance is cosine (matches the
+  # `vector_cosine_ops` HNSW index in `db/schema.rb`).
   has_neighbors :summary_embedding
 
   def to_param
@@ -91,11 +89,7 @@ class Game < ApplicationRecord
   # `Game::CoverComponent`. It downsamples cleanly into the
   # 98 × 130 shelf tile slot (65% of the 150 × 200 grid tile).
   # `t_cover_big_2x` (~528 × 748 native) is the highest-resolution cover
-  # variant IGDB serves. Added 2026-05-17 for the bundle modal composite
-  # cells which render large enough that the 264 × 374 `t_cover_big`
-  # asset visibly softens. Other surfaces (game show page, /games tile,
-  # shelf rows) stay on their existing tokens — the 2x source is reserved
-  # for the composite cells that need it.
+  # variant IGDB serves. Retained for high-DPI surfaces that need it.
   COVER_SIZES = %w[
     t_thumb t_cover_small t_cover_small_2x t_cover_big t_cover_big_2x
     t_screenshot_med t_screenshot_big t_logo_med
@@ -108,8 +102,7 @@ class Game < ApplicationRecord
 
   # Phase 27 follow-up (2026-05-17) — `belongs_to :collection` removed
   # along with the Collection model + `games.collection_id` column.
-  # Bundle membership (M2M through `bundle_members`) replaces the
-  # single-pointer "collection" pattern.
+  # R1 (2026-05-25) — Bundle membership also removed.
   has_many :footages, dependent: :nullify
   # Phase 15 §1 — calendar entries cascade.
   has_many :calendar_entries, dependent: :destroy
@@ -186,47 +179,11 @@ class Game < ApplicationRecord
                                 allow_destroy: true,
                                 reject_if: :all_blank
 
-  # Phase 14 §2 — Bundle membership. A Game can belong to many
-  # Bundles. Cascade-on-delete from games removes the join rows;
-  # `BundleCoverInvalidate` is enqueued from `after_update_commit`
-  # below when `cover_image_id` changes so every bundle the game
-  # belongs to gets its composite cover regenerated.
-  has_many :bundle_members, dependent: :destroy
-  has_many :bundles, through: :bundle_members
-
   # Phase 14 §3 — video attribution. `dependent: :destroy` so the
   # `recompute_game_footage_cache` after_destroy_commit hook on
   # `VideoGameLink` fires for every cascaded row.
   has_many :video_game_links, dependent: :destroy
   has_many :videos, through: :video_game_links
-
-  # Phase 14 §2 — fire `BundleCoverInvalidate` when `cover_image_id`
-  # changes. The job evicts the cached tile (so the next build
-  # re-downloads the new IGDB cover bytes) and enqueues a rebuild for
-  # every bundle the game belongs to.
-  after_update_commit :invalidate_bundle_covers_if_image_changed
-
-  # Phase 27 follow-up (2026-05-17) — fire a rebuild for every bundle
-  # touched by a sync / destroy event on this game. The orchestrator
-  # (`Bundle::CompositeRebuildQueue`) sorts inputs alphabetically by
-  # `Bundle.name` (case-insensitive) and enqueues a sequential
-  # `BundleCoverBuild` chain — predictable order is load-bearing for
-  # UX (which bundle is rebuilding next) and for tests (deterministic
-  # enqueue order).
-  #
-  # Two hooks cover the two trigger surfaces this model owns:
-  #   - `after_save_commit` — game re-synced from IGDB (`igdb_synced_at`
-  #     changed). Rebuilds every bundle the game is currently in.
-  #   - `before_destroy` + `after_destroy_commit` — game deleted.
-  #     Rebuilds every bundle the game WAS in (captured pre-destroy
-  #     because the after_destroy hook sees the post-cascade state).
-  #
-  # The add / move / remove surface is owned by `BundleMember`'s own
-  # `after_commit` (single-bundle rebuilds — no chain needed) so a
-  # membership change does not need a `Game`-side hook.
-  after_save_commit    :rebuild_bundle_composites_on_resync
-  before_destroy       :capture_pre_destroy_bundles
-  after_destroy_commit :rebuild_bundle_composites_on_destroy
 
   # 2026-05-19 — /games index live refresh. Every Game create / update /
   # destroy broadcasts a Turbo `refresh` signal to the `"games"` stream
@@ -587,51 +544,6 @@ class Game < ApplicationRecord
   def mapped_release_precision
     return nil unless respond_to?(:release_precision)
     public_send(:release_precision)
-  end
-
-  # Phase 14 §2 — bundle cover invalidation hook. Passes the previous
-  # `cover_image_id` explicitly so the invalidator job (running in a
-  # separate Sidekiq process) can evict the now-stale tile from the
-  # cache without relying on `previous_changes`.
-  def invalidate_bundle_covers_if_image_changed
-    return unless saved_change_to_cover_image_id?
-    previous_cover_image_id = saved_change_to_cover_image_id.first
-    BundleCoverInvalidate.perform_async(id, previous_cover_image_id)
-  end
-
-  # Phase 27 follow-up (2026-05-17) — bundle composite rebuild hook for
-  # the re-sync surface. Fires whenever `igdb_synced_at` was just
-  # written (a fresh IGDB sync). Skips when the row belongs to zero
-  # bundles. The `BundleMember`-side `after_commit` already covers the
-  # add/remove case; this hook ONLY handles the "membership unchanged
-  # but cover bytes may now point at a new IGDB asset" case.
-  def rebuild_bundle_composites_on_resync
-    return unless saved_change_to_igdb_synced_at?
-
-    Bundle::CompositeRebuildQueue.new.enqueue_for_game_resync(self)
-  end
-
-  # Phase 27 follow-up (2026-05-17) — capture the game's bundles BEFORE
-  # destroy so the after_destroy_commit hook can rebuild composites for
-  # the bundles the game WAS in. By the time after_destroy_commit
-  # fires the row is gone and the `bundle_members` rows have CASCADED
-  # away — the bundle set has to be cached during the destroy
-  # transaction.
-  def capture_pre_destroy_bundles
-    @pre_destroy_bundles = bundles.to_a
-    true
-  end
-
-  # Phase 27 follow-up (2026-05-17) — bundle composite rebuild hook for
-  # the destroy surface. Reads the captured pre-destroy bundle set and
-  # hands it to the orchestrator. A standalone game (no bundles before
-  # destroy) is a no-op.
-  def rebuild_bundle_composites_on_destroy
-    targets = Array(@pre_destroy_bundles).compact
-    return if targets.empty?
-
-    Bundle::CompositeRebuildQueue.new
-                                  .enqueue_for_game_destroy(self, was_in: targets)
   end
 
   # Phase 27 v2 spec 01 — set `primary_genre_id` when blank so the

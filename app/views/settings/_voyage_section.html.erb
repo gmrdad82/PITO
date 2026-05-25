@@ -38,15 +38,15 @@
 <%# 2026-05-18 (DR) — Voyage stats line added between the heading and
     the action row. `Voyage::Stats.call` is a sub-millisecond aggregate
     read (count + max per target), safe to call on every settings
-    render. Bundle keys come back nil when the `summary_embedding`
-    column is not yet on the bundles table — the view degrades to "—"
-    on those without raising. %>
+    render.
+    R1 (2026-05-25) — bundles removed; bundle row dropped from embeds table. %>
 <%# 2026-05-24 — Voyage sub-panel split into two tables:
 
       1. EMBEDS table (sortable) — `collection | embedded` columns,
-         rows = games + bundles. `data-sort-value` carries the raw
-         embedded integer count so the column sorts numerically even
-         though the rendered cell mixes a segmented bar + `N / M`.
+         rows = games only (bundles removed R1). `data-sort-value`
+         carries the raw embedded integer count so the column sorts
+         numerically even though the rendered cell mixes a segmented
+         bar + `N / M`.
 
       2. INFO table (NON-sortable) — model, last indexed, HNSW
          indexes, last 24h. No `<thead>`, no `sortable-table`
@@ -80,9 +80,8 @@
 
   <%# Build sorted rows for server-side ordering. %>
   <% _voyage_rows = [
-       { key: "row_games_embedded",   label: t("settings.voyage.games_embedded"),   count: voyage_stats[:embedded_games_count].to_i,   total: voyage_stats[:total_games_count].to_i,   pct: voyage_stats[:coverage_pct].to_f },
-       voyage_stats[:total_bundles_count].to_i > 0 ? { key: "row_bundles_embedded", label: t("settings.voyage.bundles_embedded"), count: voyage_stats[:embedded_bundles_count].to_i, total: voyage_stats[:total_bundles_count].to_i, pct: voyage_stats[:bundle_coverage_pct].to_f } : nil
-     ].compact %>
+       { key: "row_games_embedded", label: t("settings.voyage.games_embedded"), count: voyage_stats[:embedded_games_count].to_i, total: voyage_stats[:total_games_count].to_i, pct: voyage_stats[:coverage_pct].to_f }
+     ] %>
   <% _voyage_rows = case _voyage_sort
      when "collection" then _voyage_rows.sort_by { |r| r[:label].downcase }
      when "embedded"   then _voyage_rows.sort_by { |r| r[:count] }

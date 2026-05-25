@@ -2,9 +2,11 @@
 #
 # Standalone sibling of `Search::OmnisearchModalComponent`. Built fresh
 # per the user's 2026-05-19 strict-independence rule: the existing
-# /games omnisearch (modes `:game_index, :bundle_add, :games_search`)
-# stays untouched, this component spans games + bundles + channels
-# with context-aware section ordering driven by `current_path`.
+# /games omnisearch (modes `:game_index, :games_search`) stays
+# untouched, this component spans games + channels with context-aware
+# section ordering driven by `current_path`.
+#
+# R1 (2026-05-25) — bundles removed from this surface.
 #
 # No inheritance / no template sharing with `OmnisearchModalComponent`.
 # The `omnisearch-modal` Stimulus controller is reused by class-name

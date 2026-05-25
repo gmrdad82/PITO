@@ -6,25 +6,6 @@
         data-omnisearch-modal-frame-id-value="<%= results_frame_id %>"
         data-action="click->omnisearch-modal#clickOutside keydown->omnisearch-modal#keydown">
   <div class="omnisearch-modal-inner">
-    <% if render_recommendations? %>
-      <section class="omnisearch-recommendations" aria-label="similar to this bundle">
-        <h3 class="omnisearch-section-heading">similar to your bundle</h3>
-        <div class="shelf-row" data-controller="steam-shelf">
-          <% recommendations.each do |game| %>
-            <%= render Game::GenreTileComponent.new(
-                  game: game,
-                  link_to: nil,
-                  data: {
-                    controller: "bundle-add-trigger",
-                    "bundle-add-trigger-bundle-id-value": bundle.id,
-                    "bundle-add-trigger-game-id-value": game.id,
-                    action: "click->bundle-add-trigger#add"
-                  }
-                ) %>
-          <% end %>
-        </div>
-      </section>
-    <% end %>
     <input type="search"
            class="omnisearch-input"
            placeholder="<%= placeholder %>"

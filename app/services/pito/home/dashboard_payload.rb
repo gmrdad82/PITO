@@ -33,14 +33,14 @@ module Pito
 
       SEARCH_INDEX_DISPLAY_ALLOWLIST = %w[games].freeze
 
+      # R1 (2026-05-25) — bundles row removed.
       POSTGRES_TABLE_ROWS = [
-        { label: "games",   table: "games",   class_name: "Game" },
-        { label: "bundles", table: "bundles", class_name: "Bundle" }
+        { label: "games", table: "games", class_name: "Game" }
       ].freeze
 
+      # R1 (2026-05-25) — composites/bundles dir removed.
       ASSETS_CATEGORY_DIRECTORIES = {
-        "cover arts" => [ "covers", "games" ],
-        "composites" => [ "covers", "bundles" ]
+        "cover arts" => [ "covers", "games" ]
       }.freeze
 
       def initialize(user:, params: {})

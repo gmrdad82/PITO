@@ -1,26 +1,19 @@
 # Phase 27 §01h / Phase 27 follow-up (2026-05-17) — Compositable mixin.
 #
 # Shared interface for models that own an on-disk composite cover JPEG
-# fingerprinted by `Composite::Checksum`. Currently mixed into:
-#   - `Bundle` (Phase 14 §2 — bundle groupings of Games; the only host
-#     after the 2026-05-17 Collection→Bundle consolidation).
+# fingerprinted by `Composite::Checksum`.
+#
+# R1 (2026-05-25) — Bundles dropped. Mixin retained for future composite
+# hosts (e.g. curated game collections if re-introduced).
 #
 # The mixin captures the three responsibilities a composite-cover host
 # needs:
 #   1. Resolve the absolute on-disk Pathname for the composite cover
-#      from `composite_cover_path` (a relative path under
-#      `<PITO_ASSETS_PATH>/covers/bundles/<id>/composite.jpg`).
+#      from `composite_cover_path`.
 #   2. Render the public URL the static-file middleware serves via the
 #      `public/covers` → `<PITO_ASSETS_PATH>/covers` symlink.
 #   3. Sweep the on-disk file when the host model is destroyed
 #      (best-effort — `Errno::ENOENT` is swallowed).
-#
-# What it does NOT cover:
-#   - Building the composite — the host's composer service does that
-#     (`Composite::Builder` for Bundle).
-#   - Membership-change hooks — Bundle wires `after_save` into
-#     `BundleCoverBuild`; `BundleMember`'s `after_commit` enqueues
-#     rebuilds when membership changes.
 #
 # 2026-05-17 unification — composites moved from
 # `<PITO_ASSETS_PATH>/composites/bundle-<id>.jpg` (served by an

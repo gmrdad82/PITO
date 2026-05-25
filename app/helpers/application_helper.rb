@@ -63,11 +63,11 @@ module ApplicationHelper
       return "settings"
     end
 
+    # R2 (2026-05-25) — /games and /videos screens removed. All game/video
+    # data surfaces on home panels. Channels sub-routes retain "channels" accent.
     case path
-    when "channels", %r{\Achannels/}, "videos", %r{\Avideos/}
+    when "channels", %r{\Achannels/}
       "channels"
-    when "games", %r{\Agames/}
-      "games"
     else
       "home"
     end
@@ -242,13 +242,11 @@ module ApplicationHelper
   def cancel_path_for(type)
     case type
     when "channel"    then channels_path
-    when "video"      then videos_path
-    when "game"       then games_path
-    # 2026-05-18 — `/bundles` index removed. Bundles are reachable
-    # only via the /games bundle shelf + modal flow; cancel/back
-    # destinations fall back to /games.
-    when "bundle"     then games_path
-    when "video_game_link" then videos_path
+    # R2 (2026-05-25) — /videos and /games screens removed; fall back to root.
+    when "video"      then root_path
+    when "game"       then root_path
+    when "bundle"     then root_path
+    when "video_game_link" then root_path
     else root_path
     end
   end
@@ -300,10 +298,9 @@ module ApplicationHelper
 
     return nil unless respond_to?(:action_name) && action_name == "show"
 
+    # R2 (2026-05-25) — /games and /videos screens removed. Only channel
+    # show pages remain as a sub-page breadcrumb surface.
     case controller_path
-    when "games"
-      game = instance_variable_get(:@game)
-      game.respond_to?(:title) ? game.title.presence : nil
     when "channels"
       channel = instance_variable_get(:@channel)
       return nil unless channel
@@ -311,9 +308,6 @@ module ApplicationHelper
       title = channel.respond_to?(:title) ? channel.title : nil
       handle = channel.respond_to?(:handle) ? channel.handle : nil
       title.presence || handle.presence
-    when "videos"
-      video = instance_variable_get(:@video)
-      video.respond_to?(:title) ? video.title.presence : nil
     end
   end
 
@@ -354,10 +348,10 @@ module ApplicationHelper
   #
   # Call site: layout `<meta name="pito-screen-actions">` tag.
   def pito_screen_actions_json(section = current_section)
+    # R2 (2026-05-25) — only home screen remains; games + videos screens removed.
+    # "settings" maps to :home (settings panels live on Home since C18).
     screen = case section.to_s
-    when "channels" then :videos
     when "settings" then :home
-    when "games"    then :games
     else                 :home
     end
     actions = Pito::ActionRegistry.for_screen(screen)

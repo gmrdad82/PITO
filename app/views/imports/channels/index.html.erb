@@ -50,7 +50,7 @@
           <span class="action">
             <%= render(BracketedLinkComponent.new(
               label: "cancel",
-              href: videos_path,
+              href: root_path,
               data: { turbo_frame: "_top" }
             )) %>
           </span>
@@ -108,7 +108,7 @@
     <% else %>
       <p class="text-muted">no connected channels.</p>
       <div class="modal-footer">
-        <%= render(BracketedLinkComponent.new(label: "back", href: videos_path)) %>
+        <%= render(BracketedLinkComponent.new(label: "back", href: root_path)) %>
       </div>
     <% end %>
   </div>

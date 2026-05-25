@@ -3,7 +3,9 @@ module Pito
   #
   # The notifications panel on Home (/). Manages Discord + Slack webhook
   # delivery channels for notification dispatching (per-channel webhook
-  # URLs + "send all"/"daily digest" toggles).
+  # URLs + "send all"/"daily digest" toggles). Each webhook row carries a
+  # distinct label ("Discord webhook:" / "Slack webhook:") — no section
+  # headings or hairline separators between the two rows.
   #
   # ## Kwargs
   #

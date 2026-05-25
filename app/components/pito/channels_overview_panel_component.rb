@@ -77,8 +77,15 @@ module Pito
 
     # Relative time of the most recently published video on this channel.
     # Falls back to "never" when the channel has no published videos.
+    # Casts the virtual column value to Time before passing to the formatter
+    # because PostgreSQL returns virtual columns as raw strings when AR
+    # does not know the column type statically.
     def format_last_published(channel)
-      Pito::Formatter::CompactTimeAgo.call(channel.last_published_video_at)
+      raw = channel.last_published_video_at
+      time = raw.is_a?(Time) ? raw : (raw.present? ? Time.parse(raw.to_s) : nil)
+      Pito::Formatter::CompactTimeAgo.call(time)
+    rescue ArgumentError, TypeError
+      Pito::Formatter::CompactTimeAgo.call(nil)
     end
 
     # Display handle (prefer @handle, fall back to title).

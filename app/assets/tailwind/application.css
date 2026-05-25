@@ -6934,29 +6934,6 @@ dialog.tui-confirmation-dialog::backdrop {
   background: color-mix(in srgb, var(--dracula-bg) 70%, transparent);
 }
 
-/* ===== Tui::AlertDialogComponent =====
-   FB-172 (2026-05-21). Message-only alert dialog (no submit action).
-   Spawned by the `keyboard-only` Stimulus controller when forbidden
-   mouse activity is detected — title `invalid input`, body lines
-   `mouse interaction forbidden` + `type ? for help or : for command`.
-   Built on the same `.tui-dialog-frame` chrome as the confirmation
-   dialog so the corner-flush title + `[Esc] to close` hint stay
-   uniform across every dialog in the app. */
-.tui-alert-dialog {
-  max-width: 480px;
-  padding: 16px 14px 12px !important;
-}
-.tui-alert-dialog__line {
-  margin: 0 0 6px;
-  line-height: 1;
-}
-.tui-alert-dialog__line:last-child {
-  margin-bottom: 0;
-}
-dialog.tui-alert-dialog::backdrop {
-  background: color-mix(in srgb, var(--dracula-bg) 70%, transparent);
-}
-
 /* ===== Tui::SizeGuardDialogComponent =====
    Phase 1C (2026-05-22). Minimum-window-size guard. Reuses the canonical
    `.tui-dialog-frame` chrome via Tui::DialogComponent; this rule only
@@ -6972,18 +6949,6 @@ dialog.tui-size-guard-dialog::backdrop {
 .tui-size-guard-dialog__message {
   color: var(--color-muted);
   margin: 8px 0 0;
-}
-
-/* ===== Keyboard-only mode (FB-172) =====
-   When the `keyboard-only` Stimulus controller is mounted on `<body>`
-   it adds the `.keyboard-only` class; the rule below hides the native
-   OS cursor everywhere so the only interaction surface is the
-   keyboard. `!important` so per-element `cursor:` rules elsewhere in
-   this file (every interactive element sets `cursor: pointer`) cannot
-   override the disable. */
-body.keyboard-only,
-body.keyboard-only * {
-  cursor: none !important;
 }
 
 /* ===== Tui::ReindexProgressComponent =====
@@ -7492,7 +7457,7 @@ body.keyboard-only * {
    var(--section-accent) per the actions-accent rule. Chips are separated by
    a single space via gap; no delimiter chrome between them.
    Active chip ([x]) keeps the same accent color — the checked bracket is the
-   visual indicator; no background change (mouse-guard / no-hover rules). */
+   visual indicator; no background change (no-hover rule). */
 .nf-filter-chips {
   display: inline-flex;
   align-items: center;

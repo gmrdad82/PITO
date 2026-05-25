@@ -1,10 +1,10 @@
 module Tui
   # Phase 1C (2026-05-22) — minimum-window-size guard dialog.
   #
-  # Pattern parity with `Tui::AlertDialogComponent` (message-only, no
-  # submit action). Built on the canonical `.tui-dialog-frame` chrome
-  # via `Tui::DialogComponent`, so the title-in-border + `[Esc] to
-  # close` affordance stays uniform across every dialog in the app.
+  # Message-only dialog (no submit action). Built on the canonical
+  # `.tui-dialog-frame` chrome via `Tui::DialogComponent`, so the
+  # title-in-border + `[Esc] to close` affordance stays uniform
+  # across every dialog in the app.
   #
   # Mounted once in the application layout. The `tui-size-guard`
   # Stimulus controller (mounted on the dialog element itself) listens

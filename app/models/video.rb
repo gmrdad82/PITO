@@ -82,14 +82,14 @@ class Video < ApplicationRecord
   # superfluous on a CASCADE FK but harmless.
   has_many :calendar_entries, dependent: :destroy
 
-  # Phase 14 §3 — game / bundle attribution links.
+  # Phase 14 §3 — game attribution links.
   # `dependent: :destroy` (rather than :delete_all) so the
   # `recompute_game_footage_cache` after_destroy_commit hook on
   # `VideoGameLink` fires for every cascaded row when a Video is
   # destroyed (master-agent decision #9).
+  # R1 (2026-05-25) — bundle links removed.
   has_many :video_game_links, dependent: :destroy
-  has_many :linked_games,   through: :video_game_links, source: :game
-  has_many :linked_bundles, through: :video_game_links, source: :bundle
+  has_many :linked_games, through: :video_game_links, source: :game
 
   # Phase 11 §01a — Video edit page polish. Thumbnail attaches via
   # Active Storage; chapters / end-screens live in dedicated tables
@@ -117,8 +117,6 @@ class Video < ApplicationRecord
 
   scope :linked_to_game,
         ->(game) { joins(:video_game_links).where(video_game_links: { game_id: game.id }) }
-  scope :linked_to_bundle,
-        ->(bundle) { joins(:video_game_links).where(video_game_links: { bundle_id: bundle.id }) }
 
   # Convenience reach-through. Video hits YouTube via the channel's
   # YoutubeConnection (Q4 lock). The connection is reached transitively;
@@ -203,7 +201,7 @@ class Video < ApplicationRecord
 
   # Phase 34 (2026-05-18) — `searchable` / `filterable` declarations
   # are gone; Video is no longer indexed into Meilisearch. The
-  # unified `/games` corpus covers Game + Bundle only.
+  # unified `/games` corpus covers Game only (R1: bundles removed).
 
   scope :starred, -> { where(star: true) }
   scope :published, -> { where(privacy_status: %i[public unlisted]) }

@@ -1,13 +1,11 @@
 module Tui
   # Beta 4 — Phase F1. Screens navigation list for the bottom status bar.
-  # Renders the `home / videos / games` row with the current screen
-  # highlighted via the section-accent cascade.
+  # R2 (2026-05-25) — reduced to a single screen: home. /videos and /games
+  # screens were removed; all content lives on the root `/` (dashboard).
   #
   # Kwargs:
-  #   current_section: (String) — "home", "videos", or "games". Controls
-  #                    which entry receives `.bsb-section--current` so the
-  #                    `body[data-section]` CSS cascade can apply the right
-  #                    accent color without a per-render color lookup.
+  #   current_section: (String) — "home". Reserved for future expansion;
+  #                    currently only "home" is valid.
   #
   # Behavior:
   #   Each screen entry is an `<a>` tag linking to the screen's root path.
@@ -16,7 +14,7 @@ module Tui
   #
   # i18n: screen labels come from `tui.bst.screens.<name>` (en.yml).
   class ScreensListComponent < ViewComponent::Base
-    SECTIONS = %w[home videos games].freeze
+    SECTIONS = %w[home].freeze
 
     # @param current_section [String] the active screen slug
     def initialize(current_section:)
@@ -41,9 +39,7 @@ module Tui
 
     def section_path(section)
       case section
-      when "home"   then "/"
-      when "videos" then "/videos"
-      when "games"  then "/games"
+      when "home" then "/"
       else "/"
       end
     end

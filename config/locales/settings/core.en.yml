@@ -26,7 +26,6 @@ en:
       col_collection: "embeds"
       col_embedded: "embedded"
       games_embedded: "games"
-      bundles_embedded: "bundles"
       model: "model"
       last_indexed: "last indexed"
       hnsw_indexes: "HNSW indexes"

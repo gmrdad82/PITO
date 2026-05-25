@@ -13,12 +13,7 @@
 <div style="margin-top: 16px;">
   <div class="dot-list" style="margin-bottom: 6px;">
     <h2 style="display: inline; margin: 0;">videos (<%= number_with_delimiter(total) %>)</h2>
-    <% if total > 30 %>
-      <%= render(BracketedLinkComponent.new(
-            label: "see all videos",
-            href: videos_path(channel: channel.to_param)
-          )) %>
-    <% end %>
+    <%# R2 (2026-05-25) — /videos screen removed; "see all" link dropped. %>
   </div>
 
   <% if videos.any? %>
@@ -76,7 +71,7 @@
                   —
                 <% end %>
               </td>
-              <td><%= render(BracketedLinkComponent.new(label: "edit", href: edit_video_path(video))) %></td>
+              <td><%# R2 — edit action removed with /videos screen %></td>
             </tr>
           <% end %>
         </tbody>

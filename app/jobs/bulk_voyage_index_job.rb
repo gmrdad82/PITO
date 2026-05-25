@@ -1,37 +1,30 @@
 # 2026-05-18 follow-up — Bulk Voyage embedder for `ReindexAllJob`.
 #
-# Replaces the per-record fan-out (`Game.find_each { ... perform_later }`
-# + `Bundle.find_each { ... perform_later }`) that turned a single
-# `[reindex]` click into 13 game + 18 bundle Voyage HTTP calls, all
-# firing in a tight Sidekiq burst that tripped Voyage's per-minute rate
+# Replaces the per-record fan-out (`Game.find_each { ... perform_later }`)
+# that turned a single `[reindex]` click into many game Voyage HTTP calls,
+# all firing in a tight Sidekiq burst that tripped Voyage's per-minute rate
 # limit and bombed the run with 429s.
 #
 # Voyage's `/v1/embeddings` accepts up to 128 input strings in a single
 # request (see `Voyage::Client::MAX_BATCH_SIZE`). One bulk job per
 # corpus collapses N HTTP calls into ceil(N/128) — for the current
-# pito dataset (≪128 of each), exactly ONE call per corpus.
+# pito dataset (≪128 games), exactly ONE call.
 #
-# Scope: ONLY used by `ReindexAllJob`. The per-record jobs
-# (`GameVoyageIndexJob`, `BundleVoyageIndexJob`) stay live for the
-# sync hooks — when a single game arrives from IGDB or a bundle's
-# membership changes, batching one input is overkill and we want the
+# Scope: ONLY used by `ReindexAllJob`. The per-record job
+# (`GameVoyageIndexJob`) stays live for the sync hooks — when a single
+# game arrives from IGDB, batching one input is overkill and we want the
 # existing forgiving per-row contract (`Voyage::Client#embed` returns
 # nil on failure, no Sidekiq retry storm).
+#
+# R1 (2026-05-25) — bundle corpus removed; games only.
 #
 # Text-building MUST match the single-record indexers so a bulk
 # reindex produces byte-identical Voyage inputs (and therefore
 # byte-identical embeddings) to a per-row reindex:
 #
-#   - Game:   "title — alt_names — summary" (em-dash, mirrors
-#             `Game::VoyageIndexer#combined_text`; alt_names slot
-#             omitted when alternative_names is empty)
-#   - Bundle: "name — agg(summaries)" (mirrors `Bundle::VoyageIndexer#combined_text`,
-#             up to 5 member summaries em-dash joined)
-#
-# If the single-record builders ever change, update both call sites in
-# lockstep or extract them to a shared text builder class. The current
-# duplication is deliberate — keeping the bulk path independent means
-# a bug in either does not poison the other.
+#   - Game: "title — alt_names — summary" (em-dash, mirrors
+#           `Game::VoyageIndexer#combined_text`; alt_names slot
+#           omitted when alternative_names is empty)
 #
 # Error contract: `Voyage::Client#embed_batch` raises on non-2xx /
 # missing key / malformed response. The job lets the raise propagate
@@ -45,10 +38,8 @@ class BulkVoyageIndexJob < ApplicationJob
     case corpus.to_s
     when "games"
       embed_games
-    when "bundles"
-      embed_bundles
     else
-      raise ArgumentError, "Unknown corpus: #{corpus.inspect} (expected 'games' or 'bundles')"
+      raise ArgumentError, "Unknown corpus: #{corpus.inspect} (expected 'games')"
     end
   end
 
@@ -82,20 +73,6 @@ class BulkVoyageIndexJob < ApplicationJob
 
     sync_to_search(records, text_for: ->(g) { game_text(g) }) do |record|
       Game::MeilisearchIndexer.call(record.reload)
-    end
-  end
-
-  # Bundles with at least one member-game that contributes summary
-  # text. Mirrors `Bundle::VoyageIndexer#combined_text` — a bundle
-  # with only `name` and no summarisable members still indexes (name
-  # alone is enough to find by typing); a bundle with neither name nor
-  # any summary text is skipped via `combined_text.blank?`.
-  def embed_bundles
-    records = Bundle.order(:id).to_a.reject { |b| bundle_text(b).blank? }
-    return if records.empty?
-
-    sync_to_search(records, text_for: ->(b) { bundle_text(b) }) do |record|
-      Bundle::MeilisearchIndexer.call(record.reload, embedding: record.summary_embedding)
     end
   end
 
@@ -134,8 +111,8 @@ class BulkVoyageIndexJob < ApplicationJob
 
   # Mirrors `Game::VoyageIndexer#combined_text` — keep in sync.
   # 2026-05-19 — `alternative_names` joins the embedding input so the
-  # similar-games + recommended-bundles clustering picks up alt-name
-  # signal (series identifiers, localized names, marketing aliases).
+  # similar-games clustering picks up alt-name signal (series identifiers,
+  # localized names, marketing aliases).
   def game_text(game)
     parts = []
     parts << game.title.to_s.strip if game.title.present?
@@ -144,16 +121,6 @@ class BulkVoyageIndexJob < ApplicationJob
       parts << alt.join(" ") if alt.any?
     end
     parts << game.summary.to_s.strip if game.summary.present?
-    parts.join(" — ")
-  end
-
-  # Mirrors `Bundle::VoyageIndexer#combined_text` — keep in sync.
-  def bundle_text(bundle)
-    parts = []
-    parts << bundle.name.to_s.strip if bundle.name.present?
-    summaries = bundle.games.first(Bundle::VoyageIndexer::MAX_MEMBER_SUMMARIES)
-                      .map(&:summary).compact.reject(&:blank?).join(" — ")
-    parts << summaries if summaries.present?
     parts.join(" — ")
   end
 end

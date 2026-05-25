@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_25_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -119,30 +119,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
     t.integer "status", default: 0, null: false
     t.jsonb "target_video_ids"
     t.datetime "updated_at", null: false
-  end
-
-  create_table "bundle_members", force: :cascade do |t|
-    t.bigint "bundle_id", null: false
-    t.datetime "created_at", null: false
-    t.bigint "game_id", null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["bundle_id", "game_id"], name: "index_bundle_members_on_bundle_and_game", unique: true
-    t.index ["bundle_id", "position"], name: "index_bundle_members_on_bundle_and_position"
-    t.index ["bundle_id"], name: "index_bundle_members_on_bundle_id"
-    t.index ["game_id"], name: "index_bundle_members_on_game_id"
-  end
-
-  create_table "bundles", force: :cascade do |t|
-    t.string "composite_cover_checksum"
-    t.string "composite_cover_path"
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.string "slug", null: false
-    t.vector "summary_embedding", limit: 1024
-    t.datetime "updated_at", null: false
-    t.index ["slug"], name: "index_bundles_on_slug", unique: true
-    t.index ["summary_embedding"], name: "index_bundles_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
   end
 
   create_table "calendar_entries", force: :cascade do |t|
@@ -906,7 +882,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
   end
 
   create_table "video_game_links", force: :cascade do |t|
-    t.bigint "bundle_id"
     t.datetime "created_at", null: false
     t.bigint "created_by_user_id"
     t.bigint "game_id"
@@ -914,15 +889,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
     t.integer "link_type", null: false
     t.datetime "updated_at", null: false
     t.bigint "video_id", null: false
-    t.index ["bundle_id"], name: "index_video_game_links_on_bundle_id"
     t.index ["created_by_user_id"], name: "index_video_game_links_on_created_by_user_id"
     t.index ["game_id"], name: "index_video_game_links_on_game_id"
     t.index ["is_primary"], name: "idx_video_game_links_primary", where: "(is_primary = true)"
     t.index ["link_type"], name: "index_video_game_links_on_link_type"
-    t.index ["video_id", "bundle_id"], name: "idx_video_game_links_unique_bundle", unique: true, where: "(bundle_id IS NOT NULL)"
     t.index ["video_id", "game_id"], name: "idx_video_game_links_unique_game", unique: true, where: "(game_id IS NOT NULL)"
     t.index ["video_id"], name: "index_video_game_links_on_video_id"
-    t.check_constraint "link_type = 0 AND game_id IS NOT NULL AND bundle_id IS NULL OR link_type = 1 AND bundle_id IS NOT NULL AND game_id IS NULL", name: "video_game_links_exactly_one_target"
   end
 
   create_table "video_retentions", force: :cascade do |t|
@@ -1119,8 +1091,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
   add_foreign_key "auth_audit_logs", "users", column: "acting_user_id"
   add_foreign_key "bulk_operation_items", "bulk_operations"
   add_foreign_key "bulk_operation_items", "videos"
-  add_foreign_key "bundle_members", "bundles", on_delete: :cascade
-  add_foreign_key "bundle_members", "games", on_delete: :cascade
   add_foreign_key "calendar_entries", "calendar_entries", column: "parent_entry_id", on_delete: :nullify
   add_foreign_key "calendar_entries", "channels", on_delete: :cascade
   add_foreign_key "calendar_entries", "games", on_delete: :cascade
@@ -1176,7 +1146,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_25_130000) do
   add_foreign_key "video_diffs", "users", column: "resolved_by_user_id", on_delete: :nullify
   add_foreign_key "video_diffs", "videos", on_delete: :cascade
   add_foreign_key "video_end_screens", "videos", on_delete: :cascade
-  add_foreign_key "video_game_links", "bundles", on_delete: :cascade
   add_foreign_key "video_game_links", "games", on_delete: :cascade
   add_foreign_key "video_game_links", "users", column: "created_by_user_id", on_delete: :nullify
   add_foreign_key "video_game_links", "videos", on_delete: :cascade

@@ -10,17 +10,6 @@
   <% end %>
   <span class="text-muted" style="font-size: 11px;"><%= t("search.everywhere.kind_label.game") %></span>
 
-<% when :bundle %>
-  <%= link_to bundle_path(record),
-              data: { turbo_frame: "_top" },
-              style: "flex: 1; text-decoration: none; color: inherit;" do %>
-    <%= record.name %>
-    <% if (count = bundle_member_count) && count.positive? %>
-      <span class="text-muted">(<%= count %>)</span>
-    <% end %>
-  <% end %>
-  <span class="text-muted" style="font-size: 11px;"><%= t("search.everywhere.kind_label.bundle") %></span>
-
 <% when :channel %>
   <%# Circular per design.md §"Channel avatars" — same sizing rule as
       `Channel::AvatarChipComponent` so the chrome stays consistent. %>

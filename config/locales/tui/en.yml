@@ -22,13 +22,6 @@ en:
     dialog:
       esc_to_close: "Esc to close"
       esc_to_cancel: "Esc to cancel"
-    # FB-172 (2026-05-21) — keyboard-only mouse guard alert dialog copy.
-    # Title surfaces in the top-border chrome; message lines stack as
-    # separate <p> elements inside the dialog body.
-    keyboard_only:
-      title: "invalid input"
-      message_line_1: "mouse interaction forbidden"
-      message_line_2: "type ? for help or : for command"
     # Phase 1C (2026-05-22) — minimum-window-size guard dialog copy.
     # Surfaces via Tui::SizeGuardDialogComponent when window.innerWidth
     # < 1200 or window.innerHeight < 800. Min values locked per

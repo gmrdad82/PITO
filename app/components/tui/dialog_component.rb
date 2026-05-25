@@ -2,7 +2,7 @@ module Tui
   # Beta 4 — Phase D9 (2026-05-22). Canonical dialog chrome primitive.
   #
   # Single source of truth for the `.tui-dialog-frame` shell used by every
-  # dialog in pito: ConfirmationDialog, AlertDialog, HelpDialog, AboutDialog,
+  # dialog in pito: ConfirmationDialog, HelpDialog, AboutDialog,
   # webhook help dialog, etc. The chrome renders:
   #
   #   * a `<dialog>` element with `border-radius: 0`, hairline border, and

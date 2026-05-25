@@ -13,7 +13,7 @@ import { Controller } from "@hotwired/stimulus"
 //     the dialog open and stop the event reaching sibling controllers.
 //   * `open()` / `close()` are exposed for callers that want to drive the
 //     dialog from JS (e.g. command palette `:about` / `:help`, action bus
-//     confirmation requests, keyboard-only mouse-guard alert).
+//     confirmation requests).
 //
 // Composes cleanly with sibling controllers (e.g. `tui-confirmation-dialog`,
 // `tui-help-dialog`) — Stimulus runs each controller independently, and the

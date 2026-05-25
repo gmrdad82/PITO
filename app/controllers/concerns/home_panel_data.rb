@@ -71,24 +71,24 @@ module HomePanelData
   LATEST_VIDEOS_DEFAULT_DIR   = "desc".freeze
   LATEST_VIDEOS_LIMIT         = 12
 
-  # Meilisearch unified `games_*` index splits into two display rows
-  # (games + bundles) via the `kind` field. Only the unified index is
-  # surfaced; per-env suffixes are stripped.
+  # Meilisearch unified `games_*` index displays games. Only the unified
+  # index is surfaced; per-env suffixes are stripped.
+  # R1 (2026-05-25) — bundles row removed.
   SEARCH_INDEX_DISPLAY_ALLOWLIST = %w[games].freeze
 
   # Postgres rows displayed in the Stack panel breakdown. Other tables
   # (channels / videos / notifications) stay hidden until those product
   # surfaces re-enter scope.
+  # R1 (2026-05-25) — bundles row removed.
   POSTGRES_TABLE_ROWS = [
-    { label: "games",   table: "games",   class_name: "Game"   },
-    { label: "bundles", table: "bundles", class_name: "Bundle" }
+    { label: "games", table: "games", class_name: "Game" }
   ].freeze
 
   # Assets root sub-directory map. Each row appears in the assets
   # breakdown regardless of whether the directory has any files yet.
+  # R1 (2026-05-25) — composites/bundles dir removed.
   ASSETS_CATEGORY_DIRECTORIES = {
-    "cover arts" => [ "covers", "games" ],
-    "composites" => [ "covers", "bundles" ]
+    "cover arts" => [ "covers", "games" ]
   }.freeze
 
   # -----------------------------------------------------------------

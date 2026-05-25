@@ -50,9 +50,6 @@ en:
       disabled_placeholder: "cannot attach — this row has editions"
       placeholder: "type to search primaries…"
       detach: "detach"
-  bundles:
-    tile:
-      add_aria: "add to %{bundle}"
   platforms:
     chip:
       label:

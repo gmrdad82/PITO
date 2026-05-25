@@ -32,14 +32,6 @@
         <% when "game" %>
           <th><%= t("deletions.show.col.title") %></th>
           <th><%= t("deletions.show.col.publisher") %></th>
-          <th><%= t("deletions.show.col.bundles") %></th>
-        <% when "timeline" %>
-          <th>title</th>
-          <th>project</th>
-          <th class="num">state</th>
-        <% when "bundle" %>
-          <th><%= t("deletions.show.col.name") %></th>
-          <th class="num"><%= t("deletions.show.col.members") %></th>
         <% when "video_game_link" %>
           <th>video</th>
           <th>kind</th>
@@ -79,30 +71,10 @@
           <% when "game" %>
             <td><%= item.title %></td>
             <td><%= item.publisher || t("common.em_dash") %></td>
-            <td>
-              <% names = item.bundles.order(:name).pluck(:name) %>
-              <%= names.any? ? names.join(", ") : t("common.em_dash") %>
-            </td>
-          <% when "timeline" %>
-            <td><%= item.title %></td>
-            <td><%= item.project.name %></td>
-            <td class="num"><%= item.state %></td>
-          <% when "bundle" %>
-            <td><%= item.name %></td>
-            <td class="num"><%= number_with_delimiter(item.bundle_members.count) %></td>
           <% when "video_game_link" %>
             <td>video #<%= item.video_id %></td>
             <td><%= item.link_type %></td>
-            <td>
-              <% target = item.target %>
-              <% if target.respond_to?(:title) %>
-                <%= target.title %>
-              <% elsif target.respond_to?(:name) %>
-                <%= target.name %>
-              <% else %>
-                —
-              <% end %>
-            </td>
+            <td><%= item.target&.title || "—" %></td>
             <td class="num"><%= item.is_primary? ? "yes" : "no" %></td>
           <% end %>
         </tr>

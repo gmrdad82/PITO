@@ -15,10 +15,8 @@ import { Controller } from "@hotwired/stimulus"
  *                    for browser chrome / sidebar)
  *   height =  800px
  *
- * Pattern parity with the keyboard-only mouse guard
- * (tui_alert_dialog_controller / keyboard_only_controller): a global
- * input-class trigger that surfaces a Tui::AlertDialogComponent-style
- * message-only dialog.
+ * Global input-class trigger that surfaces a message-only dialog
+ * when the viewport falls below the minimum dimensions.
  *
  * Mounted on the dialog element itself (NOT on <body>) so
  * this.element is the <dialog> we call showModal() / close() on.
