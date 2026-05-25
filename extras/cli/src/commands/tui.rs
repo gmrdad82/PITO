@@ -109,6 +109,7 @@ fn run_loop<C: PitoClient>(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>
 
         if last_tick.elapsed() >= tick_rate {
             last_tick = std::time::Instant::now();
+            app.poll_status();
         }
 
         if !app.running {

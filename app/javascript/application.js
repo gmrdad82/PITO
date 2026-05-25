@@ -58,6 +58,8 @@ function w(s) { term.write(s); }
 let channels = [];
 let sidebarOpen = true;
 const mainLines = [];
+let statusData = null;
+let sidebarData = null;
 
 // ── Layout ───────────────────────────────────────────────────────
 let cols, rows;
@@ -92,14 +94,31 @@ function drawFrame() {
     for (let i = 0; i < sh; i++) w(cu(HEADER_H + 1 + i, divider + 1) + bg(T.border) + ' ' + R);
     let sr = HEADER_H + 1;
     w(cu(sr++, cols - SIDEBAR_W) + A + B + 'channels' + R);
-    if (channels.length > 0) channels.slice(0,6).forEach(ch => { w(cu(sr++, cols - SIDEBAR_W) + M + '  @'+ch.channel_url + R); });
-    else w(cu(sr++, cols - SIDEBAR_W) + M + '  (none)' + R);
+    if (sidebarData && sidebarData.channels) {
+      const sc = sidebarData.channels;
+      w(cu(sr++, cols - SIDEBAR_W) + green('  ' + sc.total) + M + ' total' + R);
+      w(cu(sr++, cols - SIDEBAR_W) + A + '  ' + sc.starred + M + ' starred' + R);
+    } else if (channels.length > 0) {
+      channels.slice(0,6).forEach(ch => { w(cu(sr++, cols - SIDEBAR_W) + M + '  @'+ch.channel_url + R); });
+    } else {
+      w(cu(sr++, cols - SIDEBAR_W) + M + '  (none)' + R);
+    }
     sr++;
     w(cu(sr++, cols - SIDEBAR_W) + A + B + 'videos' + R);
-    w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /videos)' + R);
+    if (sidebarData && sidebarData.recent_videos && sidebarData.recent_videos.length > 0) {
+      sidebarData.recent_videos.slice(0,6).forEach(v => {
+        w(cu(sr++, cols - SIDEBAR_W) + M + '  ' + v.youtube_video_id.substring(0,12) + ' ' + green(v.views) + R);
+      });
+    } else {
+      w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /videos)' + R);
+    }
     sr++;
     w(cu(sr++, cols - SIDEBAR_W) + A + B + 'games' + R);
-    w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /games)' + R);
+    if (sidebarData && sidebarData.upcoming_games && sidebarData.upcoming_games.length > 0) {
+      sidebarData.upcoming_games.slice(0,6).forEach(g => { w(cu(sr++, cols - SIDEBAR_W) + M + '  ' + g + R); });
+    } else {
+      w(cu(sr++, cols - SIDEBAR_W) + M + '  (use /games)' + R);
+    }
   }
 
   // Input line
@@ -107,7 +126,17 @@ function drawFrame() {
   w(clr() + cu(ir, 1) + bg(T.sbarBg) + F + accent('> ') + cmdBuffer + R);
 
   // Status bar
-  w(clr() + cu(rows, 1) + bg(T.sbarBg) + F + green('●') + ' ' + muted('connected') + '  ' + muted('sidekiq') + ' ' + green('b0') + ' ' + orange('e0') + ' ' + red('r0') + ' ' + muted('d0') + ' '.repeat(Math.max(0, cols - 50)) + muted(new Date().toLocaleTimeString()) + R);
+  w(clr() + cu(rows, 1) + bg(T.sbarBg) + F);
+  if (statusData && statusData.connected) {
+    const sk = statusData.sidekiq;
+    const ts = statusData.timestamp ? new Date(statusData.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+    const bar = green('●') + ' ' + muted('connected') + '  ' + muted('sidekiq') + ' ' +
+      green('b' + (sk.enqueued ?? 0)) + ' ' + orange('e' + (sk.retry ?? 0)) + ' ' + red('r' + (sk.dead ?? 0)) + ' ' + muted('d' + (sk.scheduled ?? 0));
+    w(bar + ' '.repeat(Math.max(0, cols - bar.replace(/\x1b\[[0-9;]*m/g, '').length - ts.length - 1)) + muted(ts));
+  } else if (statusData && !statusData.connected) {
+    w(red('●') + ' ' + red('disconnected'));
+  }
+  w(R);
 }
 
 // ── Command ──────────────────────────────────────────────────────
@@ -203,12 +232,36 @@ async function apiCmd(cmd) {
 
 function csrf() { const m = document.querySelector('meta[name="csrf-token"]'); return m ? m.getAttribute('content') : ''; }
 
+// ── Polling ────────────────────────────────────────────────────────
+async function fetchStatus() {
+  try {
+    const r = await fetch('/status.json');
+    statusData = await r.json();
+  } catch (e) {
+    statusData = { connected: false };
+  }
+  drawFrame();
+}
+
+async function fetchSidebar() {
+  try {
+    const r = await fetch('/sidebar.json');
+    sidebarData = await r.json();
+  } catch (e) {
+    sidebarData = null;
+  }
+  drawFrame();
+}
+
 // ── Boot ─────────────────────────────────────────────────────────
 function boot() {
   fit.fit(); resize();
   mainLines.push(''); mainLines.push(bold('pito') + '  ' + muted('YouTube channel management'));
   mainLines.push(muted('  type /help for commands, /auth <code> to login'));
   mainLines.push(muted('  Tab toggles sidebar')); mainLines.push('');
+  fetchStatus(); fetchSidebar();
+  setInterval(fetchStatus, 5000);
+  setInterval(fetchSidebar, 30000);
   drawFrame();
 }
 window.addEventListener('resize', () => { fit.fit(); resize(); drawFrame(); });

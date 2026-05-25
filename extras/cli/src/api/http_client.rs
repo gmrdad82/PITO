@@ -322,6 +322,22 @@ impl PitoClient for HttpClient {
         Ok(resp.status().is_success() || resp.status().as_u16() == 302)
     }
 
+    fn get_status(&self) -> Result<StatusData> {
+        let url = self.url("/status.json");
+        let response = self
+            .client
+            .get(&url)
+            .header("Accept", "application/json")
+            .send()
+            .with_context(|| format!("GET {}", url))?
+            .error_for_status()
+            .with_context(|| format!("status check {}", url))?;
+        let data: StatusData = response
+            .json()
+            .with_context(|| format!("decode status {}", url))?;
+        Ok(data)
+    }
+
     fn execute_command(&self, command: &str) -> Result<String> {
         let url = self.url("/commands/execute.json");
         let body = json!({ "command": command });

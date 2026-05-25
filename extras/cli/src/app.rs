@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use crate::api::client::PitoClient;
-use crate::api::models::{AppSettings, BulkOperationStatus, Channel, DashboardData};
+use crate::api::models::{AppSettings, BulkOperationStatus, Channel, DashboardData, StatusData};
 use crate::api::thumbnails::{Cache as ThumbnailCache, Tier};
 use crate::theme::{Theme, ThemeMode};
 use crate::ui::footage_detail::{
@@ -57,6 +57,7 @@ pub const SYNC_POLL_INTERVAL: Duration = Duration::from_millis(500);
 pub const SYNC_POLL_DEADLINE: Duration = Duration::from_secs(10);
 pub const OPERATION_POLL_INTERVAL: Duration = Duration::from_millis(500);
 pub const OPERATION_POLL_DEADLINE: Duration = Duration::from_secs(30);
+pub const STATUS_POLL_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Clone)]
 pub struct SyncPolling {
@@ -116,6 +117,10 @@ pub struct App<C: PitoClient> {
     pub sync_polling: Option<SyncPolling>,
     pub operation_progress: Option<OperationProgress>,
 
+    // Status polling
+    pub status_data: StatusData,
+    pub last_status_poll: Instant,
+
     // Footage detail (salvaged)
     pub footage_detail_state: Option<FootageDetailState>,
     pub footage_detail_rects: Option<ScrubRects>,
@@ -144,6 +149,14 @@ impl<C: PitoClient> App<C> {
             client,
             sync_polling: None,
             operation_progress: None,
+            status_data: StatusData {
+                connected: false,
+                sidekiq_busy: 0,
+                sidekiq_enqueued: 0,
+                sidekiq_retry: 0,
+                sidekiq_dead: 0,
+            },
+            last_status_poll: Instant::now(),
             footage_detail_state: None,
             footage_detail_rects: None,
             terminal_capability: TerminalCapability::TextOnly,
@@ -185,6 +198,18 @@ impl<C: PitoClient> App<C> {
 
     pub fn sync_anim_tick(&self) -> u8 {
         self.sync_polling.as_ref().map(|sp| sp.tick).unwrap_or(0)
+    }
+
+    /// Poll GET /status.json every [`STATUS_POLL_INTERVAL`]. Errors are
+    /// silently discarded — the status bar shows the last successful data.
+    pub fn poll_status(&mut self) {
+        if self.last_status_poll.elapsed() < STATUS_POLL_INTERVAL {
+            return;
+        }
+        self.last_status_poll = Instant::now();
+        if let Ok(data) = self.client.get_status() {
+            self.status_data = data;
+        }
     }
 
     // ── Footage detail (salvaged) ────────────────────────────────

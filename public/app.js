@@ -9336,6 +9336,8 @@ ${h2.join(`
       var channels = [];
       var sidebarOpen = true;
       var mainLines = [];
+      var statusData = null;
+      var sidebarData = null;
       var cols;
       var rows;
       function resize() {
@@ -9366,20 +9368,48 @@ ${h2.join(`
           for (let i = 0; i < sh; i++) w2(cu(HEADER_H + 1 + i, divider + 1) + bg(T.border) + " " + R);
           let sr2 = HEADER_H + 1;
           w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "channels" + R);
-          if (channels.length > 0) channels.slice(0, 6).forEach((ch) => {
-            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  @" + ch.channel_url + R);
-          });
-          else w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (none)" + R);
+          if (sidebarData && sidebarData.channels) {
+            const sc2 = sidebarData.channels;
+            w2(cu(sr2++, cols - SIDEBAR_W) + green("  " + sc2.total) + M2 + " total" + R);
+            w2(cu(sr2++, cols - SIDEBAR_W) + A + "  " + sc2.starred + M2 + " starred" + R);
+          } else if (channels.length > 0) {
+            channels.slice(0, 6).forEach((ch) => {
+              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  @" + ch.channel_url + R);
+            });
+          } else {
+            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (none)" + R);
+          }
           sr2++;
           w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "videos" + R);
-          w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /videos)" + R);
+          if (sidebarData && sidebarData.recent_videos && sidebarData.recent_videos.length > 0) {
+            sidebarData.recent_videos.slice(0, 6).forEach((v3) => {
+              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  " + v3.youtube_video_id.substring(0, 12) + " " + green(v3.views) + R);
+            });
+          } else {
+            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /videos)" + R);
+          }
           sr2++;
           w2(cu(sr2++, cols - SIDEBAR_W) + A + B2 + "games" + R);
-          w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /games)" + R);
+          if (sidebarData && sidebarData.upcoming_games && sidebarData.upcoming_games.length > 0) {
+            sidebarData.upcoming_games.slice(0, 6).forEach((g2) => {
+              w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  " + g2 + R);
+            });
+          } else {
+            w2(cu(sr2++, cols - SIDEBAR_W) + M2 + "  (use /games)" + R);
+          }
         }
         const ir2 = rows - STATUS_H - 1;
         w2(clr() + cu(ir2, 1) + bg(T.sbarBg) + F2 + accent("> ") + cmdBuffer + R);
-        w2(clr() + cu(rows, 1) + bg(T.sbarBg) + F2 + green("\u25CF") + " " + muted("connected") + "  " + muted("sidekiq") + " " + green("b0") + " " + orange("e0") + " " + red("r0") + " " + muted("d0") + " ".repeat(Math.max(0, cols - 50)) + muted((/* @__PURE__ */ new Date()).toLocaleTimeString()) + R);
+        w2(clr() + cu(rows, 1) + bg(T.sbarBg) + F2);
+        if (statusData && statusData.connected) {
+          const sk = statusData.sidekiq;
+          const ts2 = statusData.timestamp ? new Date(statusData.timestamp).toLocaleTimeString() : (/* @__PURE__ */ new Date()).toLocaleTimeString();
+          const bar = green("\u25CF") + " " + muted("connected") + "  " + muted("sidekiq") + " " + green("b" + (sk.enqueued ?? 0)) + " " + orange("e" + (sk.retry ?? 0)) + " " + red("r" + (sk.dead ?? 0)) + " " + muted("d" + (sk.scheduled ?? 0));
+          w2(bar + " ".repeat(Math.max(0, cols - bar.replace(/\x1b\[[0-9;]*m/g, "").length - ts2.length - 1)) + muted(ts2));
+        } else if (statusData && !statusData.connected) {
+          w2(red("\u25CF") + " " + red("disconnected"));
+        }
+        w2(R);
       }
       var cmdBuffer = "";
       var cmdHistory = [];
@@ -9520,6 +9550,24 @@ ${h2.join(`
         const m = document.querySelector('meta[name="csrf-token"]');
         return m ? m.getAttribute("content") : "";
       }
+      async function fetchStatus() {
+        try {
+          const r = await fetch("/status.json");
+          statusData = await r.json();
+        } catch (e) {
+          statusData = { connected: false };
+        }
+        drawFrame();
+      }
+      async function fetchSidebar() {
+        try {
+          const r = await fetch("/sidebar.json");
+          sidebarData = await r.json();
+        } catch (e) {
+          sidebarData = null;
+        }
+        drawFrame();
+      }
       function boot() {
         fit.fit();
         resize();
@@ -9528,6 +9576,10 @@ ${h2.join(`
         mainLines.push(muted("  type /help for commands, /auth <code> to login"));
         mainLines.push(muted("  Tab toggles sidebar"));
         mainLines.push("");
+        fetchStatus();
+        fetchSidebar();
+        setInterval(fetchStatus, 5e3);
+        setInterval(fetchSidebar, 3e4);
         drawFrame();
       }
       window.addEventListener("resize", () => {

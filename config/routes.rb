@@ -99,6 +99,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # Images — cover art / thumbnail pipeline
+  get "images/games/:id", to: "images#show_game", defaults: { format: "json" }
+  get "images/videos/:id/thumbnail", to: "images#show_video_thumbnail", defaults: { format: "json" }
+
   # Footage — JSON API + frame endpoints for scrub UI
   resources :footages, only: [ :index, :show, :edit, :update, :destroy ]
   get "/footages/:id/frames.json",       to: "footages#frames",       as: :footage_frames,       defaults: { format: "json" }

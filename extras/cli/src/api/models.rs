@@ -131,6 +131,17 @@ pub struct BulkOperationItem {
     pub error_message: Option<String>,
 }
 
+/// Live Sidekiq status snapshot returned by GET /status.json.
+/// Polled every 5 seconds by the TUI status bar.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatusData {
+    pub connected: bool,
+    pub sidekiq_busy: u64,
+    pub sidekiq_enqueued: u64,
+    pub sidekiq_retry: u64,
+    pub sidekiq_dead: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     pub max_panes: u32,

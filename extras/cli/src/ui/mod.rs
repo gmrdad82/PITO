@@ -143,13 +143,21 @@ pub fn render<C: PitoClient>(frame: &mut Frame, app: &mut App<C>) {
     // ── Status bar ─────────────────────────────────────────────
     let status_area = Rect::new(area.x, status_y, cols, 1);
     let mut st_spans: Vec<Span> = Vec::new();
-    st_spans.push(Span::styled("● ", Style::default().fg(theme.success)));
-    st_spans.push(Span::styled("connected  ", Style::default().fg(theme.muted)));
+
+    let sd = &app.status_data;
+    let (conn_icon, conn_label) = if sd.connected {
+        ("● ", "connected")
+    } else {
+        ("○ ", "offline")
+    };
+    st_spans.push(Span::styled(conn_icon, Style::default().fg(if sd.connected { theme.success } else { theme.danger })));
+    st_spans.push(Span::styled(format!("{}  ", conn_label), Style::default().fg(theme.muted)));
+
     st_spans.push(Span::styled("sidekiq ", Style::default().fg(theme.muted)));
-    st_spans.push(Span::styled("b0 ", Style::default().fg(theme.success)));
-    st_spans.push(Span::styled("e0 ", Style::default().fg(theme.orange)));
-    st_spans.push(Span::styled("r0 ", Style::default().fg(theme.danger)));
-    st_spans.push(Span::styled("d0", Style::default().fg(theme.muted)));
+    st_spans.push(Span::styled(format!("b{} ", sd.sidekiq_busy), Style::default().fg(if sd.sidekiq_busy > 0 { theme.orange } else { theme.success })));
+    st_spans.push(Span::styled(format!("e{} ", sd.sidekiq_enqueued), Style::default().fg(if sd.sidekiq_enqueued > 0 { theme.orange } else { theme.muted })));
+    st_spans.push(Span::styled(format!("r{} ", sd.sidekiq_retry), Style::default().fg(if sd.sidekiq_retry > 0 { theme.danger } else { theme.muted })));
+    st_spans.push(Span::styled(format!("d{}", sd.sidekiq_dead), Style::default().fg(if sd.sidekiq_dead > 0 { theme.danger } else { theme.muted })));
 
     let now = chrono::Local::now().format("%H:%M:%S").to_string();
     let left_w: usize = st_spans.iter().map(|s| s.width()).sum();
