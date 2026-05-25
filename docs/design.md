@@ -4,6 +4,24 @@
 > demo where the pick was made, when applicable. Demos are gitignored
 > and persist locally as the source of truth.
 
+## Hard rules (locked)
+
+1. **ViewComponents only.** Every visible HTML structure renders via a
+   ViewComponent. No inline ERB markup for actions, inputs, code blocks,
+   hints, dialogs, or panels. If no existing VC fits, EXTEND the closest
+   one or BUILD a new one — never inline. The auth dialog's body is the
+   canonical example: 7 `render` calls, zero raw `<button>` / `<input>` /
+   `<code>` tags.
+2. **No custom CSS classes for action chrome.** The `.bracketed` class
+   (on `<button>` or `<a>`) is THE action surface. Every action VC
+   (`Tui::ActionComponent`, etc.) renders into that class. Custom
+   `.{thing}__submit` / `__toggle` / `__copy` blocks are forbidden.
+3. **Panels are border-only.** No background fill on `.pito-pane`. Focused
+   state is signalled by a full-accent border, never by a background tint.
+4. **Master + agent prompts must reference these rules + the canonical VC
+   by file path** before any UI dispatch. No "render as bracketed action"
+   — instead "use `Tui::ActionComponent`, never invent a new action class".
+
 ## Goal
 
 Replicate the vim / nvim / terminal experience in the browser. Excel-sheet
