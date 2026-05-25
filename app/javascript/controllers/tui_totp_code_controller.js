@@ -44,6 +44,13 @@ export default class extends Controller {
       this._onFormSubmit = () => this._syncHidden()
       this._form.addEventListener("submit", this._onFormSubmit, true)
     }
+
+    // 1Password / browser autofill often bypass `input` / `change` / `paste`
+    // events by setting `.value` directly. The poll catches those paths.
+    // 150 ms is imperceptible UX delay; `_maybeAutoSubmit` early-returns until
+    // every cell is filled and `_submitted` is false, so the poll is a no-op
+    // most of the time.
+    this._autoSubmitPoll = setInterval(() => this._maybeAutoSubmit(), 150)
   }
 
   disconnect() {
@@ -52,6 +59,11 @@ export default class extends Controller {
     }
     this._form = null
     this._onFormSubmit = null
+
+    if (this._autoSubmitPoll) {
+      clearInterval(this._autoSubmitPoll)
+      this._autoSubmitPoll = null
+    }
   }
 
   // Per-box `input` handler. Sanitises, distributes multi-char payloads,
