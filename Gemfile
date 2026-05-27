@@ -48,6 +48,7 @@ gem "ruby-vips", "~> 2.2", require: false
 gem "neighbor", "~> 0.6"
 
 group :development, :test do
+  gem "pry-rails"
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "bundler-audit", require: false
   gem "brakeman", require: false

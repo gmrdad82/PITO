@@ -489,20 +489,20 @@ config/locales/pito/
 - [x] T2.3 In Tailwind config, set `theme.fontSize.base = ["16px", "1.4"]` (size + line-height). Plan 1 uses ONLY `text-base` everywhere. complexity: [low]
 - [x] T2.4 Add a body-level rule (in `application.css` or as Tailwind base layer): `* { font-size: inherit; }` — defensive guard against `text-sm`/`text-lg` from accidental use. complexity: [low]
 - [x] T2.5 Boot `bin/dev`, visit `/` (still 404 fine), verify the page background is `#1a1b26` and any visible text is monospace 16px. complexity: [manual]
-- [-] T2.6 Commit: `U2: application layout shell + typography lock`. complexity: [manual]
+- [x] T2.6 Commit: `U2: application layout shell + typography lock`. complexity: [manual]
 
 ## U3 — Primitive components (Segment, Cursor)
 
 > Build the two visual primitives every other component depends on.
 
-- [ ] T3.1 Create `app/components/pito/segment/component.rb`. Initialize with `border:` and `background:` keyword args, both nilable. Render block content via `content` slot. complexity: [low]
-- [ ] T3.2 Create `app/components/pito/segment/component.html.erb` with the bar+gap+content flex markup. Bar 4px wide, gap 6px transparent, content `flex-1` with padding `10px 16px 10px 12px` and the background fill applied ONLY to the content child. complexity: [medium]
-- [ ] T3.3 Smoke render in `rails console`: `ApplicationController.renderer.render(Pito::Segment::Component.new(border: "var(--accent-orange)", background: nil)) { "test" }`. Inspect output. complexity: [manual]
-- [ ] T3.4 Create `app/components/pito/cursor/component.rb` with `char:` and `color:` kwargs (default `var(--accent-purple)`). complexity: [low]
-- [ ] T3.5 Create `app/components/pito/cursor/component.html.erb` — inline `<span>` with `background: <color>; color: var(--bg-root);` containing the character. complexity: [low]
-- [ ] T3.6 Smoke render the cursor; verify the character appears inverted (purple bg, dark fg). complexity: [manual]
-- [ ] T3.7 Visual review: both primitives match `ui-p1.5.md` patterns. complexity: [manual]
-- [ ] T3.8 Commit: `U3: Pito::Segment + Pito::Cursor primitives`. complexity: [manual]
+- [x] T3.1 Create `app/components/pito/segment/component.rb`. Initialize with `border:` and `background:` keyword args, both nilable. Render block content via `content` slot. complexity: [low]
+- [x] T3.2 Create `app/components/pito/segment/component.html.erb` with the bar+gap+content flex markup. Bar 4px wide, gap 6px transparent, content `flex-1` with padding `10px 16px 10px 12px` and the background fill applied ONLY to the content child. complexity: [medium]
+- [x] T3.3 Smoke render in `rails console`: `ApplicationController.renderer.render(Pito::Segment::Component.new(border: "var(--accent-orange)", background: nil)) { "test" }`. Inspect output. complexity: [manual]
+- [x] T3.4 Create `app/components/pito/cursor/component.rb` with `char:` and `color:` kwargs (default `var(--accent-purple)`). complexity: [low]
+- [x] T3.5 Create `app/components/pito/cursor/component.html.erb` — inline `<span>` with `background: <color>; color: var(--bg-root);` containing the character. complexity: [low]
+- [x] T3.6 Smoke render the cursor; verify the character appears inverted (purple bg, dark fg). complexity: [manual]
+- [x] T3.7 Visual review: both primitives match `ui-p1.5.md` patterns. complexity: [manual]
+- [-] T3.8 Commit: `U3: Pito::Segment + Pito::Cursor primitives`. complexity: [manual]
 
 ## U4 — Shell components
 
