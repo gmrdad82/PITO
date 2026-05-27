@@ -119,16 +119,16 @@ Each task carries a `model:` hint. Pick by complexity, not by feel.
 
 ## P3 — Spec body wipe
 
-- [ ] T3.1 Empty every file under `spec/models/` (keep file names). model: [flash]
-- [ ] T3.2 Empty every file under `spec/services/`. model: [flash]
-- [ ] T3.3 Empty every file under `spec/channels/`. model: [flash]
-- [ ] T3.4 Empty every file under `spec/requests/`. model: [flash]
-- [ ] T3.5 Empty every file under `spec/sidekiq/` (will be deleted in P4). model: [flash]
-- [ ] T3.6 Empty every file under `spec/lib/`. model: [flash]
-- [ ] T3.7 Reset `spec/rails_helper.rb` to the rspec-rails generator template. model: [haiku]
-- [ ] T3.8 Reset `spec/spec_helper.rb` to the rspec-rails generator template. model: [haiku]
-- [ ] T3.9 Empty `spec/support/` factories/helpers (keep dir). model: [flash]
-- [ ] T3.10 `bundle exec rspec` should report 0 examples, 0 failures. model: [manual]
+- [x] T3.1 Empty every file under `spec/models/` (keep file names). model: [flash]
+- [x] T3.2 Empty every file under `spec/services/`. model: [flash]
+- [x] T3.3 Empty every file under `spec/channels/`. model: [flash]
+- [x] T3.4 Empty every file under `spec/requests/`. model: [flash]
+- [x] T3.5 Empty every file under `spec/sidekiq/` (will be deleted in P4). model: [flash]
+- [x] T3.6 Empty every file under `spec/lib/`. model: [flash]
+- [x] T3.7 Reset `spec/rails_helper.rb` to the rspec-rails generator template. model: [haiku]
+- [x] T3.8 Reset `spec/spec_helper.rb` to the rspec-rails generator template. model: [haiku]
+- [x] T3.9 Empty `spec/support/` factories/helpers (keep dir). model: [flash]
+- [x] T3.10 `bundle exec rspec` should report 0 examples, 0 failures. model: [manual]
 - [ ] T3.11 Commit: `[skipci] wipe spec bodies; rspec back to generator defaults`. model: [manual]
 
 ## P4 — Sidekiq → SolidQueue
