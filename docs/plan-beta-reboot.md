@@ -156,20 +156,20 @@ Each task carries a `model:` hint. Pick by complexity, not by feel.
 
 ## P5 — Redis → SolidCache + SolidCable
 
-- [ ] T5.1 Remove `gem "redis"` from Gemfile. model: [flash]
-- [ ] T5.2 Add `gem "solid_cache"` + `gem "solid_cable"` to Gemfile. model: [flash]
-- [ ] T5.3 `bundle install`. model: [manual]
-- [ ] T5.4 Run `bin/rails solid_cache:install` and `solid_cable:install` (or equivalent migration generators). model: [manual]
-- [ ] T5.5 Rewrite `config/cable.yml` to use the `solid_cable` adapter (dev + prod). model: [haiku]
-- [ ] T5.6 Rewrite `config/cache.yml` to use the `solid_cache` adapter. model: [haiku]
-- [ ] T5.7 In `config/environments/production.rb`, set `config.cache_store = :solid_cache_store`. model: [haiku]
-- [ ] T5.8 Remove any remaining `Redis.new` / `Redis.current` references in `app/`. model: [sonnet]
-- [ ] T5.9 Remove Redis service from `docker-compose.yml`. model: [flash]
-- [ ] T5.10 Remove Redis volume + healthcheck blocks. model: [flash]
-- [ ] T5.11 Remove `REDIS_*` env vars from `.env.example`, `.env.development`, `.env.test`. model: [flash]
-- [ ] T5.12 `bin/rails db:migrate` (Solid tables land). model: [manual]
-- [ ] T5.13 Smoke test: `Rails.cache.write/read`; broadcast on a test cable channel. model: [manual]
-- [ ] T5.14 Commit: `[skipci] drop redis; solid_cache + solid_cable`. model: [manual]
+- [x] T5.1 Remove `gem "redis"` from Gemfile. model: [flash]
+- [x] T5.2 Add `gem "solid_cache"` + `gem "solid_cable"` to Gemfile. model: [flash]
+- [x] T5.3 `bundle install`. model: [manual]
+- [x] T5.4 Run `bin/rails solid_cache:install` and `solid_cable:install`. model: [manual]
+- [x] T5.5 Rewrite `config/cable.yml` to use the `solid_cable` adapter. model: [haiku]
+- [x] T5.6 `config/cache.yml` already wired for solid_cache (cache.yml was generated earlier). model: [haiku]
+- [x] T5.7 `config/environments/production.rb` already has `config.cache_store = :solid_cache_store`. model: [haiku]
+- [x] T5.8 Remove any remaining `Redis.new` / `Redis.current` references in `app/`. model: [sonnet]
+- [x] T5.9 Remove Redis service from `docker-compose.yml`. model: [flash]
+- [x] T5.10 Remove Redis volume + healthcheck blocks. model: [flash]
+- [x] T5.11 Remove `REDIS_*` env vars from `.env.example`, `.env.development`, `.env.test`. model: [flash]
+- [x] T5.12 `bin/rails db:migrate` + load cache/cable schemas. model: [manual]
+- [x] T5.13 Smoke test: `Rails.cache.write/read`; broadcast on a test cable channel. model: [manual]
+- [x] T5.14 Commit: drop redis; solid_cache + solid_cable. model: [manual]
 
 ## P6 — Gem cull
 

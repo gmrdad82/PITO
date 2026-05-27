@@ -25,8 +25,8 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  # Use Redis for caching in development
-  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://127.0.0.1:64527/0") }
+  # Use SolidCache (Postgres-backed) — reads config/cache.yml
+  config.cache_store = :solid_cache_store
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local

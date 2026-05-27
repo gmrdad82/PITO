@@ -9,16 +9,14 @@ gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "bootsnap", require: false
 
-# Redis (for Rails cache store)
-gem "redis", ">= 4.0.1"
-
-# Phase 3 — Step B. Rack::Attack throttles failed bearer-token lookups
-# (10 failures / 5 min / IP). Backed by the Rails cache store (Redis in
-# dev/prod, MemoryStore in test).
+# Rack::Attack throttles failed bearer-token lookups
+# (10 failures / 5 min / IP). Backed by the Rails cache store.
 gem "rack-attack"
 
-# Background jobs — SolidQueue (Postgres-backed)
+# Solid* gems — Postgres-backed queue, cache, and cable
 gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
 
 # YouTube APIs
 gem "google-apis-youtube_v3"
