@@ -1,4 +1,3 @@
 web: bin/rails server -p ${PORT:-3027}
-worker: bundle exec sidekiq -C config/sidekiq.yml
 tunnel: cloudflared tunnel run pito
 website: cd extras/website && mise exec node@22 -- npm run dev

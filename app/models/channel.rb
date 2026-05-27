@@ -290,10 +290,10 @@ class Channel < ApplicationRecord
   end
 
   def enqueue_initial_sync
-    ChannelSync.perform_async(id)
+    ChannelSync.perform_later(id)
   end
 
   def enqueue_sync_on_star
-    ChannelSync.perform_async(id) if saved_change_to_star? && star?
+    ChannelSync.perform_later(id) if saved_change_to_star? && star?
   end
 end

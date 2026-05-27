@@ -1,11 +1,10 @@
-# Phase 14 §1 — Sidekiq job wrapping `Game::Igdb::SyncGame#call`.
 #
 # Single argument `game_id`. On `Game::Igdb::Client::RateLimited` /
-# `ServerError` / network errors, raises so Sidekiq retries with
+# `ServerError` / network errors, with
 # exponential backoff (5 attempts). On `ValidationError` (game ID
 # does not exist on IGDB) the local row is stamped with
 # `last_sync_error` inside `Game::Igdb::SyncGame` and the job swallows
-# the raise so Sidekiq does NOT retry.
+# the raise, not retrying.
 #
 # Phase 14 §1 polish (2026-05-10) — `games.resyncing` mutex flag.
 # The job flips `resyncing` true at start (skips when already in
@@ -19,12 +18,6 @@
 #             cleared in `ensure`. The controller consults the same
 #             flag to short-circuit duplicate enqueues from the
 #             breadcrumb [sync] click.
-#   Layer 2 — Sidekiq uniqueness lock (`sidekiq_options lock:
-#             :until_executed, on_conflict: :log`). Pito runs on
-#             Sidekiq OSS without `sidekiq-unique-jobs`, so the
-#             option is a NO-OP intent declaration today — the DB
-#             flag (Layer 1) is the real safety net. If the gem is
-#             ever added, the keys are already in place.
 #
 # UI feedback while a resync is in flight is handled entirely on
 # `/games/:id` by the page-level `auto-refresh` controller (reloads
@@ -34,12 +27,8 @@
 # control surface.
 #
 # R1 (2026-05-25) — bundle cover-art fan-out removed with bundles.
-class GameIgdbSync
-  include Sidekiq::Job
-  sidekiq_options queue: :default,
-                  retry: 5,
-                  lock: :until_executed,
-                  on_conflict: :log
+class GameIgdbSync < ApplicationJob
+  queue_as :default
 
   def perform(game_id)
     game = Game.find_by(id: game_id)
@@ -48,7 +37,7 @@ class GameIgdbSync
     # 2026-05-18 — controller-owned mutex flip. `GamesController#resync`
     # stamps `resyncing = true` SYNCHRONOUSLY before enqueuing the job
     # so the post-POST redirect renders the muted breadcrumb + auto-
-    # refresh polling immediately (no race against Sidekiq pickup).
+    # refresh polling immediately (no race condition).
     # `update_column` skips validations / callbacks so this is safe to
     # call when the controller already set the flag (idempotent no-op).
     # The legacy `return if game.resyncing?` early-bail was retired in

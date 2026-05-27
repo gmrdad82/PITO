@@ -370,7 +370,7 @@ class Video < ApplicationRecord
   def enqueue_sync_back
     # The job is responsible for read-modify-write semantics + audit
     # logging + last_sync_error stamping. The model just enqueues.
-    VideoSyncBack.perform_async(id)
+    VideoSyncBack.perform_later(id)
   end
 
   def title_no_brackets

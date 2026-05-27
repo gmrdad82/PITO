@@ -17,9 +17,8 @@ gem "redis", ">= 4.0.1"
 # dev/prod, MemoryStore in test).
 gem "rack-attack"
 
-# Background jobs
-gem "sidekiq"
-gem "sidekiq-cron"
+# Background jobs — SolidQueue (Postgres-backed)
+gem "solid_queue"
 
 # YouTube APIs
 gem "google-apis-youtube_v3"

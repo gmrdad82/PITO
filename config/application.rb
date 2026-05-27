@@ -45,8 +45,8 @@ module Pito
     config.time_zone = "UTC"
     config.active_record.default_timezone = :utc
 
-    # Use Sidekiq for background jobs
-    config.active_job.queue_adapter = :sidekiq
+    # Use SolidQueue for background jobs (runs in-process in Puma in dev)
+    config.active_job.queue_adapter = :solid_queue
 
     # Active Storage variant processor — Phase 4 §5. Use ruby-vips (libvips)
     # explicitly. ImageMagick v7.1.2 deprecated the `convert` alias that

@@ -15,7 +15,7 @@
 #             (`SettingsController#voyage_reindex`) consults the flag
 #             BEFORE enqueueing; this job's `ensure` block clears it
 #             so a worker crash never leaves it stuck.
-#   Layer 2 — `sidekiq_options lock: :until_executed`.
+#   Layer 2 — unique-job lock (`lock: :until_executed`).
 #   Layer 3 — UI gate (Voyage section + Stack pane shared running
 #             state).
 #
@@ -37,7 +37,6 @@ class VoyageReindexJob < ApplicationJob
   REINDEX_SLEEP_SECONDS = 8
 
   queue_as :search
-  sidekiq_options lock: :until_executed, on_conflict: :log
 
   def perform
     # ADR 0018 — panel-scoped cable broadcast. See `MeilisearchReindexJob`

@@ -17,9 +17,9 @@
 #             (`SettingsController#meilisearch_reindex`) consults the
 #             flag BEFORE enqueueing; this job's `ensure` block clears
 #             it so a worker crash never leaves it stuck.
-#   Layer 2 — `sidekiq_options lock: :until_executed` (no-op intent in
-#             Sidekiq OSS; enforced under sidekiq-unique-jobs /
-#             Enterprise).
+#   Layer 2 — unique-job lock (`lock: :until_executed`; no-op intent
+#             under open-source Sidekiq; enforced under
+#             sidekiq-unique-jobs / Enterprise).
 #   Layer 3 — UI gate. The Voyage section currently gates its own
 #             render on the shared flag; that behaviour stays. The
 #             Stack pane's per-tile `[reindex]` link is rendered idle
@@ -27,7 +27,6 @@
 #             running reindex.
 class MeilisearchReindexJob < ApplicationJob
   queue_as :search
-  sidekiq_options lock: :until_executed, on_conflict: :log
 
   def perform
     # ADR 0018 — panel-scoped cable broadcast. Tracks the
