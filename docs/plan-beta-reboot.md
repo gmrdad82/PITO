@@ -12,9 +12,7 @@
 ## Status — 2026-05-27
 
 Stopped after P10.4. Plan 1's U0 pre-flight forced us back here for the
-gem-install prereqs:
-
-- **P9.1–P9.4 (Tailwind install + scan paths) — done as Plan 1 U0
+gem-install prereqs: (Tailwind install + scan paths) — done as Plan 1 U0
   prereq.** Tailwind 4.x via `tailwindcss-rails` 4.4.0. Scan paths
   expressed as `@source "../../views"` + `@source "../../components"`
   in `app/assets/tailwind/application.css` (TW4 inline-CSS config,

@@ -10,6 +10,14 @@
 - [x] Drafted — 2026-05-27
 - [x] Audited — 2026-05-27
 
+> **Plan 1 completed 2026-05-28.** Notable divergences from spec:
+> - **T11.7 (tag) skipped** — no tagging in this repo's workflow.
+> - **Start-screen ASCII logo included** (was listed as Plan 2+ follow-up).
+>   A 6-row ASCII "pito" in `--brand-pito` added during U7. The
+>   `renders_one :logo` slot mechanism exists for future replacement.
+> - **`pry-rails` re-added** during U3 (removed in Plan 0 P6 gem cull).
+>   Dev-only debugging gem; not a production dependency.
+
 ## North star
 
 Plan 0 leaves the Rails 8 app reset to defaults: gems culled, schema rebuilt, Tailwind installed, ViewComponent baseline in place, locales scaffolded. Plan 1 builds the **static visual chassis** on top of that reset — the four screens designed during the v0 phase (chat shell, start screen, palette overlays, sidebar overlay), implemented as ViewComponents with Tailwind tokens and i18n copy.
@@ -613,7 +621,7 @@ config/locales/pito/
 - [x] T11.3 `git grep -n 'text-sm\\|text-lg\\|text-xl\\|text-2xl\\|text-3xl\\|text-4xl\\|text-5xl'` in `app/views/**` and `app/components/**` — should return zero hits (Plan 1 uses only `text-base`). complexity: [manual]
 - [x] T11.4 `git diff --stat reboot/beta...HEAD -- Gemfile Gemfile.lock` — should show NO new gems beyond what Plan 0 introduced. complexity: [manual]
 - [x] T11.5 Update `docs/architecture.md` to mention the static UI baseline lives at `/`, `/start`. Note the `/_ui/*` review routes will be removed in Plan 2+. complexity: [low]
-- [-] T11.6 Commit: `U11: static ui verification + architecture notes`. complexity: [manual]
+- [x] T11.6 Commit: `U11: static ui verification + architecture notes`. complexity: [manual]
 - [ ] T11.7 Tag: `git tag v0.1.0-static-ui`. complexity: [manual]
 
 ---
@@ -622,7 +630,6 @@ config/locales/pito/
 
 These are explicitly NOT in Plan 1. They live in subsequent plans:
 
-- Logo asset + treatment on start screen (logo is intentionally out of scope here)
 - Stimulus controllers (autoscroll, slash palette toggle on `/`, TAB channel cycling, Ctrl+P modal open/close, sidebar toggle, theme switcher, expand/collapse on tool-output cards)
 - Action Cable channels + Turbo Streams for message streaming
 - Command router + handler registry (`lib/pito/command/router.rb`)
