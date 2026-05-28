@@ -602,18 +602,18 @@ config/locales/pito/
 - [x] T10.6 Create `config/locales/pito/sample/en.yml` containing every sample message body string used by the chat shell page. Prefix every key with `pito.sample.` and add a top-of-file comment `# SAMPLE — every key in this file will be replaced when real data is wired in Plan 2+`. complexity: [medium]
 - [x] T10.7 Audit each component template under `app/components/pito/**` and each view under `app/views/**` — run `git grep -nE '">[A-Z]'` and `git grep -nE 'translate\b'`. Goal: every user-facing string is `t(".key")`. Fix any stragglers. complexity: [medium]
 - [x] T10.8 Boot `bin/dev`; visit each route and confirm no `translation missing` placeholders appear. complexity: [manual]
-- [-] T10.9 Commit: `U10: i18n locale files; all copy externalized`. complexity: [manual]
+- [x] T10.9 Commit: `U10: i18n locale files; all copy externalized`. complexity: [manual]
 
 ## U11 — Verification & cleanup
 
 > Final pass before tagging. Make sure the plan delivered exactly what it promised.
 
-- [ ] T11.1 Visit `/`, `/start`, `/_ui/palettes`, `/_ui/sidebar` in a real browser at full width (not the v0 narrow preview). Compare each side-by-side with its v0 spec (`docs/ui/ui-pX.md`) and the v0 snapshot. Note any visual deltas; fix or document. complexity: [manual]
-- [ ] T11.2 `git grep -nE '#[0-9a-fA-F]{6}'` in `app/views/**` and `app/components/**` — should return zero hex values (everything goes through Tailwind utilities or CSS vars). complexity: [manual]
-- [ ] T11.3 `git grep -n 'text-sm\\|text-lg\\|text-xl\\|text-2xl\\|text-3xl\\|text-4xl\\|text-5xl'` in `app/views/**` and `app/components/**` — should return zero hits (Plan 1 uses only `text-base`). complexity: [manual]
-- [ ] T11.4 `git diff --stat reboot/beta...HEAD -- Gemfile Gemfile.lock` — should show NO new gems beyond what Plan 0 introduced. complexity: [manual]
-- [ ] T11.5 Update `docs/architecture.md` to mention the static UI baseline lives at `/`, `/start`. Note the `/_ui/*` review routes will be removed in Plan 2+. complexity: [low]
-- [ ] T11.6 Commit: `U11: static ui verification + architecture notes`. complexity: [manual]
+- [x] T11.1 Visit `/`, `/start`, `/_ui/palettes`, `/_ui/sidebar` in a real browser at full width (not the v0 narrow preview). Compare each side-by-side with its v0 spec (`docs/ui/ui-pX.md`) and the v0 snapshot. Note any visual deltas; fix or document. complexity: [manual]
+- [x] T11.2 `git grep -nE '#[0-9a-fA-F]{6}'` in `app/views/**` and `app/components/**` — should return zero hex values (everything goes through Tailwind utilities or CSS vars). complexity: [manual]
+- [x] T11.3 `git grep -n 'text-sm\\|text-lg\\|text-xl\\|text-2xl\\|text-3xl\\|text-4xl\\|text-5xl'` in `app/views/**` and `app/components/**` — should return zero hits (Plan 1 uses only `text-base`). complexity: [manual]
+- [x] T11.4 `git diff --stat reboot/beta...HEAD -- Gemfile Gemfile.lock` — should show NO new gems beyond what Plan 0 introduced. complexity: [manual]
+- [x] T11.5 Update `docs/architecture.md` to mention the static UI baseline lives at `/`, `/start`. Note the `/_ui/*` review routes will be removed in Plan 2+. complexity: [low]
+- [-] T11.6 Commit: `U11: static ui verification + architecture notes`. complexity: [manual]
 - [ ] T11.7 Tag: `git tag v0.1.0-static-ui`. complexity: [manual]
 
 ---
