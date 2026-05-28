@@ -8,9 +8,9 @@
       background: "var(--bg-surface)"
     )) do %>
   <div class="flex flex-col">
-    <%# Line 1: ghost cursor + placeholder %>
+    <%# Line 1: cursor + placeholder %>
     <div class="flex items-center">
-      <%= render(Pito::Cursor::Component.new(char: "/", color: "var(--fg-default)", ghost: true)) %>
+      <%= render(Pito::Cursor::Component.new(char: "/", ghost: true)) %>
       <span class="text-fg-faded" style="margin-left: 8px;"><%= placeholder %></span>
     </div>
     <%# Line 2: filter context (only shown in :default state) %>

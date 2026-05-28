@@ -570,8 +570,8 @@ config/locales/pito/
 - [x] T8.7 In the controller, hardcode the slash commands array (8 commands) and the Ctrl+P sections array (Suggested / Session / Channel / Output) using the i18n keys from the spec. complexity: [medium]
 - [x] T8.8 Create `app/views/_ui/palettes/show.html.erb`. Stack both palettes vertically inside an 800px centered container, each with a small subheading above (`"Slash command palette · opens above chatbox when / is typed"`, `"Ctrl+P command palette · centered modal overlay"`). complexity: [low]
 - [x] T8.9 In `config/routes.rb`, add `namespace :_ui do get "palettes", to: "palettes#show" end`. complexity: [low]
-- [ ] T8.10 Visit `/_ui/palettes`. Verify both palettes match `ui-p3.md`. complexity: [manual]
-- [ ] T8.11 Commit: `U8: palette components + review page`. complexity: [manual]
+- [x] T8.10 Visit `/_ui/palettes`. Verify both palettes match `ui-p3.md`. complexity: [manual]
+- [x] T8.11 Commit: `U8: palette components + review page`. complexity: [manual]
 
 ## U9 — Sidebar overlay + review page (`/_ui/sidebar`)
 
