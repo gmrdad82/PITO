@@ -7,7 +7,7 @@
 # long enough that the cookie almost certainly belongs to a closed
 # browser, a stolen laptop, or a long-since-abandoned device.
 #
-# Schedule lives in `config/sidekiq_cron.yml`:
+# Schedule lives in `config/recurring.yml`:
 #
 #     session_stale_sweeper:
 #       cron: "*/15 * * * *"

@@ -1,5 +1,5 @@
 # pito:test:reindex — dev rake tasks for exercising reindex cable state
-# without running an actual Meilisearch / Voyage AI indexing pass.
+# without running an actual Voyage AI indexing pass.
 #
 # Purpose: simulate the full `reindex_event` cable lifecycle (running →
 # ticks → complete) so the Stack sub-panel UI state machine can be
@@ -18,10 +18,8 @@
 #     channels. Safe to run even when no simulate is in flight.
 #
 # Env vars:
-#   TARGET   — `meilisearch` (default) or `voyage`. Selects which
-#              sub-panel channel receives the broadcasts. The companion
-#              channel also receives its final `complete` broadcast on
-#              reset so the UI never gets stuck.
+#   TARGET   — `voyage`. Selects which
+#              sub-panel channel receives the broadcasts.
 #   DURATION — seconds to broadcast ticks before auto-completing.
 #              Default 10. Ignored when STUCK=yes.
 #   STUCK    — `yes` to leave reindex_running true indefinitely (tests
@@ -32,26 +30,24 @@
 # Related:
 #   AppSetting.start_reindex! / clear_reindex_lock! — DB flag contract
 #   Pito::CableBroadcaster.broadcast_panel            — canonical envelope
-#   Pito::Stack::MeilisearchSubPanelComponent         — cable channel source
 #   Pito::Stack::VoyageSubPanelComponent              — cable channel source
 #
 namespace :pito do
   namespace :test do
     namespace :reindex do
       CHANNEL_MAP = {
-        "meilisearch" => "pito:home:stack:meilisearch",
-        "voyage"      => "pito:home:stack:voyage"
+        "voyage" => "pito:home:stack:voyage"
       }.freeze
 
       desc <<~DESC
-        Simulate a reindex cable cycle (TARGET=meilisearch|voyage, DURATION=10, STUCK=yes, DELAY=120).
+        Simulate a reindex cable cycle (TARGET=voyage, DURATION=10, STUCK=yes, DELAY=120).
         Flips AppSetting.reindex_running? true, broadcasts reindex_event ticks, then clears (unless STUCK=yes).
       DESC
       task simulate: :environment do
-        target   = (ENV.fetch("TARGET", "meilisearch")).downcase
+        target   = (ENV.fetch("TARGET", "voyage")).downcase
         duration = (ENV.fetch("DURATION", "10")).to_i
         stuck    = ENV.fetch("STUCK", "no").downcase == "yes"
-        delay_ms = (ENV.fetch("DELAY", "120")).to_i
+        delay_ms = ENV.fetch("DELAY", "120").to_i
 
         channel = CHANNEL_MAP[target]
         abort "Unknown TARGET '#{target}'. Use: #{CHANNEL_MAP.keys.join(' | ')}" unless channel
@@ -108,7 +104,7 @@ namespace :pito do
         end
       end
 
-      desc "Force-reset reindex lock for all targets (meilisearch + voyage) and broadcast complete."
+      desc "Force-reset reindex lock for all targets (voyage) and broadcast complete."
       task reset: :environment do
         AppSetting.clear_reindex_lock!
 

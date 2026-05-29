@@ -4,7 +4,7 @@ module Pito
   # Immutable value object representing a single user-triggerable action.
   # Constructed by `Pito::ActionRegistry.define` at boot from a
   # `config/initializers/pito_actions.rb` block; consumers (web Stimulus
-  # dispatcher, palette, leader menu, MCP, CLI) all read the same record.
+  # dispatcher, palette, leader menu) all read the same record.
   #
   # `path_proc` is wrapped in a Proc because Rails route helpers must be
   # resolved AFTER routes are loaded; `path` calls the proc lazily.

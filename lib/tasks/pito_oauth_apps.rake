@@ -5,7 +5,7 @@
 # `/settings/oauth_applications/*` management surface was dropped in
 # this follow-up; the Doorkeeper handshake routes (`/oauth/authorize`,
 # `/oauth/token`, `/oauth/revoke`, `/oauth/introspect`) stay live so
-# OAuth clients (Claude Desktop's MCP custom connector being the
+# OAuth clients (Claude Desktop custom connector being the
 # motivating one) keep working. Operators register / inspect / revoke
 # applications from the shell.
 #

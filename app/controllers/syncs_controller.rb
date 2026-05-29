@@ -175,8 +175,7 @@ class SyncsController < ApplicationController
   end
 
   # JSON envelope for the diff-check intent. No `BulkOperation`, so no
-  # `operation_id` / `status_url`. CLI / MCP callers reading this shape
-  # poll the per-record diff endpoint instead.
+  # `operation_id` / `status_url`.
   def diff_check_enqueued_json
     {
       mode: "enqueued",

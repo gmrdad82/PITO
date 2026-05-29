@@ -1,6 +1,6 @@
 module Pito
   module Test
-    class SimpleSidekiqJob < ApplicationJob
+    class SimpleJob < ApplicationJob
       def perform(seconds = 5)
         sleep(seconds)
       end

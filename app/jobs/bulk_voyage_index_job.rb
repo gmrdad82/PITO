@@ -45,28 +45,14 @@ class BulkVoyageIndexJob < ApplicationJob
 
   private
 
-  # All games that have a usable summary (title alone is not embedded
-  # in the per-row path either — see `Game::VoyageIndexer#call`'s
-  # early-return when both title and summary are blank — but title-
-  # only games are valid). The query mirrors the per-row enqueue
+  # All games that have a usable summary. The query mirrors the per-row enqueue
   # filter (`Game.where.not(summary: nil)`) so the bulk job indexes
   # exactly the same set the old fan-out did.
   #
-  # Reindex semantics (2026-05-18 follow-up #3):
-  # - Records that DO NOT yet have a Voyage embedding → Voyage embed +
-  #   write + Meilisearch push.
-  # - Records that ALREADY have a Voyage embedding → SKIP the Voyage
-  #   API call, but STILL push to Meilisearch. The Meilisearch upsert
-  #   via `?primaryKey=id` is idempotent, so re-pushing the same doc
-  #   simply refreshes it in place. This is the only way to repair a
-  #   Meilisearch index that drifted from the Voyage / PG side (which
-  #   is exactly the scenario `[reindex]` is meant to fix).
-  #
-  # This trades the older "re-embed everything" semantics for "make
-  # Meilisearch agree with PG" — the user signal is "rebuild the
-  # search corpus", and the search corpus IS Meilisearch. We avoid
-  # gratuitous Voyage 429s by not re-embedding rows whose vectors are
-  # already on disk and good.
+  # Reindex semantics:
+  # - Records that DO NOT yet have a Voyage embedding → embed via Voyage.
+  # - Records that ALREADY have a Voyage embedding → SKIP (no gratuitous
+  #   Voyage API calls that could 429).
   def embed_games
     records = Game.where.not(summary: nil).where("summary <> ''").order(:id).to_a
     return if records.empty?

@@ -5,7 +5,6 @@ class SettingsController < ApplicationController
   #
   # Remaining routed actions:
   #   PATCH  /settings               → update  (legacy passthrough; redirect)
-  #   POST   /settings/stack/meilisearch/reindex → meilisearch_reindex
   #   POST   /settings/stack/voyage/reindex      → voyage_reindex
 
   # Phase 29 (settings refactor) — legacy passthrough. The multi-section

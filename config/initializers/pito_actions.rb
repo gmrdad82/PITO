@@ -6,10 +6,10 @@
 # `Pito::ActionRegistry.define` call wires one action into the canonical
 # registry the JS dispatcher (`window.Pito.dispatchAction`) + Ruby
 # dispatcher (`Pito::ActionDispatcher`) + future palette / leader menu /
-# MCP / CLI consumers all read from.
+# CLI consumers all read from.
 #
 # Initial migration scope (FB-178+180 / FB-126 / FB-171 spaghetti
-# closeout): reindex_meilisearch + reindex_voyage. Subsequent actions
+# closeout): reindex_voyage. Subsequent actions
 # (`update_slack_webhook`, `revoke_session`, etc.) folded in by their
 # own dispatches per the ADR's migration plan.
 Rails.application.config.after_initialize do
@@ -36,7 +36,7 @@ Rails.application.config.after_initialize do
   #
   # `sync_toggle` — programmatically clicks the
   # `Tui::SyncIndicatorComponent` for the named target
-  # (`home.stack.meilisearch`, `home.stack`, etc.). The args carry
+  # (`home.stack`, etc.). The args carry
   # `target: <name>`; the JS dispatcher finds the matching
   # `[data-sync-target=<name>]` element and `.click()`s it. Same wire
   # shape as sort_table — no path, no POST.

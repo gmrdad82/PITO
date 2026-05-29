@@ -9,7 +9,7 @@ module Pito
     # ## Why this exists
     #
     # The Home dashboard pulls cross-domain data (sessions, webhooks,
-    # postgres + meilisearch + voyage + assets stack stats). Rather than
+    # postgres + voyage + assets stack stats). Rather than
     # bloating the controller with 24 helpers, all that orchestration
     # lives here.
     #

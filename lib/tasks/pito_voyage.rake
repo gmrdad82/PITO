@@ -1,7 +1,7 @@
-# Phase 34 (2026-05-18) — Voyage AI / Meilisearch backfill tasks.
+# Phase 34 (2026-05-18) — Voyage AI backfill tasks.
 #
 # Operator entry points for re-indexing the entire Game corpus
-# through the Voyage + Meilisearch pipeline. Used after:
+# through the Voyage pipeline. Used after:
 #   - Initial Voyage rollout (existing games need their first
 #     embedding pass).
 #   - A model change (`Voyage::Client::DEFAULT_MODEL` swap) that
@@ -21,7 +21,7 @@
 # time they re-sync.
 namespace :pito do
   namespace :voyage do
-    desc "Re-enqueue Voyage embedding + Meilisearch indexing for every " \
+    desc "Re-enqueue Voyage embedding for every " \
          "synced Game. Async — returns once jobs are enqueued."
     task reindex_games: :environment do
       scope = Game.where.not(summary: nil)
@@ -63,10 +63,10 @@ namespace :pito do
     # Phase 34 (2026-05-18) — full-corpus backfill convenience. Runs
     # `reindex_games` and `reindex_channels` in one shot so a single
     # operator command refreshes the entire Voyage embedding corpus
-    # (Games power the unified `/games` Meilisearch index; Channels
+    # (Games power the pgvector neighbor lookups; Channels
     # power the pgvector neighbor lookups via
     # `has_neighbors :summary_embedding`).
-    desc "Re-enqueue Voyage embedding + Meilisearch indexing for every " \
+    desc "Re-enqueue Voyage embedding for every " \
          "Game + Channel. Async."
     task reindex_all: %i[reindex_games reindex_channels]
   end

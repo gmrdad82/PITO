@@ -69,7 +69,7 @@ namespace :pito do
         system: [
           "sidekiq has 12 retries — investigate",
           "log files > 250 MB — consider truncation",
-          "meilisearch index lag above 30 seconds",
+
           "voyage AI quota at 85% — monitor usage",
           "postgres disk usage above 70%",
           "background jobs completed — queue clear"

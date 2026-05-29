@@ -20,8 +20,7 @@
 #      adding a second wrapper.
 #
 # HTML format renders the component; JSON returns the raw orchestrator
-# payload for the eventual CLI / MCP parity surface (locked in spec
-# §"Required artifacts"). No layout — Turbo Frame swaps the body
+# payload. No layout — Turbo Frame swaps the body
 # directly into the dialog.
 class EverywhereSearchController < ApplicationController
   MAX_QUERY_LENGTH = 200

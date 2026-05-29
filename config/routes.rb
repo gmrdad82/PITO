@@ -19,12 +19,6 @@ Rails.application.routes.draw do
   post "/chat", to: "chat#create"
   get "/start", to: "start_screens#show"
 
-  # _ui — review-only pages for UI component development
-  namespace :_ui do
-    get "palettes", to: "palettes#show"
-    get "sidebar",  to: "sidebar#show"
-  end
-
   # JSON-only dashboard alias for pito CLI
   get "dashboard", to: "dashboard#index", as: :dashboard
   get "sidebar", to: "dashboard#sidebar", as: :sidebar

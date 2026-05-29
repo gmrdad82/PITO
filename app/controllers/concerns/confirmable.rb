@@ -42,8 +42,7 @@ module Confirmable
     if ids.empty?
       respond_to do |format|
         format.html { redirect_to cancel_path, alert: "nothing to #{action_verb}." }
-        # Phase 21 — JSON parity. CLI / MCP callers parse this string,
-        # so the envelope is normative ("no_ids_supplied" rather than
+        # Phase 21 — JSON envelope is normative ("no_ids_supplied" rather than
         # the free-form HTML alert text).
         format.json { render json: { error: "no_ids_supplied" }, status: :unprocessable_content }
       end

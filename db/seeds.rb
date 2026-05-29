@@ -66,8 +66,8 @@ puts "  user: #{owner.username} (id=#{owner.id})"
 # `db:seed` finds the existing row and is a no-op (the dev plaintext is gone
 # forever after the first run; revoke + mint a new one if you lost it).
 #
-# Phase 10 — MCP scope simplification (ADR 0004). The dev token now
-# carries the full `Scopes::ALL` set (`["dev", "app"]` in development).
+# The dev token carries the full `Scopes::ALL` set (`["dev", "app"]`
+# in development).
 # Skipped entirely in production: a production install does not want a
 # "dev" token sitting in the database — the operator mints their own
 # via `/settings/tokens` with the `app` scope only.
@@ -132,8 +132,8 @@ end
 # ONCE to STDOUT on this seed run.
 #
 # Ordering: this block runs BEFORE the Claude Desktop OAuth seed
-# below. If the captured `runtime_state.oauth_apps` includes the
-# `claude-mcp` row, restoring it here makes the find-by-name lookup
+# below. If the captured `runtime_state.oauth_apps` includes a
+# Claude Desktop row, restoring it here makes the find-by-name lookup
 # in the Claude seed block hit the captured row and skip its own
 # create branch — so the operator's real client_id + secret survive
 # the reseed instead of being clobbered by a fresh random uid.

@@ -17,7 +17,7 @@
 # 6. Parse the rows-and-headers response shape into
 #    attribute-hashes ready for the caller's upsert.
 #
-# Retry policy lives in Sidekiq (`sidekiq_options retry: 5,
+# Retry policy (`sidekiq_options retry: 5,
 # retry_in: ...`). The client itself raises on the first
 # transient failure; the job-side `perform` lets Sidekiq requeue.
 require "google/apis/youtube_analytics_v2"

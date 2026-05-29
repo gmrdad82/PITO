@@ -11,9 +11,7 @@
 # - `Pito::Notifications::Formatter::InApp` — structured hash for §3's
 #   ERB views.
 #
-# Phase 29 (MCP cut, 2026-05-19) — the `Mcp` variant was dropped
-# alongside the MCP surface. The `:mcp` channel symbol is no longer
-# accepted by `link` or `escape_for`.
+# The `:mcp` channel symbol is no longer accepted by `link` or `escape_for`.
 #
 # Each formatter delegates per-event-type strings (title / body / url)
 # to a `Templates::<Kind>` PORO. Templates read ONLY from
@@ -183,7 +181,7 @@ module Pito
       # Phase 16 §2 security fix-forward (F1 / F2 — 2026-05-10 audit). URL
       # scheme allowlist applied at every outbound boundary that renders a
       # `[text](url)` markdown link to a downstream renderer (in-app HTML,
-      # MCP markdown, Discord embed description, Slack mrkdwn section).
+      # Discord embed description, Slack mrkdwn section).
       #
       # Allowed:
       #   - `http://`, `https://` — the live source-helper surface today.

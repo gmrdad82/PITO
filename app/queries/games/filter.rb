@@ -28,7 +28,7 @@ module Games
     LIFECYCLE_TOKENS  = %w[released scheduled].freeze
     ENGAGEMENT_TOKENS = %w[played].freeze
 
-    # Legacy aliases kept so external callers (MCP tools, specs) survive.
+    # Legacy aliases kept so external callers survive.
     STATUS_TOKENS    = LIFECYCLE_TOKENS
     OWNERSHIP_TOKENS = [].freeze
     PLATFORM_TOKENS  = [].freeze

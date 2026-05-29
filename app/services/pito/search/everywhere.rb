@@ -23,7 +23,7 @@
 #   }
 #
 # Per-source failures degrade to empty hits with an `:error` key on
-# that source's hash — a Meilisearch hiccup on ONE source must not
+# that source's hash — a search hiccup on ONE source must not
 # blank the whole modal.
 #
 # Section-order contract:
@@ -55,8 +55,7 @@ module Pito
       private
 
       # Delegates to `Pito::Search::SearchGames` (games-only). The returned
-      # `:games` array is Meilisearch ranking + Postgres ILIKE fallback
-      # merged uniques, capped at `@per_page`.
+      # `:games` array is Postgres ILIKE, capped at `@per_page`.
       def search_games
         result = Pito::Search::SearchGames.call(
           @query, include_bundles: false, limit: @per_page

@@ -46,11 +46,8 @@ class SearchController < ApplicationController
     }
   end
 
-  # Meilisearch's `_formatted` payload echoes the document fields with the same
-  # types as stored (arrays for tags, strings for everything else). The Rust
-  # `SearchHit::highlights` field is `HashMap<String, String>`, so any non-string
-  # values must be coerced. Arrays are joined with commas; everything else is
-  # converted via `to_s`.
+  # The search payload echoes document fields — arrays are joined with commas;
+  # everything else is converted via `to_s`.
   def stringify_highlights(raw)
     return {} unless raw.is_a?(Hash)
     raw.each_with_object({}) do |(k, v), out|

@@ -63,7 +63,7 @@ class Game
         # 2026-05-19 — IGDB `alternative_names` is an array of
         # `{id, name, comment}` hashes. We persist only the `name`
         # strings (deduplicated, blanks dropped) into the local
-        # `alternative_names` text[] column for omnisearch + Meili.
+        # `alternative_names` text[] column for omnisearch.
         # When IGDB omits the field entirely, the column resets to an
         # empty array so a previously-populated row whose alt names
         # were removed upstream stays in sync.

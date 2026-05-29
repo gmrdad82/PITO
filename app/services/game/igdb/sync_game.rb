@@ -67,14 +67,11 @@ class Game
           Rails.logger.warn "[Game::Igdb::SyncGame] cover normalization failed for game id=#{game.id}: #{e.class}: #{e.message}"
         end
 
-        # Phase 34 (2026-05-18) — enqueue Voyage embedding + Meilisearch
-        # indexing for the freshly synced row. Async so the user-facing
-        # sync POST doesn't block on Voyage HTTP. The job is idempotent
-        # (re-embeds + re-writes) so a duplicate enqueue from any other
-        # path (rake backfill, manual console call) is safe. The job
-        # itself guards on `voyage_configured?` — when the API key is
-        # not configured it still pushes a BM25-only document to
-        # Meilisearch so the keyword surface stays current.
+        # Phase 34 (2026-05-18) — enqueue Voyage embedding for the
+        # freshly synced row. Async so the user-facing sync POST
+        # doesn't block on Voyage HTTP. The job is idempotent
+        # (re-embeds + re-writes) so a duplicate enqueue from any
+        # other path (rake backfill, manual console call) is safe.
         GameVoyageIndexJob.perform_later(game.id)
 
         game

@@ -33,8 +33,7 @@
 # prefix `"pito:test:"` so a real login is never deleted.
 #
 # Sibling file `pito_test_broadcast.rake` keeps the no-DB synthetic
-# broadcast surface (`pito:test:broadcast_sidekiq`,
-# `pito:test:broadcast_notifications`) and the Sidekiq-state seed jobs.
+# broadcast surface and the seed jobs.
 # This file is the DB-touching counterpart; the two are intentionally
 # split so a `clear` invocation targets the right surface.
 namespace :pito do

@@ -1,22 +1,14 @@
-# Omnisearch local-corpus query against the shared `games_<env>`
-# Meilisearch index that holds Game documents (written by
-# `Game::MeilisearchIndexer`). The `kind` discriminator field is
-# `"game"`.
+# Omnisearch local-corpus query against the Postgres games table.
 #
 # R1 (2026-05-25) — bundle documents removed; games only.
 #
 # Returns a Hash with one key:
-#   - :games   → Array of Game ActiveRecord rows, ordered by
-#                Meilisearch's relevance ranking.
+#   - :games   → Array of Game ActiveRecord rows, ordered by title.
 #
 # Options:
 #   - limit: per-record-type cap. Defaults to 20.
 #
-# Network failures are logged and degrade to empty result sets so a
-# Meilisearch hiccup never crashes the search controller path. The
-# IGDB half of the omnisearch envelope is independent (see
-# `Game::SearchService`) and continues even when the local half is
-# empty.
+# Network failures are logged and degrade to empty result sets.
 require "net/http"
 require "json"
 

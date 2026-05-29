@@ -9,7 +9,7 @@
 #   2. Always integer output (no fractional digits).
 #
 # Used by the /settings stack pane tables (Postgres / Redis /
-# Meilisearch / assets / notes).
+# Voyage / assets / notes).
 #
 # Examples:
 #   nil         => "—"

@@ -44,9 +44,8 @@ module Pito
     # under spec/components/previews/ work without further config.
     config.view_component.preview_paths = [ Rails.root.join("spec/components/previews").to_s ]
 
-    # Postgres timezone defaults — Phase 2.
     # Postgres stores timestamps as timestamptz; pin Rails to UTC so Groupdate
-    # aggregates render predictably across both Pumas and Sidekiq workers.
+    # aggregates render predictably.
     config.time_zone = "UTC"
     config.active_record.default_timezone = :utc
 

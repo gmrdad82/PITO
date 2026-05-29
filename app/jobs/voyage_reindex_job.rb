@@ -1,12 +1,5 @@
-# FB-63 (2026-05-20) — Voyage AI-only reindex job.
-#
-# Half of the split that replaced the combined `ReindexAllJob`. Where
-# `MeilisearchReindexJob` (its sibling) repushes the Game corpus into
-# Meilisearch, this job re-embeds the SAME corpus through Voyage AI.
-# R1 (2026-05-25) — bundle corpus removed; games only. The two jobs are independently triggerable from the Stack
-# pane — each subsystem tile owns its own `[reindex]` action so the
-# operator can refresh Voyage embeddings without burning Meilisearch
-# work (or vice versa).
+# FB-63 (2026-05-20) — Voyage AI reindex job.
+# R1 (2026-05-25) — bundle corpus removed; games only.
 #
 # Three-layer lock contract (unchanged from `ReindexAllJob`):
 #
@@ -21,12 +14,7 @@
 #
 # Voyage rate-limit shape. Voyage's `/v1/embeddings` accepts up to 128
 # input strings per request; one bulk job per corpus collapses N HTTP
-# calls into ceil(N / 128). The work itself runs in
-# `BulkVoyageIndexJob` (preserved from the prior pipeline) — that
-# class also writes the Meilisearch document with the freshly-computed
-# `_vectors.default` so a Voyage-only reindex keeps the search index
-# documents up to date too. See `BulkVoyageIndexJob` for the
-# text-building contract that mirrors the single-record indexers.
+# calls into ceil(N / 128).
 #
 # `REINDEX_SLEEP_SECONDS` preserves the testing-visibility pause from
 # the prior `ReindexAllJob` so the operator can SEE the in-progress UI
@@ -39,9 +27,8 @@ class VoyageReindexJob < ApplicationJob
   queue_as :search
 
   def perform
-    # ADR 0018 — panel-scoped cable broadcast. See `MeilisearchReindexJob`
-    # for the rationale; this job mirrors the same `running` / `complete`
-    # shape against its own `pito:settings:stack:voyage` channel.
+    # ADR 0018 — panel-scoped cable broadcast for `running` / `complete`
+    # state on the `pito:settings:stack:voyage` channel.
     Pito::CableBroadcaster.broadcast_panel(
       "pito:settings:stack:voyage",
       kind: "reindex_event",

@@ -1,9 +1,5 @@
 # Phase 3 — Step B (5b-token-and-auth-concern.md) — token CRUD rake tasks.
 #
-# Renamed from `mcp:generate_token` / `mcp:list_tokens` / `mcp:revoke_token`
-# to the namespace-neutral `tokens:create` / `tokens:list` / `tokens:revoke`,
-# matching the model rename `McpAccessToken` → `ApiToken`.
-#
 # Usage:
 #   bin/rails "tokens:create[<name>,<scope1>+<scope2>+...]"
 #   bin/rails tokens:list
@@ -13,9 +9,7 @@
 # task args without escaping). Example:
 #   bin/rails "tokens:create[cli-default,app]"
 #
-# Phase 10 — the catalog collapsed from 9 to 2 (`dev` + `app`).
-# Phase 29 (MCP cut, 2026-05-19) — the catalog collapsed further to a
-# single scope, `app`. Legacy string forms like `dev:read` and the
+# Legacy string forms like `dev:read` and the
 # retired `dev` / `auth` scopes are no longer valid.
 #
 # Plaintext is shown once and then unreachable; copy it before closing

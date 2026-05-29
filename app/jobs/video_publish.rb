@@ -7,7 +7,7 @@
 # In the steady state the controller `#publish` / `#schedule` actions
 # perform this synchronously (no enqueue) so the user sees the badge
 # update in the same response. The job entry point is reserved
-# for MCP-driven flows and any future scheduler that needs to fire a
+# for any future scheduler that needs to fire a
 # pre-checked publish in the background.
 class VideoPublish < ApplicationJob
   queue_as :default

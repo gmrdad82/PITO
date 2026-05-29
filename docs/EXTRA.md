@@ -30,10 +30,6 @@ notifications), Videos (videos + channels), Games (games + bundles + footage).
 These were in the codebase but are slated for removal — do NOT add new code on
 top of them, do NOT bring them up in suggestions:
 
-- **Rust TUI / Ratatui CLI** at `extras/cli/` — being deleted
-- **MCP server** (`gem "mcp"`, `docs/mcp.md`, `mcp.pitomd.com`)
-- **Meilisearch indexers** (`Channel::MeilisearchIndexer`,
-  `Game::MeilisearchIndexer`, `Bundle::MeilisearchIndexer`)
 - **Redis** (cache + Sidekiq) — migrating to Postgres-backed alternatives (Solid
   Cache / Solid Queue)
 
@@ -49,7 +45,7 @@ the task is the removal itself.
   accent groups, terminal-aesthetic rules.
 - `docs/website.md` — Astro landing page contract (`extras/website/`).
 
-Note: `docs/mcp.md` and `docs/tui.md` cover surfaces being removed.
+Note: `docs/tui.md` covers surfaces being removed.
 
 ## Canonical namespace policy
 
@@ -170,7 +166,7 @@ them.** Data-source integrations are claimed by the domain they feed.
 - **`[skipci]` is intentional.** Use it during WIP, drop it when a commit should
   re-validate. Do NOT use the GitHub-built-in `[skip ci]` (with space) — it's a
   different token.
-- **Don't reintroduce removed surfaces.** MCP, Ratatui CLI, Meilisearch, Redis —
+- **Don't reintroduce removed surfaces.** MCP, Ratatui CLI, Redis —
   all flagged for deletion. Don't add new dependencies on them; help with their
   removal when asked.
 - **No co-author trailers.** No "Generated with Claude Code", no Anthropic /

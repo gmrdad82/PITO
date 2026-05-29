@@ -3,12 +3,12 @@ module Pito
   #
   # Canonical registry of every user-triggerable action in pito. Each
   # registered entry is a `Pito::Action` value object; the registry
-  # indexes by symbol name (e.g. `:reindex_meilisearch`).
+  # indexes by symbol name.
   #
   # Definitions live in `config/initializers/pito_actions.rb` (loaded
   # via `Rails.application.config.after_initialize` so route helpers are
   # resolvable). The registry is the single seam every consumer reads:
-  # web JS dispatcher, palette, leader menu, MCP tool surface, CLI.
+  # web JS dispatcher, palette, leader menu.
   #
   # Scope system (2026-05-25) — every action carries a `scope:` symbol:
   #   :global  — surfaces in the `:` palette on every screen (default)
@@ -19,7 +19,7 @@ module Pito
   # `for_screen(screen)` returns the subset of actions scoped to `:global`
   # OR the given screen. The layout helper `pito_screen_actions_json` uses
   # this to embed the screen-filtered catalog at first paint so the palette
-  # does not show irrelevant commands (e.g. "reindex Meilisearch" must not
+  # does not show irrelevant commands specific to other screens.
   # appear when browsing /videos).
   module ActionRegistry
     extend self
@@ -70,7 +70,7 @@ module Pito
     #
     # @param screen [Symbol, String] one of :home, :videos, :games (or "home",
     #   "videos", "games"). Passing :global / "global" returns only the
-    #   global-scoped actions (useful for MCP / CLI surfaces that don't have
+    #   global-scoped actions.
     #   a screen concept).
     # @return [Array<Pito::Action>]
     def for_screen(screen)

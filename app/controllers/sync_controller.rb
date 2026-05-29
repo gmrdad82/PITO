@@ -14,7 +14,7 @@
 # `ApplicationController`). Return `head :no_content` — Turbo-friendly; the
 # UI updates via the cable broadcast.
 class SyncController < ApplicationController
-  ALLOWED_TARGETS = %w[app home home.stack home.stack.meilisearch home.stack.voyage
+  ALLOWED_TARGETS = %w[app home home.stack home.stack.voyage
                         home.stack.postgres home.stack.assets].freeze
 
   def toggle

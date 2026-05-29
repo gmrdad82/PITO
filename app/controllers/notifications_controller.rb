@@ -205,8 +205,7 @@ class NotificationsController < ApplicationController
       end
       # Phase 21 — JSON parity. Locked decision #2: replace the previous
       # `head :no_content` with a structured body containing the new
-      # read state + the recomputed unread_count, so the CLI / MCP
-      # caller does not need a follow-up `/notifications/badge.json`
+      # read state + the recomputed unread_count.
       # round trip.
       format.json do
         @unread_count = Notification.unread.count

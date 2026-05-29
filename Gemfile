@@ -15,7 +15,6 @@ gem "bootsnap", "~> 1.24", require: false
 
 # Rack::Attack throttles the login, TOTP-management, and password-reset
 # surfaces (per-IP buckets). Backed by the Rails cache store.
-gem "rack-attack", "~> 6.8"
 
 # Solid* gems — Postgres-backed queue, cache, and cable
 gem "solid_queue", "~> 1.4"

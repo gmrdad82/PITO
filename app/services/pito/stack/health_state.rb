@@ -17,8 +17,8 @@ module Pito
     # pink. `:absent` lives on the danger side because the notes /
     # storage volume being absent is operationally a failure.
     #
-    # Per-consumer state expression varies. Postgres / Redis /
-    # Meilisearch flip between `:connected` / `:disconnected`; assets
+    # Per-consumer state expression varies. Postgres / Redis
+    # flip between `:connected` / `:disconnected`; assets
     # / notes flip across `:writable` / `:read_only` / `:absent`;
     # Voyage flips between `:configured` / `:not_configured`. The
     # module does not own the predicate logic — callers infer it from

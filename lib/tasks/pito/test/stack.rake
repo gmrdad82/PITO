@@ -1,10 +1,9 @@
-# pito:test:stack — dev/test rake surface for the stack panel's four
-# sub-panels (Meilisearch / Voyage AI / PostgreSQL / Assets).
+# pito:test:stack — dev/test rake surface for the stack panel's three
+# sub-panels (Voyage AI / PostgreSQL / Assets).
 #
 # Purpose:
-#   All four stack sub-panels are ENTIRELY QUERY-TIME LIVE. Their data
+#   All three stack sub-panels are ENTIRELY QUERY-TIME LIVE. Their data
 #   originates from:
-#     - Meilisearch: live API call to the search engine
 #     - Voyage AI:   AppSetting probe + live embedding counts from the DB
 #     - PostgreSQL:  live `pg_total_relation_size` + model `.count`
 #     - Assets:      live filesystem stat on `Pito::AssetsRoot.root`
@@ -22,8 +21,8 @@
 #   bin/rails pito:test:stack:reset   # broadcast a stack_reset event + restore live data
 #
 # Env vars (seed):
-#   SUBPANEL=meilisearch|voyage|postgres|assets
-#               scope broadcast to one sub-panel only (default: all four)
+#   SUBPANEL=voyage|postgres|assets
+#               scope broadcast to one sub-panel only (default: all)
 #   DELAY=ms    pause between sub-panel broadcasts in milliseconds (default: 300)
 #
 # Dependencies:
@@ -43,31 +42,21 @@ namespace :pito do
     namespace :stack do
       # Channel constants matching the CABLE_CHANNEL on each sub-panel VC.
       STACK_CHANNELS = {
-        meilisearch: "pito:home:stack:meilisearch",
-        voyage:      "pito:home:stack:voyage",
-        postgres:    "pito:home:stack:postgres",
-        assets:      "pito:home:stack:assets"
+        voyage:   "pito:home:stack:voyage",
+        postgres: "pito:home:stack:postgres",
+        assets:   "pito:home:stack:assets"
       }.freeze
 
       # ---------------------------------------------------------------------------
       # Synthetic payloads — realistic-looking numbers for each sub-panel.
       # These mirror the Hash shapes consumed by each sub-panel VC:
       #
-      # Meilisearch: { healthy:, stats: { version: }, per_index_stats: [{ label:, documents:, size_bytes:, missing:, omit_size: }] }
       # Voyage:      { configured:, embed_rows: [{ label:, embedded: }], info: { model:, last_indexed:, hnsw_indexes:, last_24h: } }
       # PostgreSQL:  { status: { connected:, version: }, table_breakdown: [{ label:, count:, size_bytes: }] }
       # Assets:      { storage_status: { present:, writable:, size_bytes:, file_count: }, breakdown: [{ label:, file_count:, size_bytes: }] }
       # ---------------------------------------------------------------------------
 
       STACK_SEED_PAYLOADS = {
-        meilisearch: {
-          healthy: true,
-          stats: { version: "1.10.3" },
-          per_index_stats: [
-            { label: "games",   documents: 2841, size_bytes: 18_456_320, missing: false },
-            { label: "bundles", documents:  374, size_bytes: nil,        missing: false, omit_size: true }
-          ]
-        },
         voyage: {
           configured: true,
           embed_rows: [
@@ -103,8 +92,8 @@ namespace :pito do
         }
       }.freeze
 
-      desc "broadcast synthetic stack data on all 4 sub-panel channels " \
-           "(SUBPANEL=meilisearch|voyage|postgres|assets  DELAY=300)"
+      desc "broadcast synthetic stack data on all sub-panel channels " \
+           "(SUBPANEL=voyage|postgres|assets  DELAY=300)"
       task seed: :environment do
         subpanel_filter = ENV["SUBPANEL"].to_s.strip.downcase.presence
         delay_ms        = ENV.fetch("DELAY", 300).to_i.clamp(0, 30_000)
@@ -121,7 +110,7 @@ namespace :pito do
 
         puts "[pito:test:stack:seed] broadcasting synthetic data on #{targets.keys.join(', ')} " \
              "sub-panel(s); delay=#{delay_ms}ms"
-        puts "[pito:test:stack:seed] NOTE: all 4 sub-panels are query-time live. This task " \
+        puts "[pito:test:stack:seed] NOTE: all sub-panels are query-time live. This task " \
              "is a broadcast simulator only; a page refresh will restore live data."
 
         targets.each_with_index do |(name, channel), idx|
@@ -144,7 +133,7 @@ namespace :pito do
         puts "[pito:test:stack:seed] done"
       end
 
-      desc "broadcast stack_reset on all 4 sub-panel channels to signal live-data restore"
+      desc "broadcast stack_reset on all sub-panel channels to signal live-data restore"
       task reset: :environment do
         puts "[pito:test:stack:reset] broadcasting stack_reset on all sub-panel channels"
 
