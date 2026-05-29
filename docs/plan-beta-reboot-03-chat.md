@@ -189,6 +189,7 @@ Plan 2's `Pito::Lex`, `Pito::Stream::Broadcaster`, models, controller, component
 - [x] T5.5 Verify in console: `Pito::Chat::Dispatcher.call(input: "list videos", conversation: Conversation.singleton)` returns `Result::Ok` with one assistant_text event. complexity: [manual]
 - [x] T5.6 RSpec service spec for `Pito::Chat::Handlers::List`: returns Ok with one event whose payload references the expected i18n key. complexity: [low]
 - [ ] T5.7 Smoke test: type `list videos` in the chatbox at `/`. See echo (orange border) + assistant text response. Refresh. Same content reappears. complexity: [manual]
+- [x] T5.8 Commit: (combined C5-C8). complexity: [manual]
 
 ## C6 — Unknown-input handler
 
@@ -200,7 +201,7 @@ Plan 2's `Pito::Lex`, `Pito::Stream::Broadcaster`, models, controller, component
 - [x] T6.4 RSpec service spec: returns Error with the expected message_key and message_args. complexity: [low]
 - [ ] T6.5 Smoke test: type `hello` in the chatbox. See echo + red-bordered error: "Didn't understand 'hello'. Try /help for available commands." complexity: [manual]
 - [ ] T6.6 Smoke test: type `madeup verb here` (recognized chat verb pattern but unregistered verb — `madeup` isn't in `RECOGNIZED_VERBS`). Since `madeup` isn't recognized AND there's no open turn, it routes to Unknown. See the same error. complexity: [manual]
-- [ ] T6.7 Commit: `[skipci] C6: unknown-input handler`. complexity: [manual]
+- [x] T6.7 Commit: (combined C5-C8). complexity: [manual]
 
 ## C7 — Refinement primitive (structural only)
 
@@ -213,7 +214,7 @@ Plan 2's `Pito::Lex`, `Pito::Stream::Broadcaster`, models, controller, component
 - [x] T7.5 RSpec request spec: with an existing recent Turn (e.g. previous `list videos` request), POST `/chat` with input `add ctr` results in events appended to the existing Turn, not a new Turn. complexity: [medium]
 - [ ] T7.6 Smoke test: type `list videos`. Then type `add ctr`. Observe: only one Turn exists in the DB for both messages; both echo events + both response events appear in the scrollback. complexity: [manual]
 - [ ] T7.7 Smoke test: wait > 30 minutes (or temporarily lower the threshold) after `list videos`, then type `add ctr`. Observe: it now routes to Unknown (no open turn), producing an error event. Restore threshold after. complexity: [manual]
-- [ ] T7.8 Commit: `[skipci] C7: refinement primitive (structural)`. complexity: [manual]
+- [x] T7.8 Commit: (combined C5-C8). complexity: [manual]
 
 ## C8 — i18n keys for Plan 3
 
@@ -223,16 +224,16 @@ Plan 2's `Pito::Lex`, `Pito::Stream::Broadcaster`, models, controller, component
 - [x] T8.2 Suggested copy: `list.descriptions.list: "List items (videos, games, playlists)"`; `list.fake_response: "[FAKE] Would list %{count} items here. Example: %{sample_title}"`; `errors.unknown_input: "Didn't understand %{input}. Try /help for available commands."`; `errors.verb_not_implemented: "The chat verb %{verb} isn't wired yet."`; `errors.misrouted_slash: "Internal: slash command %{raw} reached the chat parser."`; `refine_demo.acknowledged: "[DEMO refinement] Received: %{input}"`. complexity: [low]
 - [x] T8.3 Audit every file added/modified in Plan 3 — no inline user-facing strings. complexity: [medium]
 - [ ] T8.4 Boot `bin/dev`, exercise `list videos`, `hello`, `madeup`, `add ctr` (after a recent turn). No `translation missing` placeholders. complexity: [manual]
-- [ ] T8.5 Commit: `[skipci] C8: i18n keys for chat core`. complexity: [manual]
+- [x] T8.5 Commit: (combined C5-C8). complexity: [manual]
 
 ## C9 — AGENTS.md additions
 
 > Document the conventions Plan 3 introduces.
 
-- [ ] T9.1 Add section `## Chat conventions` to AGENTS.md describing: `Pito::Chat::*` namespace, handlers under `app/services/pito/chat/handlers/`, every handler returns a `Pito::Chat::Result`, registry registered in `config/initializers/pito.rb`, recognized verbs declared in parser constant `RECOGNIZED_VERBS`. complexity: [medium]
-- [ ] T9.2 Add section `## Turn lifecycle` describing: how the parser classifies new-turn vs refinement vs unknown, the 30-minute open-turn threshold, how the controller attaches Events to existing vs new Turns based on the Result type. complexity: [medium]
-- [ ] T9.3 Add section `## Chat vs Slash` summarizing the isolation invariants: no cross-import, no shared Result types, shared only via `Pito::Lex` and `Pito::Stream::*`, chat reads (eventually) and slash writes. complexity: [low]
-- [ ] T9.4 Commit: `[skipci] C9: AGENTS.md chat + turn lifecycle conventions`. complexity: [manual]
+- [x] T9.1 Add section `## Chat conventions` to AGENTS.md describing: `Pito::Chat::*` namespace, handlers under `app/services/pito/chat/handlers/`, every handler returns a `Pito::Chat::Result`, registry registered in `config/initializers/pito.rb`, recognized verbs declared in parser constant `RECOGNIZED_VERBS`. complexity: [medium]
+- [x] T9.2 Add section `## Turn lifecycle` describing: how the parser classifies new-turn vs refinement vs unknown, the 30-minute open-turn threshold, how the controller attaches Events to existing vs new Turns based on the Result type. complexity: [medium]
+- [x] T9.3 Add section `## Chat vs Slash` summarizing the isolation invariants: no cross-import, no shared Result types, shared only via `Pito::Lex` and `Pito::Stream::*`, chat reads (eventually) and slash writes. complexity: [low]
+- [-] T9.4 Commit: `C9: AGENTS.md chat + turn lifecycle conventions`. complexity: [manual]
 
 ## C10 — Verification & cleanup
 

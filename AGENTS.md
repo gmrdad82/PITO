@@ -1608,3 +1608,125 @@ independently.
 - `git grep -n "Pito::Chat" lib/pito/slash app/services/pito/slash app/controllers/chat_controller.rb` — should return zero hits (the isolation invariant).
 - `git grep -nE '"[A-Z][a-z][^"]*"' app/services/pito/slash` — every match should be an i18n key or a non-user-facing string.
 <!-- agents:end name=pito-invariants -->
+
+<!-- agents:begin name=pito-chat sha=plan03 -->
+
+## Chat conventions
+
+### Project context
+
+Read `docs/EXTRA.md` first. It may declare additional chat handlers, custom
+result types, or registry loading rules. Anything declared there overrides
+the defaults below.
+
+### Conventions
+
+#### Namespace
+
+- Everything lives under `Pito::Chat::*`.
+- Infrastructure (parser, registry, result types, dispatcher) lives under
+  `lib/pito/chat/`.
+- Concrete domain handlers live under `app/services/pito/chat/handlers/`.
+
+#### Handler contract
+
+- Every handler inherits from `Pito::Chat::Handler`.
+- Every handler that responds to a verb declares:
+  - `self.verb = :<symbol>` — the command word it responds to.
+  - `self.description_key = "pito.chat.<area>.descriptions.<verb>"` — an i18n
+    key used by the help system.
+- Handlers invoked directly (not by verb lookup), such as `Unknown` and
+  `RefineDemo`, omit `self.verb`.
+- Every handler implements `#call` and returns a `Pito::Chat::Result` value
+  object:
+  - `Result::Ok` — succeeded; carries an array of events to render.
+  - `Result::Error` — failed; carries an i18n key + args.
+  - `Result::Refine` — refinement; carries events appended to the existing
+    open Turn.
+
+#### Registry
+
+- `Pito::Chat::Registry` is a singleton-style class.
+- `register(handler_class)` adds a handler; `lookup(verb)` returns the class
+  or `nil`.
+- `register_all!` discovers every class under `Pito::Chat::Handlers` that
+  inherits from `Handler` **and** has a `verb` set. Handlers without a verb
+  are skipped.
+- Registration runs once at boot in `config/initializers/pito.rb` inside a
+  `to_prepare` block, alongside the existing Slash registration.
+
+#### Recognized verbs
+
+- The set of recognized chat verbs lives in
+  `Pito::Chat::Parser::RECOGNIZED_VERBS = %i[list show find].freeze`.
+- This constant lives in the parser (not the registry) so the parser can
+  classify messages independently of handler registration state.
+
+## Turn lifecycle
+
+### Classification
+
+The parser classifies every chat message into one of three kinds:
+
+- **`:new_turn`** — The input starts with a recognized verb (`list`, `show`,
+  `find`). A new Turn is created for this exchange.
+- **`:refinement`** — The input does not start with a recognized verb, but a
+  recent open Turn exists in the conversation (created within the last 30
+  minutes). Events are appended to the existing Turn.
+- **`:unknown`** — The input does not start with a recognized verb and no
+  recent open Turn exists. The `Unknown` handler produces a "didn't
+  understand" error.
+
+### Open-turn threshold
+
+- A Turn is "open" if `Turn.last_for(conversation)` returns a Turn whose
+  `created_at` is less than 30 minutes ago.
+- The timeout is defined as `Pito::Chat::Parser::OPEN_TURN_TIMEOUT` (set to
+  `30.minutes`). Adjustable in a single place.
+
+### Controller attachment
+
+The `ChatController#handle_chat` method materializes the Result from the
+dispatcher:
+
+| Result type | Turn action | Events emitted |
+|---|---|---|
+| `Ok` | Creates a new Turn | echo + result events |
+| `Error` | Creates a new Turn | echo + single error event |
+| `Refine` | Attaches to existing Turn via `Turn.last_for` | echo + result events |
+
+The helper `current_or_new_turn(attach_to_existing:)` encapsulates the
+create-vs-reuse decision.
+
+## Chat vs Slash
+
+| Concern | Chat (`Pito::Chat::*`) | Slash (`Pito::Slash::*`) |
+|---|---|---|
+| Entry point | Input not starting with `/` | Input starting with `/` |
+| Dispatcher | `Pito::Chat::Dispatcher` | `Pito::Slash::Dispatcher` |
+| Parser | `Pito::Chat::Parser` | `Pito::Slash::Parser` |
+| Parser output | `Pito::Chat::Message` | `Pito::Slash::Invocation` |
+| Result types | `Ok`, `Error`, `Refine` | `Ok`, `Error`, `NeedsConfirmation` |
+| Handler base | `Pito::Chat::Handler` | `Pito::Slash::Handler` |
+| Handler location | `app/services/pito/chat/handlers/` | `app/services/pito/slash/handlers/` |
+| Registry | `Pito::Chat::Registry` | `Pito::Slash::Registry` |
+| Shared types | `Pito::Lex`, `Pito::Stream::*` only | (same) |
+| Cross-import | **Forbidden** — no reference to `Pito::Slash::*` | **Forbidden** — no reference to `Pito::Chat::*` |
+
+## Anti-patterns
+
+- Don't couple Chat handlers to Slash internals. No `require "pito/slash"`
+  inside `lib/pito/chat/` or `app/services/pito/chat/`.
+- Don't return plain strings from handlers. Always return a `Result`.
+- Don't hardcode user-facing strings. Use i18n keys + args.
+
+## Commands / verification
+
+- `bin/rails console` then
+  `Pito::Chat::Dispatcher.call(input: "list videos", conversation: Conversation.singleton)`
+  to exercise the full pipeline.
+- `Pito::Chat::Registry.registered_verbs` to inspect the dispatch table.
+- `Pito::Chat::Parser::RECOGNIZED_VERBS` to see which opening words trigger
+  new-turn classification.
+- `Turn.last_for(conversation)` to check the most recent Turn.
+<!-- agents:end name=pito-chat -->
