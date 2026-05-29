@@ -11,4 +11,9 @@ class Turn < ApplicationRecord
   def self.next_position_for(conversation)
     where(conversation_id: conversation.id).maximum(:position).to_i + 1
   end
+
+  # Returns the most recent Turn in the conversation, or nil if none exist.
+  def self.last_for(conversation)
+    where(conversation_id: conversation.id).order(:position).last
+  end
 end

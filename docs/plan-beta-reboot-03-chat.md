@@ -117,26 +117,26 @@ Plan 2's `Pito::Lex`, `Pito::Stream::Broadcaster`, models, controller, component
 
 > Verify Plan 2 finished. Don't start C1 until every box here is checked.
 
-- [ ] T0.1 Confirm every Plan 2 phase (S0–S14) is checked off. complexity: [manual]
-- [ ] T0.2 `bin/dev` boots; `/` renders persisted events; typing `/help` works end-to-end; refresh persists. complexity: [manual]
-- [ ] T0.3 `Pito::Slash::Dispatcher`, `Pito::Stream::Broadcaster`, `Conversation.singleton` all callable from console without error. complexity: [manual]
-- [ ] T0.4 Create branch `plan-03-chat` from `plan-02-slash` (or main, post-Plan-2 merge). complexity: [manual]
-- [ ] T0.5 Tag the current state as `v0.2.1-pre-chat`. complexity: [manual]
+- [x] T0.1 Confirm every Plan 2 phase (S0–S14) is checked off. complexity: [manual]
+- [x] T0.2 `bin/dev` boots; `/` renders persisted events; typing `/help` works end-to-end; refresh persists. complexity: [manual]
+- [x] T0.3 `Pito::Slash::Dispatcher`, `Pito::Stream::Broadcaster`, `Conversation.singleton` all callable from console without error. complexity: [manual]
+- [x] T0.4 Create branch `plan-03-chat` from `plan-02-slash` (or main, post-Plan-2 merge). complexity: [manual]
+- [x] T0.5 Tag the current state as `v0.2.1-pre-chat`. complexity: [manual]
 
 ## C1 — Chat parser + message value object
 
 > Tokens → ChatMessage. Classifies as new-turn vs refinement vs unknown.
 
-- [ ] T1.1 Create `lib/pito/chat/message.rb`. Frozen value object with `verb:` (symbol or nil), `body_tokens:` (array of `Pito::Lex::Token`), `kind:` (`:new_turn` or `:refinement` or `:unknown`), `raw:` (original input string). complexity: [low]
-- [ ] T1.2 Create `lib/pito/chat/parser.rb`. Class method `Pito::Chat::Parser.call(tokens, raw:, conversation:) -> Message`. The `conversation` arg is needed to decide refinement-eligibility (i.e. whether an open Turn exists). complexity: [medium]
-- [ ] T1.3 Parser rule: if `tokens.first.type == :slash`, raise `Pito::Chat::Parser::NotAChatMessage`. (Slash messages must not reach the Chat parser.) complexity: [low]
-- [ ] T1.4 Parser rule: take the first `:word` token's value as the candidate verb (symbol). If it's in the recognized verb set (`%i[list show find]`), classify as `:new_turn` with that verb. The remaining tokens become `body_tokens`. complexity: [medium]
-- [ ] T1.5 Parser rule: if the candidate verb isn't recognized, check refinement eligibility — does `Turn.last_for(conversation)` exist and is it less than 30 minutes old? If yes, classify as `:refinement` with `verb: nil` and all tokens (minus EOF) as `body_tokens`. If no, classify as `:unknown` with `verb: nil`. complexity: [medium]
-- [ ] T1.6 Add `Turn.last_for(conversation)` class method returning the most recent Turn in the conversation, or nil. Already implicit in `Conversation#turns` ordering but add a named method for clarity. complexity: [low]
-- [ ] T1.7 Recognized-verb set lives in `Pito::Chat::Parser::RECOGNIZED_VERBS = %i[list show find].freeze` at the top of the parser file. Constant kept here (not in Registry) so the parser can classify independently of registration state. complexity: [low]
-- [ ] T1.8 RSpec spec `spec/lib/pito/chat/parser_spec.rb`: `list videos` → `Message(verb: :list, kind: :new_turn)`; `more stuff` after a recent turn → `Message(verb: nil, kind: :refinement)`; `more stuff` with no recent turn → `Message(verb: nil, kind: :unknown)`; `/help` raises `NotAChatMessage`. complexity: [medium]
-- [ ] T1.9 Verify in console: `Pito::Chat::Parser.call(Pito::Lex::Lexer.call("list videos"), raw: "list videos", conversation: Conversation.singleton)` returns the expected Message. complexity: [manual]
-- [ ] T1.10 Commit: `[skipci] C1: chat parser + message value object`. complexity: [manual]
+- [x] T1.1 Create `lib/pito/chat/message.rb`. Frozen value object with `verb:` (symbol or nil), `body_tokens:` (array of `Pito::Lex::Token`), `kind:` (`:new_turn` or `:refinement` or `:unknown`), `raw:` (original input string). complexity: [low]
+- [x] T1.2 Create `lib/pito/chat/parser.rb`. Class method `Pito::Chat::Parser.call(tokens, raw:, conversation:) -> Message`. The `conversation` arg is needed to decide refinement-eligibility (i.e. whether an open Turn exists). complexity: [medium]
+- [x] T1.3 Parser rule: if `tokens.first.type == :slash`, raise `Pito::Chat::Parser::NotAChatMessage`. (Slash messages must not reach the Chat parser.) complexity: [low]
+- [x] T1.4 Parser rule: take the first `:word` token's value as the candidate verb (symbol). If it's in the recognized verb set (`%i[list show find]`), classify as `:new_turn` with that verb. The remaining tokens become `body_tokens`. complexity: [medium]
+- [x] T1.5 Parser rule: if the candidate verb isn't recognized, check refinement eligibility — does `Turn.last_for(conversation)` exist and is it less than 30 minutes old? If yes, classify as `:refinement` with `verb: nil` and all tokens (minus EOF) as `body_tokens`. If no, classify as `:unknown` with `verb: nil`. complexity: [medium]
+- [x] T1.6 Add `Turn.last_for(conversation)` class method returning the most recent Turn in the conversation, or nil. Already implicit in `Conversation#turns` ordering but add a named method for clarity. complexity: [low]
+- [x] T1.7 Recognized-verb set lives in `Pito::Chat::Parser::RECOGNIZED_VERBS = %i[list show find].freeze` at the top of the parser file. Constant kept here (not in Registry) so the parser can classify independently of registration state. complexity: [low]
+- [x] T1.8 RSpec spec `spec/lib/pito/chat/parser_spec.rb`: `list videos` → `Message(verb: :list, kind: :new_turn)`; `more stuff` after a recent turn → `Message(verb: nil, kind: :refinement)`; `more stuff` with no recent turn → `Message(verb: nil, kind: :unknown)`; `/help` raises `NotAChatMessage`. complexity: [medium]
+- [x] T1.9 Verify in console: `Pito::Chat::Parser.call(Pito::Lex::Lexer.call("list videos"), raw: "list videos", conversation: Conversation.singleton)` returns the expected Message. complexity: [manual]
+- [-] T1.10 Commit: `C1: chat parser + message value object`. complexity: [manual]
 
 ## C2 — Chat registry + handler base + result types
 
