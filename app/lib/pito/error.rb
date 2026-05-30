@@ -80,5 +80,21 @@ module Pito
         msg
       end
     end
+
+    # Raised when a release-date component combination violates the
+    # invariants documented in `docs/architecture.md` § "Game release-date
+    # representation". Callers in service paths get a structured error;
+    # `Game#save` surfaces the same problem through `ActiveModel::Errors`.
+    class ReleaseDateInconsistent < Base
+      def initialize(reason:, components:)
+        super(reason: reason, components: components)
+      end
+
+      private
+
+      def build_message
+        "release-date components inconsistent: #{@attrs[:reason]} (#{@attrs[:components].inspect})"
+      end
+    end
   end
 end

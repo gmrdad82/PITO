@@ -278,9 +278,19 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T7.6 Commit: `Game score: calculator + backfill`. complexity: [manual]
 
 ## P8 — IGDB sync investigation (release-date + checksum)
-- [ ] T8.1 Probe what IGDB `release_dates` returns ↔ `release_precision`; how `Game::Igdb` maps it now. complexity: [high]
-- [ ] T8.2 Decide keep vs drop `release_year`; record under the stub below. complexity: [manual]
-  > **Decision:** _TBD — fill in after investigation_
+- [x] T8.1 Probe what IGDB `release_dates` returns ↔ `release_precision`; how `Game::Igdb` maps it now. complexity: [high]
+- [x] T8.2 Decide keep vs drop `release_year`; record under the stub below. complexity: [manual]
+  > **Decision (supersedes the original "keep vs drop" framing):** Redesign release-date storage as **independent precision components** keyed off nullability, not a single date + enum. Durable design lives in `docs/architecture.md` § "Game release-date representation"; specs land the contract under `spec/services/pito/game/release_date_mapper_spec.rb`, `spec/components/pito/game/release_label_component_spec.rb`, `spec/services/game/igdb/game_mapper_release_date_spec.rb`, and additions to `spec/models/game_spec.rb`.
+  >
+  > **Schema delta (applied in T8.5):**
+  >   - **DROP** `release_precision` (never written, never read).
+  >   - **KEEP** `release_year` (single-column index queries — `WHERE release_year = 2026` — are cheap and direct).
+  >   - **ADD** `release_quarter` (int 1..4, NULL unless quarter precision).
+  >   - **ADD** `release_month` (int 1..12, NULL when only year/quarter known).
+  >   - **ADD** `release_day` (int 1..31, NULL when only month known).
+  >   - **KEEP** `release_date` (date) — recomputed `before_save` as the lower-bound of what the components describe; used for sorts / ranges / `released?`.
+  >   - **ADD** composite index `(release_month, release_day)` for "Christmas in any year"–style queries.
+  > **Code follow-on (NOT in P8 — future phase):** `Pito::Game::ReleaseDateMapper` service, IGDB adapter update (request `release_dates[].{category,y,m,d,date}` and pick the canonical row), `Game` validations + `before_save :recompute_release_date` + `released?`/`tba?`/`released_in`/`upcoming` + `release_label` presenter. Spec contracts already written; implementation gates the green run.
 - [ ] T8.3 Investigate whether `igdb_checksum`/timestamp is used in `Game::Igdb::SyncGame` to skip unchanged. complexity: [high]
 - [ ] T8.4 Decide: keep + wire `igdb_checksum`, or DROP; record under the stub below. complexity: [manual]
   > **Decision:** _TBD — fill in after investigation_
