@@ -4,16 +4,16 @@ require "rails_helper"
 
 RSpec.describe Pito::Shell::MiniStatusComponent do
   # connection_label uses `t(...)` which requires a render context — tested via render_inline below.
-  # connection_color is a pure Ruby method and can be called directly.
-  describe "#connection_color" do
-    it "returns the green accent variable when state is true" do
+  # connection_class is a pure Ruby method and can be called directly.
+  describe "#connection_class" do
+    it "returns text-green when state is true" do
       comp = described_class.new(state: true)
-      expect(comp.connection_color).to eq("var(--accent-green)")
+      expect(comp.connection_class).to eq("text-green")
     end
 
-    it "returns the red accent variable when state is false" do
+    it "returns text-red when state is false" do
       comp = described_class.new(state: false)
-      expect(comp.connection_color).to eq("var(--accent-red)")
+      expect(comp.connection_class).to eq("text-red")
     end
   end
 

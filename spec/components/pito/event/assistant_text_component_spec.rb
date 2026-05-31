@@ -60,11 +60,9 @@ RSpec.describe Pito::Event::AssistantTextComponent do
       expect(node.css("span.text-fg").text.strip).to eq("Check span")
     end
 
-    it "does not render an accent border bar (no border arg passed to Segment)" do
+    it "does not render an accent border bar (no accent arg passed to Segment)" do
       node = render_inline(described_class.new(payload: { text: "No border" }))
-      # Segment without border renders no 4px bar div
-      bar_divs = node.css("div[style*='width: 4px']")
-      expect(bar_divs).to be_empty
+      expect(node.css(".pito-segment__bar")).to be_empty
     end
   end
 end

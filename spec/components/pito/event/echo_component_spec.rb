@@ -20,9 +20,8 @@ RSpec.describe Pito::Event::EchoComponent do
   it "wraps the echo in a Segment carrying the orange accent" do
     node = render_inline(described_class.new(payload: { text: "hello" }))
 
-    # The Segment bar is rendered with the accent color as its background;
-    # assert the orange accent token is present rather than an exact rule
-    # so this survives the P10 data-accent restyle.
-    expect(node.to_html).to include("var(--accent-orange)")
+    bar = node.css(".pito-segment__bar").first
+    expect(bar).not_to be_nil
+    expect(bar["data-accent"]).to eq("orange")
   end
 end

@@ -40,10 +40,9 @@ RSpec.describe Pito::Shell::InProgressComponent do
     end
 
     context "structural checks" do
-      it "renders embedded CSS for the shimmer animation" do
+      it "uses the pito-shimmer class on shimmer spans" do
         node = render_inline(described_class.new(verb_key: "pito.shell.chatbox.placeholder"))
-        expect(node.to_html).to include("pito-shimmer")
-        expect(node.to_html).to include("pito-shimmer-sweep")
+        expect(node.css("span.pito-shimmer").length).to be >= 2
       end
 
       it "renders the outer span wrapper" do

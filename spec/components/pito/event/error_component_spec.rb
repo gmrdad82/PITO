@@ -52,10 +52,10 @@ RSpec.describe Pito::Event::ErrorComponent do
       expect(node.css("span.text-fg").text).to include("whoops")
     end
 
-    it "renders an accent border bar (red border passed to Segment)" do
-      bar = node.css("div[style*='width: 4px']").first
+    it "renders an accent bar with data-accent='red'" do
+      bar = node.css(".pito-segment__bar").first
       expect(bar).not_to be_nil
-      expect(bar["style"]).to include("var(--accent-red)")
+      expect(bar["data-accent"]).to eq("red")
     end
 
     it "renders inside the segment flex wrapper" do

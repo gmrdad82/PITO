@@ -38,7 +38,7 @@ RSpec.describe Pito::StartScreen::Component do
     end
 
     it "renders a full-viewport flex container" do
-      outer = node.css("div[style*='min-height: 100vh']").first
+      outer = node.css("div.min-h-screen").first
       expect(outer).not_to be_nil
     end
   end

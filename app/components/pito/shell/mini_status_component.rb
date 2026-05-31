@@ -18,8 +18,8 @@ module Pito
         @state ? t("pito.shell.mini_status.authenticated") : t("pito.shell.mini_status.anonymous")
       end
 
-      def connection_color
-        @state ? "var(--accent-green)" : "var(--accent-red)"
+      def connection_class
+        @state ? "text-green" : "text-red"
       end
     end
   end

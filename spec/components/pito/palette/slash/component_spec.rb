@@ -49,12 +49,12 @@ RSpec.describe Pito::Palette::Slash::Component do
     end
 
     it "renders the purple accent bar" do
-      accent = node.css("div[style*='background: var(--accent-purple)']")
+      accent = node.css(".pito-segment__bar[data-accent='purple']")
       expect(accent.first).not_to be_nil
     end
 
     it "renders the horizontal divider" do
-      divider = node.css("div[style*='height: 1px']")
+      divider = node.css("div.h-px")
       expect(divider.first).not_to be_nil
     end
 
@@ -75,7 +75,7 @@ RSpec.describe Pito::Palette::Slash::Component do
 
     it "renders the chrome (accent bar, divider) even with no commands" do
       node = render_inline(described_class.new(commands: []))
-      expect(node.css("div[style*='background: var(--accent-purple)']").first).not_to be_nil
+      expect(node.css(".pito-segment__bar[data-accent='purple']").first).not_to be_nil
     end
   end
 
@@ -126,11 +126,15 @@ RSpec.describe Pito::Palette::Slash::Component do
   describe "selection highlight" do
     let(:commands) { [ cmd_authenticate, cmd_channels, cmd_help ] }
 
-    # Command rows have `padding: 2px 10px` in their style; the horizontal divider
-    # also uses `background: var(--border-default)` but has `height: 1px` instead.
-    # Scoping to rows that include `padding: 2px 10px` isolates command rows only.
+    # Command rows have `py-0.5 px-2.5` classes; the horizontal divider
+    # also uses `bg-line-default` but has `h-px` class instead.
+    # Scoping to rows that include `px-2.5` isolates command rows only.
+    def command_rows(node)
+      node.css("div").select { |div| div["class"]&.include?("px-2.5") && div["class"]&.include?("py-0.5") }
+    end
+
     def selected_command_rows(node)
-      node.css("div[style*='padding: 2px 10px'][style*='background: var(--border-default)']")
+      command_rows(node).select { |div| div["style"]&.include?("background") }
     end
 
     it "highlights exactly one command row" do
@@ -155,8 +159,7 @@ RSpec.describe Pito::Palette::Slash::Component do
 
     it "does not highlight unselected rows" do
       node = render_inline(described_class.new(commands: commands, selected_index: 0))
-      all_rows = node.css("div[style*='padding: 2px 10px']")
-      unhighlighted = all_rows.reject { |div| div["style"]&.include?("background") }
+      unhighlighted = command_rows(node).reject { |div| div["style"]&.include?("background") }
       expect(unhighlighted.length).to eq(commands.length - 1)
     end
   end

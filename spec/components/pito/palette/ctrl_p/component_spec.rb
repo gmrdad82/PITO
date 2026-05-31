@@ -62,7 +62,8 @@ RSpec.describe Pito::Palette::CtrlP::Component do
     end
 
     it "renders the outer modal container" do
-      expect(node.css("div[style*='width: 600px']").first).not_to be_nil
+      modal = node.css("div").find { |div| div["class"]&.include?("w-[600px]") }
+      expect(modal).not_to be_nil
     end
   end
 
@@ -128,7 +129,7 @@ RSpec.describe Pito::Palette::CtrlP::Component do
     end
 
     it "renders a 12px gap div between sections (not after last)" do
-      gaps = node.css("div[style='height: 12px;']")
+      gaps = node.css("div.h-3")
       # 1 gap between 2 sections; also the chrome has a 12px gap div
       # At least one inter-section gap should be present
       expect(gaps.length).to be >= 1

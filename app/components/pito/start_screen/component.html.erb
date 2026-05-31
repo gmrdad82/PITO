@@ -1,27 +1,27 @@
 <%# U7 — Start screen. Full-viewport centered layout, no auth required. %>
 <%# ASCII logo per ui-p2.md, chatbox at 50vh, tip line + bottom corners below. %>
 
-<div style="display: flex; flex-direction: column; min-height: 100vh;">
+<div class="flex flex-col min-h-screen">
   <%# Top spacer — pushes centered group toward 50vh %>
-  <div style="flex: 1;"></div>
+  <div class="flex-1"></div>
 
   <%# Centered group %>
-  <div style="display: flex; flex-direction: column; align-items: center;">
+  <div class="flex flex-col items-center">
     <%# ASCII logo — 6 rows, brand-pito blocks + fg-dim shadow chars, 18px %>
-    <pre style="font-size: 18px; line-height: 1; margin: 0; white-space: pre; font-family: ui-monospace, monospace;">
-<span style="color: var(--brand-pito);">██████</span><span style="color: var(--fg-dim);">╗ </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╗</span><span style="color: var(--brand-pito);">████████</span><span style="color: var(--fg-dim);">╗ </span><span style="color: var(--brand-pito);">██████</span><span style="color: var(--fg-dim);">╗ </span>
-<span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╔══</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╗</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║╚══</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╔══╝</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╔═══</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╗</span>
-<span style="color: var(--brand-pito);">██████</span><span style="color: var(--fg-dim);">╔╝</span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║</span>
-<span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">╔═══╝ </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║</span>
-<span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║     </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   </span><span style="color: var(--brand-pito);">██</span><span style="color: var(--fg-dim);">║   ╚</span><span style="color: var(--brand-pito);">██████</span><span style="color: var(--fg-dim);">╔╝</span>
-<span style="color: var(--fg-dim);">╚═╝     ╚═╝   ╚═╝    ╚═════╝ </span>
+    <pre class="pito-start-screen__logo">
+<span class="text-pito">██████</span><span class="text-fg-dim">╗ </span><span class="text-pito">██</span><span class="text-fg-dim">╗</span><span class="text-pito">████████</span><span class="text-fg-dim">╗ </span><span class="text-pito">██████</span><span class="text-fg-dim">╗ </span>
+<span class="text-pito">██</span><span class="text-fg-dim">╔══</span><span class="text-pito">██</span><span class="text-fg-dim">╗</span><span class="text-pito">██</span><span class="text-fg-dim">║╚══</span><span class="text-pito">██</span><span class="text-fg-dim">╔══╝</span><span class="text-pito">██</span><span class="text-fg-dim">╔═══</span><span class="text-pito">██</span><span class="text-fg-dim">╗</span>
+<span class="text-pito">██████</span><span class="text-fg-dim">╔╝</span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║</span>
+<span class="text-pito">██</span><span class="text-fg-dim">╔═══╝ </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║</span>
+<span class="text-pito">██</span><span class="text-fg-dim">║     </span><span class="text-pito">██</span><span class="text-fg-dim">║   </span><span class="text-pito">██</span><span class="text-fg-dim">║   ╚</span><span class="text-pito">██████</span><span class="text-fg-dim">╔╝</span>
+<span class="text-fg-dim">╚═╝     ╚═╝   ╚═╝    ╚═════╝ </span>
 </pre>
 
     <%# 32px gap %>
-    <div style="height: 32px;"></div>
+    <div class="h-8"></div>
 
     <%# Chatbox — start state, max-width 600px. DO NOT MOVE. %>
-    <div style="width: 100%; max-width: 600px; padding: 0 16px;">
+    <div class="w-full max-w-[600px] px-4">
       <%= render(Pito::Shell::ChatboxComponent.new(
             state: :start,
             placeholder_key: "pito.shell.chatbox.start_placeholder"
@@ -29,18 +29,18 @@
     </div>
 
     <%# Mini-status row — right-aligned to chatbox right edge %>
-    <div style="margin-top: 8px; width: 100%; max-width: 600px; padding: 0 16px;">
-      <div style="display: flex; justify-content: flex-end;">
+    <div class="mt-2 w-full max-w-[600px] px-4">
+      <div class="flex justify-end">
         <%= render(Pito::Shell::MiniStatusComponent.new(mode: :start)) %>
       </div>
     </div>
   </div>
 
   <%# Spacer between centered group and bottom area — tip lives inside this %>
-  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 16px;">
+  <div class="flex-1 flex flex-col justify-center items-center p-4">
     <%# Tip line — orange bullet + prefix in yellow + dim placeholder text %>
     <span class="text-fg-faded">
-      <span style="color: var(--accent-orange);">●</span>
+      <span class="text-orange">●</span>
       <span class="font-bold text-yellow"><%= t("pito.start_screen.tip_prefix") %></span>
       <span> — </span>
       <span><%= t("pito.start_screen.tip_placeholder") %></span>
@@ -48,7 +48,7 @@
   </div>
 
   <%# Bottom corners %>
-  <div style="display: flex; justify-content: space-between; padding: 0 50px 32px;">
+  <div class="flex justify-between px-[50px] pb-8">
     <% if @marketing_url.present? %>
       <a href="<%= @marketing_url %>" class="text-fg-dim hover:underline" target="_blank"><%= URI.parse(@marketing_url).host || @marketing_url %></a>
     <% else %>

@@ -3,13 +3,12 @@
 module Pito
   module Segment
     class Component < ViewComponent::Base
-      # @param border [String, nil] CSS border shorthand (e.g. "1px solid var(--accent-orange)").
-      #   The bar element renders this as its background color; the content wrapper gets no border.
-      #   When nil, the bar is hidden (display: none).
-      # @param background [String, nil] CSS background for the content wrapper (e.g. "var(--bg-surface)").
-      #   When nil, the content area is transparent.
-      def initialize(border: nil, background: nil)
-        @border = border
+      # @param accent [Symbol, nil] Accent color for the left bar:
+      #   :orange, :red, :yellow, :purple. When nil, the bar is omitted.
+      # @param background [String, nil] CSS background for the content wrapper
+      #   (e.g. "var(--bg-surface)"). When nil, the content area is transparent.
+      def initialize(accent: nil, background: nil)
+        @accent = accent
         @background = background
       end
     end
