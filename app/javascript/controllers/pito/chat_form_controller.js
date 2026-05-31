@@ -31,6 +31,8 @@ export default class extends Controller {
     // Notify listeners (terminal-caret autosize/render) of the programmatic clear —
     // assigning `.value` does not fire "input" on its own.
     this.inputFieldTarget.dispatchEvent(new Event("input", { bubbles: true }))
+    // Signal the scrollback controller to scroll to bottom regardless of lock.
+    document.dispatchEvent(new CustomEvent("pito:submitted"))
   }
 
   #syncHidden() {

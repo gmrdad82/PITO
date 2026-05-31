@@ -17,11 +17,11 @@ RSpec.describe Pito::Event::EchoComponent do
     expect(node.css("span.text-fg").text.strip).to eq("")
   end
 
-  it "wraps the echo in a Segment carrying the orange accent" do
+  it "wraps the echo in a Segment carrying the purple accent" do
     node = render_inline(described_class.new(payload: { text: "hello" }))
 
     bar = node.css(".pito-segment__bar").first
     expect(bar).not_to be_nil
-    expect(bar["data-accent"]).to eq("orange")
+    expect(bar["data-accent"]).to eq("purple")
   end
 end

@@ -37,6 +37,11 @@ RSpec.describe "Conversation requests", type: :request do
       expect(response.body).not_to include("border-top")
     end
 
+    it "wires the scrollback Stimulus controller on the scrollback container" do
+      get conversation_path(uuid: conversation.uuid)
+      expect(response.body).to include('data-controller="pito--scrollback"')
+    end
+
     it "includes the uuid in the chat form" do
       get conversation_path(uuid: conversation.uuid)
       expect(response.body).to include(conversation.uuid)

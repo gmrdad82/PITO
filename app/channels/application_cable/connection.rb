@@ -4,12 +4,22 @@ module ApplicationCable
 
     def connect
       raw = cookies.encrypted[Pito::Auth::SessionCookie::COOKIE_NAME]
-      return reject_unauthorized_connection unless raw
 
-      data = SessionDataWrapper.new(raw)
-      return reject_unauthorized_connection if data.expired?
+      if raw
+        data = SessionDataWrapper.new(raw)
+        # Authenticated session: identify by sid for per-session targeting.
+        self.session_id = data.expired? ? guest_id : data.sid
+      else
+        # Unauthenticated: allow the connection so Turbo Streams work while
+        # the /authenticate flow is not yet enforced end-to-end.
+        self.session_id = guest_id
+      end
+    end
 
-      self.session_id = data.sid
+    private
+
+    def guest_id
+      "guest:#{request.session.id}"
     end
 
     SessionDataWrapper = Data.define(:sid, :last_seen_at) do

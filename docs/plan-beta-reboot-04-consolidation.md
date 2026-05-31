@@ -556,10 +556,11 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ## P21 — Auto-scroll on send
 
-- [ ] T21.1 On submit + on each appended event, scroll to newest. complexity: [low]
-- [ ] T21.2 Respect "scrolled up". complexity: [high]
-- [ ] T21.3 Smoke. complexity: [manual]
-- [ ] T21.4 Commit: `Auto-scroll scrollback on send`. complexity: [manual]
+- [x] T21.1 On submit + on each appended event, scroll to newest. complexity: [low]
+- [x] T21.2 Respect "scrolled up". complexity: [high]
+  > `pito--scrollback` Stimulus controller on `#pito-scrollback`. MutationObserver watches for Turbo appends; `pito:submitted` custom event (dispatched by `chat-form` on Enter) forces scroll regardless of lock. Lock: if user scrolls > 80px from bottom, auto-scroll suppressed; resets when they scroll back to the bottom.
+- [x] T21.3 Smoke. complexity: [manual]
+- [x] T21.4 Commit: `Auto-scroll scrollback on send`. complexity: [manual]
 
 ## P22 — First-message transition
 
