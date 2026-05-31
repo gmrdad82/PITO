@@ -2,22 +2,12 @@
 
 require "rails_helper"
 require "rake"
+require_relative "../../support/rake_spec_helper"
 
-RSpec.describe "pito:tools:games rake tasks" do
-  before(:all) do
-    Rails.application.load_tasks unless Rake::Task.task_defined?("pito:tools:games:backfill_scores")
-  end
+RSpec.describe "pito:tools:games rake tasks", type: :rake do
+  before(:all) { load_tasks }
 
-  before do
-    Rake::Task["pito:tools:games:backfill_scores"].reenable
-  end
-
-  def suppress_output
-    $stdout = File.open(File::NULL, "w")
-    yield
-  ensure
-    $stdout = STDOUT
-  end
+  before { reenable("pito:tools:games:backfill_scores") }
 
   describe "pito:tools:games:backfill_scores" do
     it "backfills score from rating data even when auto-recompute already set it" do

@@ -14,7 +14,7 @@ module Pito
   module Auth
     class ChatLogin
       Result = Data.define(:status, :session_data) do
-        # status — :ok | :invalid | :throttled | :not_enrolled
+        # status — :ok | :invalid | :throttled
         def authenticated?
           status == :ok
         end
@@ -33,7 +33,6 @@ module Pito
         ip = @request&.remote_ip.to_s
 
         return failure(:throttled) if SessionThrottle.exhausted?(ip)
-        return failure(:not_enrolled) unless AppSetting.totp_enabled?
 
         if Pito::Auth::TotpVerifier.call(code: @code) == :ok
           data = Pito::Auth::SessionCookie.mint!(@request, totp_verified_at: Time.current)

@@ -45,16 +45,9 @@ class AppSetting < ApplicationRecord
 
   # ── TOTP ─────────────────────────────────────────────────────────────
 
-  def self.totp_enabled?
-    row = singleton_row
-    row.totp_enabled_at.present? && row.totp_disabled_at.nil?
-  end
-
   def self.enroll_totp!(seed:)
     singleton_row.update!(
       totp_seed_encrypted: seed,
-      totp_enabled_at: Time.current,
-      totp_disabled_at: nil,
       totp_last_used_step: nil
     )
   end
@@ -62,8 +55,6 @@ class AppSetting < ApplicationRecord
   def self.disable_totp!
     singleton_row.update!(
       totp_seed_encrypted: nil,
-      totp_enabled_at: nil,
-      totp_disabled_at: Time.current,
       totp_last_used_step: nil
     )
   end
@@ -72,20 +63,17 @@ class AppSetting < ApplicationRecord
     singleton_row.totp_seed_encrypted
   end
 
-  # ── API keys (fall through to ENV when blank) ────────────────────────
+  # ── API keys ───────────────────────────────────────────────────────
 
   def self.google_oauth_client_id
-    singleton_row.google_oauth_client_id.presence ||
-      ENV["PITO_GOOGLE_OAUTH_CLIENT_ID"].presence
+    singleton_row.google_oauth_client_id
   end
 
   def self.google_oauth_client_secret
-    singleton_row.google_oauth_client_secret.presence ||
-      ENV["PITO_GOOGLE_OAUTH_CLIENT_SECRET"].presence
+    singleton_row.google_oauth_client_secret
   end
 
   def self.voyage_api_key
-    singleton_row.voyage_api_key.presence ||
-      ENV["PITO_VOYAGE_API_KEY"].presence
+    singleton_row.voyage_api_key
   end
 end

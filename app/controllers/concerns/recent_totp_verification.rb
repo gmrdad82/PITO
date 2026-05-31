@@ -1,13 +1,12 @@
 # Encrypted-cookie TOTP gate for sensitive write actions.
 #
-# When `AppSetting.totp_enabled?` is true, sensitive write actions
-# check `Current.session.totp_verified_at` — if recent enough the
-# gate passes without re-entering the code. Otherwise the user must
-# supply a fresh 6-digit code on the form.
+# Checks `Current.session.totp_verified_at` — if recent enough the gate
+# passes without re-entering the code. Otherwise the user must supply a
+# fresh 6-digit code on the form.
 #
-# The 15-minute window avoids annoying re-prompting for rapid edits
-# while still requiring a fresh TOTP after a gap. On successful
-# verification the cookie's `totp_verified_at` is updated.
+# The 15-minute window avoids annoying re-prompting for rapid edits while
+# still requiring a fresh TOTP after a gap. On successful verification
+# the cookie's `totp_verified_at` is updated.
 #
 # Pattern:
 #
@@ -15,13 +14,12 @@
 #     include RecentTotpVerification
 #
 #     def update
-#       return unless require_recent_totp_if_enabled!
+#       return unless require_recent_totp!
 #       # ...write path...
 #     end
 #   end
 #
-# `require_recent_totp_if_enabled!` returns `true` when:
-#   - TOTP is not enrolled, OR
+# `require_recent_totp!` returns `true` when:
 #   - `totp_verified_at` on the session cookie is < 15 min old, OR
 #   - the submitted code verifies.
 # It returns `false` after rendering / redirecting so the caller MUST
@@ -36,9 +34,7 @@ module RecentTotpVerification
 
   private
 
-  def require_recent_totp_if_enabled!(redirect_on_failure: nil, render_action: nil)
-    return true unless AppSetting.totp_enabled?
-
+  def require_recent_totp!(redirect_on_failure: nil, render_action: nil)
     if totp_recently_verified?
       return true
     end

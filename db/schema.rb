@@ -52,8 +52,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_012344) do
     t.text "google_oauth_client_id"
     t.text "google_oauth_client_secret"
     t.string "key"
-    t.datetime "totp_disabled_at"
-    t.datetime "totp_enabled_at"
     t.integer "totp_last_used_step"
     t.text "totp_seed_encrypted"
     t.datetime "updated_at", null: false

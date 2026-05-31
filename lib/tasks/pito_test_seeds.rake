@@ -21,9 +21,9 @@
 namespace :pito do
   namespace :test do
     namespace :seeds do
-      SEEDS_DIR = Rails.root.join("db/test_seeds")
-      FILES_DIR = SEEDS_DIR.join("files")
-      EXCLUDED_TABLES = %w[schema_migrations ar_internal_metadata].freeze
+      SEEDS_DIR = Rails.root.join("db/test_seeds") unless defined?(SEEDS_DIR)
+      FILES_DIR = SEEDS_DIR.join("files") unless defined?(FILES_DIR)
+      EXCLUDED_TABLES = %w[schema_migrations ar_internal_metadata].freeze unless defined?(EXCLUDED_TABLES)
 
       def storage_root
         service = ActiveStorage::Blob.service

@@ -13,8 +13,6 @@ FactoryBot.define do
 
     trait :with_totp do
       totp_seed_encrypted { "encrypted_seed_xyz" }
-      totp_enabled_at { Time.current }
-      totp_disabled_at { nil }
     end
   end
 end

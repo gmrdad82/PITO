@@ -47,8 +47,6 @@ class InitialSchema < ActiveRecord::Migration[8.1]
 
       # Singleton-row TOTP state (6-digit only; backup codes removed in P2).
       t.text     :totp_seed_encrypted
-      t.datetime :totp_enabled_at
-      t.datetime :totp_disabled_at
       t.integer  :totp_last_used_step
 
       # Singleton-row pre-allocated API key columns (AR-encrypted).

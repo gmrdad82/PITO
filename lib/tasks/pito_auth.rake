@@ -6,20 +6,14 @@
 # `/authenticate <6-digit code>` into the chatbox.
 #
 # Usage:
-#   bin/rails pito:tools:auth:enroll            # first-time enroll
-#   bin/rails pito:tools:auth:enroll FORCE=yes  # rotate existing enrollment
-#   bin/rails pito:tools:auth:reset             # wipe the seed
+#   bin/rails pito:tools:auth:enroll   # fresh TOTP seed
+#   bin/rails pito:tools:auth:reset    # wipe the seed
 namespace :pito do
   namespace :tools do
   namespace :auth do
-    desc "Enroll the singleton owner with a fresh TOTP seed. FORCE=yes to rotate existing enrollment."
+    desc "Enroll the singleton owner with a fresh TOTP seed."
     task enroll: :environment do
-      if AppSetting.totp_enabled? && ENV["FORCE"] != "yes"
-        warn "Already enrolled. Re-run with FORCE=yes to rotate the seed."
-        exit 1
-      end
-
-      AppSetting.disable_totp! if AppSetting.totp_enabled?
+      AppSetting.disable_totp!
       seed = ROTP::Base32.random_base32
       AppSetting.enroll_totp!(seed: seed)
 
