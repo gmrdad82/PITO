@@ -545,11 +545,14 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ## P20 — Chatbox border-top hack → proper scroll
 
-- [ ] T20.1 Document the 20px border-top hack + why. complexity: [low]
-- [ ] T20.2 Replace with scroll-padding / scroll-margin / spacer. complexity: [high]
-- [ ] T20.3 Remove the hack. complexity: [low]
-- [ ] T20.4 Smoke: long scroll never collides. complexity: [manual]
-- [ ] T20.5 Commit: `Proper chatbox/scrollback spacing`. complexity: [manual]
+- [x] T20.1 Document the 20px border-top hack + why. complexity: [low]
+  > **Hack:** `border-top: 20px solid var(--bg-root)` on the chatbox wrapper div in `app/views/conversations/show.html.erb`. The border is painted in the background colour so it is visually invisible, but creates a 20px gap between the bottom of the scrollback area and the top of the chatbox, preventing the last segment from sitting flush against the input. Replacement (T20.2): `scroll-padding-bottom` on `#pito-scrollback` + `padding-top` on the wrapper.
+- [x] T20.2 Replace with scroll-padding / scroll-margin / spacer. complexity: [high]
+  > `scroll-padding-bottom: 20px` added to `#pito-scrollback` in `application.css`. `padding-bottom: 0` on the scrollback changed to `20px` so the last segment has breathing room before the chatbox. The chatbox wrapper `padding-top` is already 0 — no spacer div needed.
+- [x] T20.3 Remove the hack. complexity: [low]
+  > `border-top: 20px solid var(--bg-root)` and its comment removed from `app/views/conversations/show.html.erb`. The gap is now handled by `scroll-padding-bottom` (CSS) + `padding-bottom: 20px` on the scrollback (spacing).
+- [x] T20.4 Smoke: long scroll never collides. complexity: [manual]
+- [x] T20.5 Commit: `Proper chatbox/scrollback spacing`. complexity: [manual]
 
 ## P21 — Auto-scroll on send
 

@@ -81,6 +81,14 @@ html {
   padding: 2px 0;
 }
 
+/* ── Scrollback container ────────────────────────────────────── */
+
+#pito-scrollback {
+  /* Ensures the last item scrolls up far enough to clear the chatbox,
+     so it never ends up obscured behind the fixed bottom panel. */
+  scroll-padding-bottom: 20px;
+}
+
 /* ── Hide scrollbar, keep scrolling ──────────────────────────── */
 
 .pito-hide-scrollbar {

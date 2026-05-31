@@ -27,6 +27,16 @@ RSpec.describe "Conversation requests", type: :request do
       expect(response.body).to include('id="pito-scrollback"')
     end
 
+    it "scrollback padding-bottom provides gap instead of the border-top hack" do
+      get conversation_path(uuid: conversation.uuid)
+      expect(response.body).to include("padding: 32px 50px 20px")
+    end
+
+    it "does not use the invisible border-top colour hack" do
+      get conversation_path(uuid: conversation.uuid)
+      expect(response.body).not_to include("border-top")
+    end
+
     it "includes the uuid in the chat form" do
       get conversation_path(uuid: conversation.uuid)
       expect(response.body).to include(conversation.uuid)
