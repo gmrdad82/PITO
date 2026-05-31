@@ -522,15 +522,15 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T17.5 Cable stream → `pito:conversation:<uuid>`. complexity: [low]
 - [x] T17.6 `current_conversation` resolves by uuid param. complexity: [high]
 - [x] T17.7 Request specs: `/chat/:uuid` renders; unknown uuid → 404. complexity: [low]
-- [ ] T17.8 Commit: `Conversation uuid + /chat/:uuid routing`. complexity: [manual]
+- [x] T17.8 Commit: `Conversation uuid + /chat/:uuid routing`. complexity: [manual]
 
 ## P18 — Root start screen
 
-- [ ] T18.1 `/` renders centered chatbox + logo. complexity: [low]
-- [ ] T18.2 No scrollback on `/`. complexity: [low]
-- [ ] T18.3 Chatbox form on `/` posts to `POST /chat`. complexity: [low]
-- [ ] T18.4 Smoke. complexity: [manual]
-- [ ] T18.5 Commit: `Root / = centered start screen`. complexity: [manual]
+- [x] T18.1 `/` renders centered chatbox + logo. complexity: [low]
+- [x] T18.2 No scrollback on `/`. complexity: [low]
+- [x] T18.3 Chatbox form on `/` posts to `POST /chat`. complexity: [low]
+- [x] T18.4 Smoke. complexity: [manual]
+- [x] T18.5 Commit: `Root / = centered start screen`. complexity: [manual]
 
 ## P19 — Caret rework
 

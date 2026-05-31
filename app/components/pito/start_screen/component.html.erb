@@ -20,12 +20,19 @@
     <%# 32px gap %>
     <div class="h-8"></div>
 
-    <%# Chatbox — start state, max-width 600px. DO NOT MOVE. %>
+    <%# Chatbox form — posts to POST /chat (no uuid = new conversation) %>
     <div class="w-full max-w-[600px] px-4">
-      <%= render(Pito::Shell::ChatboxComponent.new(
-            state: :start,
-            placeholder_key: "pito.shell.chatbox.start_placeholder"
-          )) %>
+      <%= form_with url: chat_path, method: :post,
+                    data: { controller: "pito--chat-form", turbo: true },
+                    class: "chatbox-form" do |form| %>
+        <%= form.hidden_field :input, data: { pito__chat_form_target: "hiddenInput" } %>
+
+        <%= render(Pito::Shell::ChatboxComponent.new(
+              state: :start,
+              placeholder_key: "pito.shell.chatbox.start_placeholder",
+              input_data: { pito__chat_form_target: "inputField" }
+            )) %>
+      <% end %>
     </div>
 
     <%# Mini-status row — right-aligned to chatbox right edge %>

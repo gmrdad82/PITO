@@ -23,6 +23,8 @@ class ChatController < ApplicationController
 
     if params[:uuid].present?
       head :no_content
+    elsif html_request?
+      redirect_to conversation_path(uuid: conversation.uuid)
     else
       render json: { uuid: conversation.uuid }, status: :created
     end
@@ -31,6 +33,10 @@ class ChatController < ApplicationController
   private
 
   # ── Conversation resolution ─────────────────────────────────────────
+
+  def html_request?
+    request.format.html? || request.headers["Accept"]&.include?("text/html")
+  end
 
   def resolve_conversation
     if params[:uuid].present?

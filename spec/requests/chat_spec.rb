@@ -214,12 +214,11 @@ RSpec.describe "Chat requests", type: :request do
     context "without a uuid (first message)" do
       let(:params) { { input: "/help" } }
 
-      it "returns 201 Created with the new conversation uuid" do
+      it "redirects to /chat/:uuid" do
         post "/chat", params: params
-        expect(response).to have_http_status(:created)
-        json = response.parsed_body
-        expect(json["uuid"]).to be_present
-        expect(Conversation.find_by(uuid: json["uuid"])).to be_present
+        expect(response).to redirect_to(%r{/chat/[a-f0-9\-]+\z})
+        uuid = URI.parse(response.headers["Location"]).path.split("/").last
+        expect(Conversation.find_by(uuid: uuid)).to be_present
       end
 
       it "creates a new Conversation" do
@@ -230,8 +229,9 @@ RSpec.describe "Chat requests", type: :request do
 
       it "creates the Turn on the new conversation" do
         post "/chat", params: params
-        json = response.parsed_body
-        conv = Conversation.find_by!(uuid: json["uuid"])
+        expect(response).to redirect_to(%r{/chat/[a-f0-9\-]+\z})
+        uuid = URI.parse(response.headers["Location"]).path.split("/").last
+        conv = Conversation.find_by!(uuid: uuid)
         expect(conv.turns.count).to eq(1)
         expect(conv.turns.first.input_text).to eq("/help")
       end
