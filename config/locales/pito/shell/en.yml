@@ -3,15 +3,19 @@ en:
     shell:
       chatbox:
         placeholder: "Type a command or message…"
+        hints:
+          authenticate: "/authenticate 123456 to authenticate"
+          help: "/help to see available commands"
         filter:
           channel_label: "Channel"
           period_label: "Period"
       mini_status:
         authenticated: "Authenticated"
-        anonymous: "Anonymous"
-        not_authenticated: "Anonymous"
+        anonymous: "not authenticated"
+        not_authenticated: "not authenticated"
         notifications_count:
           one: "%{count} notification"
           other: "%{count} notifications"
-        commands_hint: "/"
-        commands_label: "for commands"
+        commands_hint: "ctrl+k"
+        commands_hint_mac: "cmd+k"
+        commands_label: "commands"

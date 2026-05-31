@@ -534,14 +534,14 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ## P19 — Caret rework
 
-- [ ] T19.1 Evaluate `Cursor::Component` vs a real caret; record verdict. complexity: [high]
-- [ ] T19.2 If unsuitable: real caret on the chatbox `<textarea>`/input. complexity: [high]
-- [ ] T19.3 Hint only when empty; caret at the hint's first char when empty. complexity: [high]
-- [ ] T19.4 Caret follows after last typed char. complexity: [low]
-- [ ] T19.5 Caret color via token/class. complexity: [low]
-- [ ] T19.6 Remove fake-cursor component if dropped. complexity: [low]
-- [ ] T19.7 Smoke. complexity: [manual]
-- [ ] T19.8 Commit: `Real caret over hint / following input`. complexity: [manual]
+- [x] T19.1 Evaluate `Cursor::Component` vs a real caret; record verdict. complexity: [high]
+- [x] T19.2 If unsuitable: real caret on the chatbox `<textarea>`/input. complexity: [high]
+- [x] T19.3 Hint only when empty; caret at the hint's first char when empty. complexity: [high]
+- [x] T19.4 Caret follows after last typed char. complexity: [low]
+- [x] T19.5 Caret color via token/class. complexity: [low]
+- [x] T19.6 Remove fake-cursor component if dropped. complexity: [low]
+- [x] T19.7 Smoke. complexity: [manual]
+- [x] T19.8 Commit: `Real caret over hint / following input`. complexity: [manual]
 
 ## P20 — Chatbox border-top hack → proper scroll
 

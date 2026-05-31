@@ -10,11 +10,11 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         expect(node.css("div.chatbox-wrapper")).not_to be_empty
       end
 
-      it "renders the textarea with an empty placeholder attribute" do
+      it "renders the textarea with the sampled auth hint (unauthenticated → authenticate)" do
         node = render_inline(described_class.new)
         textarea = node.css("textarea")
         expect(textarea).not_to be_empty
-        expect(textarea.first["placeholder"]).to eq("")
+        expect(textarea.first["placeholder"]).to include("/authenticate")
       end
     end
 
@@ -80,10 +80,28 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         expect(node.css("div.flex.flex-col")).not_to be_empty
       end
 
-      it "renders the ghost cursor character" do
+      it "renders the field-wrap div with the terminal-caret Stimulus controller" do
         node = render_inline(described_class.new)
-        # Cursor component renders the "/" char
-        expect(node.to_html).to include("/")
+        field_wrap = node.css("div.pito-chatbox__field-wrap").first
+        expect(field_wrap).not_to be_nil
+        expect(field_wrap["data-controller"]).to eq("pito--terminal-caret")
+      end
+
+      it "renders the textarea with the terminal-caret field target" do
+        node = render_inline(described_class.new)
+        textarea = node.css("textarea[data-pito--terminal-caret-target='field']").first
+        expect(textarea).not_to be_nil
+      end
+
+      it "renders the terminal-caret span with the block target" do
+        node = render_inline(described_class.new)
+        caret = node.css("span.terminal-caret[data-pito--terminal-caret-target='block']").first
+        expect(caret).not_to be_nil
+      end
+
+      it "does not render a pito-cursor span in the chatbox" do
+        node = render_inline(described_class.new)
+        expect(node.css("span.pito-cursor")).to be_empty
       end
     end
   end

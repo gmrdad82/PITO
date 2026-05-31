@@ -81,21 +81,6 @@ html {
   padding: 2px 0;
 }
 
-/* ── Ghost cursor: outline by default, solid on chatbox hover ── */
-
-.pito-cursor--ghost {
-  border: 1px solid var(--cursor-color, var(--fg-default));
-  background: transparent;
-  color: var(--cursor-color, var(--fg-default));
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.chatbox-wrapper:hover .pito-cursor--ghost {
-  background: var(--cursor-color, var(--fg-default));
-  color: var(--bg-root);
-  border-color: transparent;
-}
-
 /* ── Hide scrollbar, keep scrolling ──────────────────────────── */
 
 .pito-hide-scrollbar {
@@ -296,6 +281,11 @@ html {
   85.5%            { background: var(--brand-pito);    opacity: .4; }
   90.75%, 100%     { background: var(--brand-pito);    opacity: .15; }
 }
+@keyframes terminal-caret-pulse {
+  0%   { opacity: 1; }
+  75%  { opacity: 0.15; } /* slow fade-out over ~3/4 of the cycle */
+  100% { opacity: 1; }    /* rapid fade-in over the last ~1/4 */
+}
 
 /* ── Segment component ──────────────────────────────────────── */
 
@@ -341,11 +331,47 @@ html {
 /* ── Chatbox component ──────────────────────────────────────── */
 
 .pito-chatbox__input {
-  caret-color: var(--accent-purple);
+  caret-color: transparent; /* native caret hidden — the terminal block caret replaces it */
   font-family: inherit;
   font-size: inherit;
   resize: none;
   overflow: hidden;
+  display: block; /* avoid inline-block baseline gap (text drifts up; caret mirror misaligns) */
+  line-height: 20px; /* caret block height syncs to this (see #syncBlockMetrics) */
+}
+
+/* ── Terminal block caret (Pito::TerminalCaretController) ─────── */
+
+.pito-chatbox__field-wrap {
+  position: relative;
+}
+
+/* Taller chatbox: grow ONLY the vertical padding. Horizontal is left at the
+   segment default so the 22px text invariant holds — keeping the input aligned
+   with the scrollback segments and the Channel line. Padding is on the segment
+   content (the visible box), not the field-wrap, so the caret geometry stays put. */
+.chatbox-wrapper .pito-segment__content {
+  padding-block: 20px;
+}
+
+/* T19.5 — Caret color via token/class */
+.terminal-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1ch;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+  background: var(--fg-default);
+  color: var(--bg-root);
+  animation: terminal-caret-pulse 1.4s ease-in-out infinite;
+}
+
+/* Solid (no blink) while the field is focused; blinks only when unfocused. */
+.terminal-caret[data-focused] {
+  animation: none;
 }
 
 .pito-chatbox__filter {

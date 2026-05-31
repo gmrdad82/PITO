@@ -1,28 +1,28 @@
 ---
-- id: 169
+- id: 187
   avatar_url:
   banner_url:
-  created_at: 2026-05-31 21:56:12.081000000 Z
+  created_at: 2026-05-31 22:57:09.678196000 Z
   description:
   handle:
   last_synced_at:
   subscriber_count:
   title: Channel 1
-  updated_at: 2026-05-31 21:56:12.081000000 Z
+  updated_at: 2026-05-31 22:57:09.678196000 Z
   video_count:
   view_count:
   youtube_channel_id: yt_channel_1
   youtube_connection_id:
-- id: 170
+- id: 188
   avatar_url:
   banner_url:
-  created_at: 2026-05-31 21:56:12.088897000 Z
+  created_at: 2026-05-31 22:57:09.686959000 Z
   description:
   handle:
   last_synced_at:
   subscriber_count:
   title: Channel 2
-  updated_at: 2026-05-31 21:56:12.088897000 Z
+  updated_at: 2026-05-31 22:57:09.686959000 Z
   video_count:
   view_count:
   youtube_channel_id: yt_channel_2

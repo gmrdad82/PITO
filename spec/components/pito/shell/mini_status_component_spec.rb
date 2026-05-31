@@ -25,9 +25,9 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
           expect(node.to_html).to include("Authenticated")
         end
 
-        it "does not render 'Anonymous'" do
+        it "does not render the 'not authenticated' label" do
           node = render_inline(described_class.new(state: true))
-          expect(node.to_html).not_to include("Anonymous")
+          expect(node.to_html).not_to include("not authenticated")
         end
 
         it "renders the label inside a span element" do
@@ -38,9 +38,9 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
       end
 
       context "when state is false (anonymous)" do
-        it "renders the 'Anonymous' label" do
+        it "renders the 'not authenticated' label" do
           node = render_inline(described_class.new(state: false))
-          expect(node.to_html).to include("Anonymous")
+          expect(node.to_html).to include("not authenticated")
         end
 
         it "does not render 'Authenticated'" do
@@ -51,10 +51,10 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
     end
 
     context "mode: :start" do
-      it "renders the not_authenticated label ('Anonymous')" do
+      it "renders the not_authenticated label ('not authenticated')" do
         node = render_inline(described_class.new(mode: :start))
-        # pito.shell.mini_status.not_authenticated = "Anonymous"
-        expect(node.to_html).to include("Anonymous")
+        # pito.shell.mini_status.not_authenticated = "not authenticated"
+        expect(node.to_html).to include("not authenticated")
       end
 
       it "does not use connection_label in start mode" do
@@ -94,16 +94,16 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
     end
 
     context "always-present elements" do
-      it "renders the commands hint ('/') in a bold yellow span" do
+      it "renders the commands hint ('ctrl+k') in a bold yellow span" do
         node = render_inline(described_class.new)
         yellow_bold = node.css("span.font-bold.text-yellow")
-        expect(yellow_bold.map(&:text)).to include("/")
+        expect(yellow_bold.map(&:text)).to include("ctrl+k")
       end
 
-      it "renders the 'for commands' label in a dim span" do
+      it "renders the 'commands' label in a dim span" do
         node = render_inline(described_class.new)
         dim_text = node.css("span.text-fg-dim").map(&:text).join
-        expect(dim_text).to include("for commands")
+        expect(dim_text).to include("commands")
       end
 
       it "renders a separator dot in a faded span" do

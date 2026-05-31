@@ -28,6 +28,9 @@ export default class extends Controller {
     this.#syncHidden()
     this.element.requestSubmit()
     this.inputFieldTarget.value = ""
+    // Notify listeners (terminal-caret autosize/render) of the programmatic clear —
+    // assigning `.value` does not fire "input" on its own.
+    this.inputFieldTarget.dispatchEvent(new Event("input", { bubbles: true }))
   }
 
   #syncHidden() {

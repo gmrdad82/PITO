@@ -19,7 +19,6 @@
 
       <%= render(Pito::Shell::ChatboxComponent.new(
             state: :default,
-            placeholder_key: "pito.shell.chatbox.placeholder",
             filter: { channel: "@gmrdad82", period: "7d" },
             input_data: { pito__chat_form_target: "inputField" }
           )) %>
