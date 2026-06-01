@@ -354,6 +354,29 @@ html {
   margin-top: 6px;
 }
 
+/* ── Thinking indicator (P25) ──────────────────────────────── */
+
+.pito-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pito-thinking__braille {
+  display: inline-block;
+  width: 1.2em;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+}
+
+.pito-thinking__word {
+  color: var(--fg-faded);
+}
+
+.pito-thinking__message {
+  color: var(--fg-faded);
+}
+
 /* ── Chatbox component ──────────────────────────────────────── */
 
 .pito-chatbox__input {

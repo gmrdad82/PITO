@@ -31,7 +31,7 @@ RSpec.describe "Authentication via /authenticate", type: :request do
       post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
 
       kinds = last_turn_events.pluck(:kind)
-      expect(kinds).to eq(%w[echo assistant_text])
+      expect(kinds).to eq(%w[echo thinking assistant_text])
       success = last_turn_events.find { |e| e.kind == "assistant_text" }
       expect(success.payload["message_key"]).to eq("pito.auth.authenticated")
     end

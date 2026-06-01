@@ -51,6 +51,35 @@ module Pito
         )
         event
       end
+
+      # Create and broadcast a thinking indicator for a turn.
+      # The word_index is chosen once and frozen in the payload.
+      def emit_thinking(turn:, dictionary:)
+        words = I18n.t("pito.event.thinking.#{dictionary}.doing")
+        payload = { dictionary:, word_index: rand(words.length) }
+        emit(turn:, kind: "thinking", payload:)
+      end
+
+      # Resolve a thinking indicator: update its payload with the resolved state
+      # and elapsed time, then broadcast a Turbo Stream replace.
+      def resolve_thinking(turn:, elapsed_seconds:)
+        event = turn.events.find_by(kind: "thinking")
+        return unless event
+
+        event.update!(
+          payload: event.payload.merge(resolved: true, elapsed_seconds: elapsed_seconds)
+        )
+
+        html    = Pito::Stream::EventRenderer.render(event)
+        helper  = ApplicationController.helpers
+        content = helper.turbo_stream.replace("event_#{event.id}", html)
+
+        Turbo::StreamsChannel.broadcast_stream_to(
+          "pito:conversation:#{@conversation.uuid}",
+          content:
+        )
+        event
+      end
     end
   end
 end

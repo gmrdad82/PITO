@@ -93,7 +93,9 @@ module Pito
         turn = Turn.last_for(@conversation)
         return false unless turn && turn.created_at >= OPEN_TURN_TIMEOUT.ago
 
-        turn.events.where.not(kind: "echo").exists?
+        # A turn is refinement-eligible only if it has actual result events
+        # (beyond echo + thinking).  The thinking indicator is not a result.
+        turn.events.where.not(kind: %w[echo thinking]).exists?
       end
     end
   end

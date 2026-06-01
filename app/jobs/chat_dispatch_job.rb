@@ -45,6 +45,7 @@ class ChatDispatchJob < ApplicationJob
     elapsed = turn.elapsed_seconds
 
     persist_and_broadcast(result, turn, conversation, broadcaster, elapsed)
+    broadcaster.resolve_thinking(turn:, elapsed_seconds: elapsed)
   rescue StandardError => e
     # Surface the error as a visible event in the scrollback so the user isn't
     # left staring at a spinning Braille indicator (P25).
@@ -53,11 +54,14 @@ class ChatDispatchJob < ApplicationJob
 
     conversation = turn.conversation
     turn.update!(completed_at: Time.current) unless turn.completed_at?
-    Pito::Stream::Broadcaster.new(conversation:).emit(
+    elapsed = turn.elapsed_seconds
+    broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+    broadcaster.emit(
       turn:,
       kind: "error",
-      payload: { message_key: "pito.errors.dispatch_failed", message_args: { message: e.message } }
+      payload: { message_key: "pito.errors.dispatch_failed", message_args: { message: e.message }, elapsed_seconds: elapsed }
     )
+    broadcaster.resolve_thinking(turn:, elapsed_seconds: elapsed)
     raise # re-raise so SolidQueue marks the job failed and can retry
   end
 

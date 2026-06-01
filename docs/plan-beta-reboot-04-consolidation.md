@@ -626,16 +626,16 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 > Under the echo; cycles words; resolves to "<Word> for <backend elapsed>s".
 
-- [ ] T25.1 Stimulus `pito--thinking`: Braille spinner + status word, from echo until result. complexity: [high]
-- [ ] T25.2 **Slash** dictionary: Executing, Dispatching, Running, Resolving, Fetching, Querying, Computing, Crunching, Assembling, Routing, Parsing, Processing. complexity: [low]
-- [ ] T25.3 **Chat** dictionary: Thinkering, Pondering, Digesting, Musing, Reasoning, Contemplating, Deliberating, Ruminating, Considering, Reflecting, Brewing, Wondering. complexity: [low]
-- [ ] T25.4 Past-tense completion forms per dictionary. complexity: [low]
-- [ ] T25.5 Both dictionaries in i18n/config (not hardcoded in JS). complexity: [low]
-- [ ] T25.6 Pick the dictionary by leading `/`. complexity: [low]
-- [ ] T25.7 Cycle words while waiting; stop on result. complexity: [high]
-- [ ] T25.8 Replace with "<PastWord> for <elapsed_seconds>s". complexity: [low]
-- [ ] T25.9 Manual: slash vs chat pick the right list; elapsed renders. complexity: [manual]
-- [ ] T25.10 Commit: `Braille thinking indicator + dictionaries`. complexity: [manual]
+- [x] T25.1 Stimulus `pito--thinking`: Braille spinner + status word, from echo until result. complexity: [high]
+- [x] T25.2 **Slash** dictionary: Executing, Dispatching, Running, Resolving, Fetching, Querying, Computing, Crunching, Assembling, Routing, Parsing, Processing. complexity: [low]
+- [x] T25.3 **Chat** dictionary: Thinkering, Pondering, Digesting, Musing, Reasoning, Contemplating, Deliberating, Ruminating, Considering, Reflecting, Brewing, Wondering. complexity: [low]
+- [x] T25.4 Past-tense completion forms per dictionary. complexity: [low]
+- [x] T25.5 Both dictionaries in i18n/config (not hardcoded in JS). complexity: [low]
+- [x] T25.6 Pick the dictionary by leading `/`. complexity: [low]
+- [x] T25.7 Cycle words while waiting; stop on result. complexity: [high]
+- [x] T25.8 Replace with "<PastWord> for <elapsed_seconds>s". complexity: [low]
+- [x] T25.9 Manual: slash vs chat pick the right list; elapsed renders. complexity: [manual]
+- [x] T25.10 Commit: `Braille thinking indicator + dictionaries`. complexity: [manual]
 
 ## P26 — Result Segment
 

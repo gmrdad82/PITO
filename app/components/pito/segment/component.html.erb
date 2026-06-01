@@ -2,7 +2,7 @@
 <%# @background — content background (nil = transparent) %>
 <%# Alignment invariant: text sits 22px from the segment's left edge
     regardless of whether the bar is present. %>
-<div class="pito-segment flex">
+<div class="pito-segment flex"<% if @id %> id="<%= @id %>"<% end %>>
   <% if @accent %>
     <div class="pito-segment__bar" data-accent="<%= @accent %>"></div>
     <div class="pito-segment__gap"></div>

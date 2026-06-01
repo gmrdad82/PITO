@@ -53,13 +53,18 @@ class ChatController < ApplicationController
 
     # Persist echo first, then broadcast (T23.1 + T23.2 / T24.1 + T24.2 — the
     # echo Segment carries the exact submitted text).
+    broadcaster = Pito::Stream::Broadcaster.new(conversation:)
     echo_event = conversation.events.create!(
       turn:,
       position: Event.next_position_for(conversation),
       kind:     "echo",
       payload:  { text: input }
     )
-    Pito::Stream::Broadcaster.new(conversation:).broadcast_event(echo_event)
+    broadcaster.broadcast_event(echo_event)
+
+    # T25: thinking indicator — one per turn, resolved by the backend when the
+    # job completes. The word_index is frozen at creation (survives refresh).
+    broadcaster.emit_thinking(turn:, dictionary: input_kind)
 
     # T23.3: read channel + period from params (defaults until TAB/Shift+TAB land).
     channel = params[:channel].presence || "@all"
@@ -112,6 +117,7 @@ class ChatController < ApplicationController
 
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
     broadcaster.emit(turn:, kind: "echo", payload: { text: masked })
+    broadcaster.emit_thinking(turn:, dictionary: "slash")
 
     code   = input.strip.split(/\s+/, 2)[1].to_s
     result = Pito::Auth::ChatLogin.call(code:, request:)

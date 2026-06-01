@@ -7,9 +7,10 @@ module Pito
       #   :orange, :red, :yellow, :purple. When nil, the bar is omitted.
       # @param background [String, nil] CSS background for the content wrapper
       #   (e.g. "var(--bg-surface)"). When nil, the content area is transparent.
-      def initialize(accent: nil, background: nil)
+      def initialize(accent: nil, background: nil, id: nil)
         @accent = accent
         @background = background
+        @id = id
       end
     end
   end

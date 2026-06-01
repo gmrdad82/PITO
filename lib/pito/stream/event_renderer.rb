@@ -10,7 +10,8 @@ module Pito
         "echo"                => Pito::Event::EchoComponent,
         "assistant_text"      => Pito::Event::AssistantTextComponent,
         "error"               => Pito::Event::ErrorComponent,
-        "confirmation_prompt" => Pito::Event::ConfirmationPromptComponent
+        "confirmation_prompt" => Pito::Event::ConfirmationPromptComponent,
+        "thinking"            => Pito::Event::ThinkingComponent
       }.freeze
 
       PLAN1_COMPONENTS = %w[
@@ -34,10 +35,10 @@ module Pito
       def self.build_component(kind, payload, event: nil)
         if kind == "echo" || kind == "user_message"
           Pito::Event::EchoComponent.new(payload:, event:)
-
+        elsif kind == "thinking"
+          Pito::Event::ThinkingComponent.new(payload:, event:)
         elsif (component_class = COMPONENT_CLASSES[kind])
           component_class.new(payload:)
-
         else
           raise ArgumentError,
             "No component registered for event kind: #{kind.inspect}"

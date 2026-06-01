@@ -10,6 +10,10 @@ RSpec.describe Pito::Stream::Broadcaster do
   let(:turn) { conversation.turns.create!(position: 1, input_kind: "slash", input_text: "/help") }
   let(:broadcaster) { described_class.new(conversation:) }
 
+  def broadcast_html(message)
+    message.is_a?(Hash) ? message.values.join : message.to_s
+  end
+
   describe "#emit" do
     it "persists an event" do
       expect {
@@ -51,10 +55,6 @@ RSpec.describe Pito::Stream::Broadcaster do
   end
 
   describe "#broadcast_event turn grouping" do
-    def broadcast_html(message)
-      message.is_a?(Hash) ? message.values.join : message.to_s
-    end
-
     it "wraps an echo in a #turn_<id> container appended to the scrollback" do
       echo = conversation.events.create!(turn:, position: 1, kind: "echo", payload: { text: "/help" })
 
@@ -77,6 +77,54 @@ RSpec.describe Pito::Stream::Broadcaster do
           html = broadcast_html(msg)
           expect(html).to include(%(target="turn_#{turn.id}"))
         }
+    end
+  end
+
+  describe "#emit_thinking" do
+    it "creates a thinking event with a random word_index" do
+      event = broadcaster.emit_thinking(turn:, dictionary: "slash")
+
+      expect(event.kind).to eq("thinking")
+      expect(event.payload).to include("dictionary" => "slash")
+      expect(event.payload).to have_key("word_index")
+      expect(event.payload["word_index"]).to be_a(Integer)
+      expect(event.payload["word_index"]).to be_between(0, 11)
+    end
+
+    it "broadcasts the thinking event into the turn container" do
+      expect {
+        broadcaster.emit_thinking(turn:, dictionary: "chat")
+      }.to have_broadcasted_to("pito:conversation:#{conversation.uuid}").with { |msg|
+        html = broadcast_html(msg)
+        expect(html).to include(%(target="turn_#{turn.id}"))
+        expect(html).to include("pito-thinking")
+      }
+    end
+  end
+
+  describe "#resolve_thinking" do
+    it "updates the thinking event payload and broadcasts a replace" do
+      thinking = broadcaster.emit_thinking(turn:, dictionary: "slash")
+      turn.update!(completed_at: Time.current)
+
+      expect {
+        broadcaster.resolve_thinking(turn:, elapsed_seconds: 2.5)
+      }.to have_broadcasted_to("pito:conversation:#{conversation.uuid}").with { |msg|
+        html = broadcast_html(msg)
+        expect(html).to include("action=\"replace\"")
+        expect(html).to include(%(target="event_#{thinking.id}"))
+        expect(html).to include("for 2.5s")
+      }
+
+      thinking.reload
+      expect(thinking.payload["resolved"]).to eq(true)
+      expect(thinking.payload["elapsed_seconds"]).to eq(2.5)
+    end
+
+    it "is a no-op when no thinking event exists" do
+      expect {
+        broadcaster.resolve_thinking(turn:, elapsed_seconds: 1.0)
+      }.not_to have_broadcasted_to("pito:conversation:#{conversation.uuid}")
     end
   end
 end

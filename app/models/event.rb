@@ -2,7 +2,7 @@
 
 class Event < ApplicationRecord
   KINDS = %w[
-    echo assistant_text error confirmation_prompt
+    echo assistant_text error confirmation_prompt thinking
     user_message thought tool_output status_footer
   ].freeze
 
