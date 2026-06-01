@@ -117,17 +117,25 @@ class ChatController < ApplicationController
 
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
     broadcaster.emit(turn:, kind: "echo", payload: { text: masked })
-    broadcaster.emit_thinking(turn:, dictionary: "slash")
+
+    thinking = broadcaster.emit_thinking(turn:, dictionary: "slash")
+    started_at = Time.current
 
     code   = input.strip.split(/\s+/, 2)[1].to_s
     result = Pito::Auth::ChatLogin.call(code:, request:)
 
+    broadcaster.resolve_thinking(
+      turn:,
+      elapsed_seconds: (Time.current - started_at).round(1)
+    )
+
     if result.authenticated?
       Current.session = result.session_data
+      greeting = I18n.t("pito.auth.greetings").sample
       broadcaster.emit(
         turn:,
         kind:    "assistant_text",
-        payload: { message_key: "pito.auth.authenticated", message_args: {} }
+        payload: { text: greeting }
       )
     else
       broadcaster.emit(
@@ -147,9 +155,9 @@ class ChatController < ApplicationController
 
   def auth_error_key(status)
     case status
-    when :throttled    then "pito.auth.throttled"
+    when :throttled    then I18n.t("pito.auth.throttles").sample
     when :not_enrolled then "pito.auth.not_enrolled"
-    else                    "pito.auth.failed"
+    else                    I18n.t("pito.auth.failures").sample
     end
   end
 end

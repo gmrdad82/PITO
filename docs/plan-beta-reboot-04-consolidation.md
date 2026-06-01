@@ -644,6 +644,20 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T26.3 Refresh `/chat/:uuid` → echo + result persist in order. complexity: [manual]
 - [x] T26.4 Commit: `Distinct-accent result Segment`. complexity: [manual]
 
+> **Post-P26 additions (session 2026-06-02):**
+>
+> - **Authentication flow overhaul:** `/authenticate` now shows a random greeting from a 106-entry dictionary (e.g. "DNA confirmed. Personality pending.") instead of the static "● auth". Auth errors (`failed`, `throttled`, `required`) also use variant dictionaries so responses feel less robotic.
+> - **Logout:** Added `DELETE /logout` route + `SessionsController` so users can clear the session cookie and re-test authentication without touching DevTools.
+> - **TOTP cleanup:** Removed unused `disable_totp!` method and `pito:tools:auth:reset` rake task — `enroll` simply overwrites the existing seed. Updated specs.
+> - **Audio chirps:** Send/receive MP3 sounds (from Freesound, CC BY 4.0, attributed in README). Send plays immediately on non-empty message submit; receive debounces 400ms after the last backend segment, with overlap guard so it never collides with send. `Ctrl+M` toggles mute; state persisted in `localStorage`; label turns `cyan` when muted.
+> - **Chat form:** Empty Enter no longer triggers `pito:submitted` — dots and audio stay silent.
+> - **Mini status:** `ctrl+m` + `mute` segment placed before `ctrl+k` + `commands`. i18n for all keyboard hints.
+> - **Thinking indicator:** Fixed Braille alignment (verb starts at same X as `/authenticate`). Removed word cycling — word is random at creation, frozen in payload, survives refresh. Template no longer references `data-muted-symbol` (removed).
+> - **Home transition:** Filter line inject uses i18n labels (`Channel` / `Period`) from data attributes.
+> - **README:** Added Sounds section with original Freesound filenames mapped to in-app paths.
+>
+> **Spec count:** 631 examples, 0 failures. Rubocop: 0 offenses.
+
 ## P27 — `/connect` (OAuth, multi-channel)
 
 - [ ] T27.1 `/connect` starts Google OAuth (reuse omniauth init). complexity: [high]

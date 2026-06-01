@@ -1,19 +1,17 @@
-# Pito auth operator tasks — TOTP enrollment + reset.
+# Pito auth operator tasks — TOTP enrollment.
 #
 # These tasks target the singleton-owner model: AppSetting holds the TOTP
-# seed. Both tasks are operator-only shell surfaces; no web equivalent
-# exists. The owner authenticates in the browser by typing
+# seed. Operator-only shell surface; no web equivalent exists.
+# The owner authenticates in the browser by typing
 # `/authenticate <6-digit code>` into the chatbox.
 #
 # Usage:
-#   bin/rails pito:tools:auth:enroll   # fresh TOTP seed
-#   bin/rails pito:tools:auth:reset    # wipe the seed
+#   bin/rails pito:tools:auth:enroll   # fresh TOTP seed (overwrites any existing)
 namespace :pito do
   namespace :tools do
   namespace :auth do
-    desc "Enroll the singleton owner with a fresh TOTP seed."
+    desc "Enroll the singleton owner with a fresh TOTP seed (overwrites existing)."
     task enroll: :environment do
-      AppSetting.disable_totp!
       seed = ROTP::Base32.random_base32
       AppSetting.enroll_totp!(seed: seed)
 
@@ -30,12 +28,6 @@ namespace :pito do
       puts "  #{seed}"
       puts ""
       puts "Done. In your browser, type /authenticate <6-digit code> in the chatbox."
-    end
-
-    desc "Reset TOTP enrollment — drops the seed."
-    task reset: :environment do
-      AppSetting.disable_totp!
-      puts "TOTP reset. Run pito:tools:auth:enroll to enroll a new device."
     end
   end
   end

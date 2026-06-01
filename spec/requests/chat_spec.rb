@@ -239,6 +239,16 @@ RSpec.describe "Chat requests", type: :request do
         post "/chat", params: { input: "", uuid: conversation.uuid }
         expect(response).to have_http_status(:no_content)
       end
+
+      it "does not create a Turn or Event" do
+        expect {
+          post "/chat", params: { input: "", uuid: conversation.uuid }
+        }.not_to change(Turn, :count)
+
+        expect {
+          post "/chat", params: { input: "", uuid: conversation.uuid }
+        }.not_to change(Event, :count)
+      end
     end
 
     context "with blank input and no uuid (home→chat transition step 1)" do

@@ -17,6 +17,9 @@ Rails.application.routes.draw do
   post "/chat", to: "chat#create", as: :chat
   get "/chat/:uuid", to: "conversations#show", as: :conversation
 
+  # Dev helper: clears the session cookie so you can re-test /authenticate
+  delete "/logout", to: "sessions#destroy", as: :logout
+
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 end

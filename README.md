@@ -31,6 +31,13 @@ the rebuild. To try it anyway, start with
 - [`docs/design.md`](docs/design.md) — visual contract, keybindings, terminology
 - [`docs/footage_probe.md`](docs/footage_probe.md) — ffprobe integration, grading detection, rake task usage
 
+## sounds
+
+| event | file | original | source | license |
+|---|---|---|---|---|
+| send | `/sounds/send.mp3` | `vs-pop_5.mp3` | [Pop_5.mp3](https://freesound.org/s/463395/) by Vilkas_Sound | CC BY 4.0 |
+| receive | `/sounds/receive.mp3` | `pop-1.wav` | [Pop 1](https://freesound.org/s/545201/) by theplax | CC BY 4.0 |
+
 ## license
 
 AGPL-3.0 — see [LICENSE](LICENSE). Use it for whatever you like — self-host it,

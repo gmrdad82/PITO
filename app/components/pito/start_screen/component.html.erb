@@ -27,7 +27,10 @@
     <%# chatboxArea: wraps form + mini-status so they animate as a single unit.
         Width constraint lives here (not on children) so w-full on children resolves
         correctly in the items-center flex context. %>
-    <div class="w-full max-w-[600px]" data-pito--home-transition-target="chatboxArea">
+    <div class="w-full max-w-[600px]"
+         data-pito--home-transition-target="chatboxArea"
+         data-filter-channel-label="<%= t("pito.shell.chatbox.filter.channel_label") %>"
+         data-filter-period-label="<%= t("pito.shell.chatbox.filter.period_label") %>">
 
       <div class="px-4">
         <%= form_with url: chat_path, method: :post,

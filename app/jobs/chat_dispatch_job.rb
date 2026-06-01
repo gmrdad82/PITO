@@ -30,7 +30,7 @@ class ChatDispatchJob < ApplicationJob
     # unauthenticated session is refused here with the auth-required error.
     result = if !authenticated
       Pito::Chat::Result::Error.new(
-        message_key: "pito.auth.required",
+        message_key: I18n.t("pito.auth.mandatories").sample,
         message_args: {}
       )
     elsif turn.input_kind == "slash"

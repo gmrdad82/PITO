@@ -47,9 +47,11 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
     end
 
     context "mode: :start" do
-      it "renders only the ○ auth label" do
+      it "renders the ○ auth label and audio hint" do
         node = render_inline(described_class.new(mode: :start))
         expect(node.to_html).to include("○ auth")
+        expect(node.to_html).to include("ctrl+m")
+        expect(node.to_html).to include("mute")
         expect(node.to_html).not_to include("tab")
         expect(node.to_html).not_to include("channels")
         expect(node.to_html).not_to include("shift+tab")
@@ -58,9 +60,11 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
         expect(node.to_html).not_to include("commands")
       end
 
-      it "does not render · separators when in start mode" do
+      it "renders one separator between auth and audio" do
         node = render_inline(described_class.new(mode: :start))
-        expect(node.css("span.text-fg-faded")).to be_empty
+        faded = node.css("span.text-fg-faded")
+        expect(faded.length).to eq(1)
+        expect(faded.first.text).to eq("·")
       end
     end
 
@@ -109,6 +113,28 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
         node = render_inline(described_class.new)
         faded_texts = node.css("span.text-fg-faded").map(&:text)
         expect(faded_texts).to include("·")
+      end
+
+      it "renders the audio hint ('ctrl+m') in a bold yellow span" do
+        node = render_inline(described_class.new)
+        yellow_bold = node.css("span.font-bold.text-yellow")
+        expect(yellow_bold.map(&:text)).to include("ctrl+m")
+      end
+
+      it "renders the 'mute' label in a dim span with the toggle id" do
+        node = render_inline(described_class.new)
+        label = node.css("span#pito-audio-label").first
+        expect(label).not_to be_nil
+        expect(label.text).to include("mute")
+        expect(label["class"]).to include("text-fg-dim")
+      end
+
+      it "places ctrl+m before ctrl+k" do
+        node = render_inline(described_class.new)
+        html = node.to_html
+        ctrl_m_pos = html.index("ctrl+m")
+        ctrl_k_pos = html.index("ctrl+k")
+        expect(ctrl_m_pos).to be < ctrl_k_pos
       end
     end
   end

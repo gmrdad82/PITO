@@ -24,3 +24,6 @@ en:
         commands_hint: "ctrl+k"
         commands_hint_mac: "cmd+k"
         commands_label: "commands"
+        separator: "·"
+        audio_hint: "ctrl+m"
+        audio_label: "mute"

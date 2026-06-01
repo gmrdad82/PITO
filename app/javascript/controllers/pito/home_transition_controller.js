@@ -104,7 +104,10 @@ export default class extends Controller {
     // Re-anchor to center (no transition — was already centered) so animating
     // only `width` makes both edges move outward equally.
     // Easing: ease-in (slow start → accelerates) to match the drop feel.
-    const targetWidth = window.innerWidth - 100
+    // Account for bottom-panel padding (50px × 2) so the chatbox lands at the
+    // exact width it will have in the conversation layout.
+    const BOTTOM_PANEL_PAD = 100  // 50px left + 50px right
+    const targetWidth = window.innerWidth - BOTTOM_PANEL_PAD
     chatbox.getBoundingClientRect()
     chatbox.style.transition = "none"
     chatbox.style.left       = "50%"
@@ -225,7 +228,10 @@ export default class extends Controller {
     if (chatboxWrapper) {
       const filterEl = document.createElement("div")
       filterEl.className = "flex items-center text-fg-faded pito-chatbox__filter"
-      filterEl.innerHTML = '<span>Channel</span><span class="text-cyan ml-1">@all</span><span class="mx-2">·</span><span>Period</span><span class="text-cyan ml-1">7d</span>'
+      const chatboxArea = this.chatboxAreaTarget
+      const channelLabel = chatboxArea.dataset.filterChannelLabel || "Channel"
+      const periodLabel  = chatboxArea.dataset.filterPeriodLabel || "Period"
+      filterEl.innerHTML = `<span>${channelLabel}</span><span class="text-cyan ml-1">@all</span><span class="mx-2">·</span><span>${periodLabel}</span><span class="text-cyan ml-1">7d</span>`
 
       const segmentContent = chatboxWrapper.querySelector(".pito-segment__content > .flex.flex-col")
       if (segmentContent) {

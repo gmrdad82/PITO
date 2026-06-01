@@ -52,13 +52,6 @@ class AppSetting < ApplicationRecord
     )
   end
 
-  def self.disable_totp!
-    singleton_row.update!(
-      totp_seed_encrypted: nil,
-      totp_last_used_step: nil
-    )
-  end
-
   def self.totp_seed
     singleton_row.totp_seed_encrypted
   end

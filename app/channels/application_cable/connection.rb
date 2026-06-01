@@ -6,7 +6,10 @@ module ApplicationCable
       raw = cookies.encrypted[Pito::Auth::SessionCookie::COOKIE_NAME]
 
       if raw
-        data = SessionDataWrapper.new(raw)
+        data = SessionDataWrapper.new(
+          sid: raw["sid"],
+          last_seen_at: raw["last_seen_at"]
+        )
         # Authenticated session: identify by sid for per-session targeting.
         self.session_id = data.expired? ? guest_id : data.sid
       else

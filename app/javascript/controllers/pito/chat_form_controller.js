@@ -24,15 +24,17 @@ export default class extends Controller {
   handleKeydown(event) {
     if (event.key !== "Enter" || event.shiftKey) return
 
+    const hasInput = this.inputFieldTarget.value.trim().length > 0
     event.preventDefault()
     this.#syncHidden()
     this.element.requestSubmit()
     this.inputFieldTarget.value = ""
-    // Notify listeners (terminal-caret autosize/render) of the programmatic clear —
-    // assigning `.value` does not fire "input" on its own.
     this.inputFieldTarget.dispatchEvent(new Event("input", { bubbles: true }))
-    // Signal the scrollback controller to scroll to bottom regardless of lock.
-    document.dispatchEvent(new CustomEvent("pito:submitted"))
+
+    // Only signal "submitted" when there is actual input — empty Enter is silent.
+    if (hasInput) {
+      document.dispatchEvent(new CustomEvent("pito:submitted"))
+    }
   }
 
   #syncHidden() {

@@ -27,13 +27,14 @@ RSpec.describe "Authentication via /authenticate", type: :request do
       expect(Turn.pluck(:input_text).join).not_to include(totp.now)
     end
 
-    it "emits an authenticated assistant_text event" do
+    it "emits a greeting assistant_text event" do
       post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
 
       kinds = last_turn_events.pluck(:kind)
       expect(kinds).to eq(%w[echo thinking assistant_text])
       success = last_turn_events.find { |e| e.kind == "assistant_text" }
-      expect(success.payload["message_key"]).to eq("pito.auth.authenticated")
+      greetings = I18n.t("pito.auth.greetings")
+      expect(greetings).to include(success.payload["text"])
     end
 
     it "sets the session cookie" do
@@ -47,7 +48,8 @@ RSpec.describe "Authentication via /authenticate", type: :request do
 
       post "/chat", params: { input: "/help", uuid: conversation.uuid }
       expect(last_turn_events.pluck(:kind)).to include("echo")
-      expect(last_turn_events.none? { |e| e.payload["message_key"] == "pito.auth.required" }).to be true
+      mandatories = I18n.t("pito.auth.mandatories")
+      expect(last_turn_events.none? { |e| mandatories.include?(e.payload["message_key"]) }).to be true
     end
   end
 
@@ -56,7 +58,8 @@ RSpec.describe "Authentication via /authenticate", type: :request do
       post "/chat", params: { input: "/authenticate 000000", uuid: conversation.uuid }
 
       error = last_turn_events.find { |e| e.kind == "error" }
-      expect(error.payload["message_key"]).to eq("pito.auth.failed")
+      failures = I18n.t("pito.auth.failures")
+      expect(failures).to include(error.payload["message_key"])
       expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_blank
     end
   end
@@ -66,18 +69,20 @@ RSpec.describe "Authentication via /authenticate", type: :request do
     # exists after the job runs. The echo is persisted synchronously by the
     # controller and is present immediately.
 
-    it "refuses a slash command with pito.auth.required (after the job runs)" do
+    it "refuses a slash command with an auth-required error (after the job runs)" do
       perform_enqueued_jobs { post "/chat", params: { input: "/help", uuid: conversation.uuid } }
 
       error = last_turn_events.find { |e| e.kind == "error" }
-      expect(error.payload["message_key"]).to eq("pito.auth.required")
+      mandatories = I18n.t("pito.auth.mandatories")
+      expect(mandatories).to include(error.payload["message_key"])
     end
 
-    it "refuses a chat message with pito.auth.required (after the job runs)" do
+    it "refuses a chat message with an auth-required error (after the job runs)" do
       perform_enqueued_jobs { post "/chat", params: { input: "list videos", uuid: conversation.uuid } }
 
       error = last_turn_events.find { |e| e.kind == "error" }
-      expect(error.payload["message_key"]).to eq("pito.auth.required")
+      mandatories = I18n.t("pito.auth.mandatories")
+      expect(mandatories).to include(error.payload["message_key"])
     end
 
     it "echoes the refused input synchronously (before the job runs)" do
