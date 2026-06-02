@@ -22,7 +22,4 @@ Rails.application.routes.draw do
 
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Segment / component visual review — development only
-  get "/demo", to: "demo#show", as: :demo if Rails.env.development?
 end
