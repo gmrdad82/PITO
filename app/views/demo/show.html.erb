@@ -83,7 +83,7 @@
           confirmation_handle: "alpha-1322",
           authenticated: true
         },
-        event: OpenStruct.new(created_at: fake_time)
+        event: fake_event
       ) %>
 
   <%= section.call("Confirmation prompt — PROCESSING (Braille + verb, job running)") %>
@@ -95,7 +95,7 @@
           processing_word_index: 2,
           authenticated: true
         },
-        event: OpenStruct.new(created_at: fake_time)
+        event: fake_event
       ) %>
 
   <%= section.call("Confirmation prompt — RESOLVED: cancelled") %>
@@ -108,7 +108,7 @@
           outcome_text: "Alright, I won't disconnect from this channel.",
           authenticated: true
         },
-        event: OpenStruct.new(created_at: fake_time)
+        event: fake_event
       ) %>
 
   <%= section.call("Confirmation prompt — RESOLVED: confirmed") %>
@@ -121,7 +121,7 @@
           outcome_text: "Disconnected from @gmrdad82. Deleted 42 videos.",
           authenticated: true
         },
-        event: OpenStruct.new(created_at: fake_time)
+        event: fake_event
       ) %>
 
   <%#──────────────────────────────────────────────────────────────────────%>
