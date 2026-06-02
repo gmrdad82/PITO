@@ -702,16 +702,33 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T28.0.c `/connect` not-configured error: always-visible credential table (client_id, client_secret, redirect_uri, api_key) with MISSING/[set] colour coding. complexity: [low]
 - [x] T28.0.d Chatbox filter labels lowercase (`Channel` → `channel`, `Period` → `period`). complexity: [low]
 - [x] T28.0.e `/config --help` + `/config <provider> --help`; fix URL kwarg parsing (`localhost:3027` no longer treated as kwarg key). complexity: [low]
+- [x] T28.0.f Docker: `bin/boot [--dev]`, named volumes for Postgres + ActiveStorage, `Dockerfile.dev` + `docker-compose.dev.yml`, squash migrations to single baseline. complexity: [low]
 
-- [ ] T28.1 Resolve target channel by `@handle` or id. complexity: [low]
-- [ ] T28.2 `confirmation_prompt` Segment describing the cascade. complexity: [low]
-- [ ] T28.3 Wire `/confirm` / `/cancel`. complexity: [high]
-- [ ] T28.4 On confirm: delete the channel + its videos. complexity: [low]
-- [ ] T28.5 If last channel on its connection, delete the `YoutubeConnection`. complexity: [low]
-- [ ] T28.6 Result Segment confirms removal. complexity: [low]
-- [ ] T28.7 Specs. complexity: [low]
-- [ ] T28.8 Smoke. complexity: [manual]
-- [ ] T28.9 Commit: `/disconnect with confirmation + cascade`. complexity: [manual]
+- [ ] T28.1 `/disconnect` handler skeleton: register in registry, resolve target channel by YouTube `@handle` (partial match) or numeric id. Error segment if not found. complexity: [low]
+
+- [ ] T28.2a `#handle` generation module: `GREEK_WORDS` constant (24 names: alpha…omega) + 4-digit random (1000–9999). `HandleGenerator.call(conversation)` generates a handle, retries until unique across the database (queries `confirmation_prompt` event payloads). complexity: [low]
+
+- [ ] T28.2b Attach handle to `confirmation_prompt` event: store as `payload[:confirmation_handle]`. Update `EventPayload` validator to accept it. complexity: [low]
+
+- [ ] T28.2c `ConfirmationPromptComponent`: render `#handle` as small faded text ABOVE the segment bar (outside `Pito::Segment::Component`), then the segment body describes the cascade (channel title, video count). Resolved-state renders differently (confirmed/cancelled outcome + summary) via `payload[:resolved]` + `payload[:outcome]`. complexity: [low]
+
+- [ ] T28.3a `ChatController`: detect `#word-digits (confirm|cancel)` pattern at start of input. Route to `ConfirmationRouter`. Emit NO echo segment, respond 204. complexity: [low]
+
+- [ ] T28.3b `ConfirmationRouter`: look up pending `confirmation_prompt` event by handle in the current conversation (must be unresolved). Enqueue `ConfirmationDispatchJob` with `event_id:` and `action: :confirm|:cancel`. complexity: [low]
+
+- [ ] T28.3c Cancel path in `ConfirmationDispatchJob`: update event payload (`resolved: true, outcome: :cancelled`), broadcast Turbo Stream replace of the event's DOM node with the cancelled-state component. complexity: [low]
+
+- [ ] T28.4 Confirm path — disconnect cascade: delete all `Video` records for the channel, then delete the `Channel`. complexity: [low]
+
+- [ ] T28.5 Post-cascade: if the `YoutubeConnection` has no remaining channels, delete it too. complexity: [low]
+
+- [ ] T28.6 Confirm path finalise: update event payload (`resolved: true, outcome: :confirmed, summary: "Deleted @handle + N videos"`), broadcast Turbo Stream replace with confirmed-state component. complexity: [low]
+
+- [ ] T28.7 Specs: handle generation uniqueness, ConfirmationPromptComponent (above-segment handle, both pending + resolved states), ChatController routes `#handle` without echo, cancel + confirm paths end-to-end. complexity: [low]
+
+- [ ] T28.8 Smoke (`bin/boot --dev`): `/connect` → add channel → `/disconnect @handle` → `#handle confirm` → verify channel + videos gone from DB. complexity: [manual]
+
+- [ ] T28.9 Commit: `/disconnect` + `#handle` confirmation system. complexity: [manual]
 
 ## P29 — TAB channel cycling
 
