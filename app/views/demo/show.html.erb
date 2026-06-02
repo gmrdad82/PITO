@@ -1,9 +1,7 @@
 <%# /demo — visual inventory of every segment kind.
     Development only. Use this page to review styling before building real flows. %>
 
-<% fake_time = Time.zone.local(2026, 6, 2, 14, 32, 0) %>
-<% FakeEvent = Struct.new(:created_at, :id, :turn) unless defined?(FakeEvent) %>
-<% fake_event = FakeEvent.new(fake_time, nil, nil) %>
+<% fake_event = @fake_event %>
 
 <div style="padding: 40px 50px 80px; max-width: 720px;">
 
