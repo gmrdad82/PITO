@@ -43,7 +43,7 @@ class Channel
       class TransientError < Error; end
       class PermanentError < Error; end
 
-      AUDIT_KIND = YoutubeApiCall::KIND_ANALYTICS_V2
+      AUDIT_KIND = "analytics_v2".freeze
       AUDIT_ENDPOINT = "reports.query".freeze
 
       OUTCOME_OK = "succeeded".freeze
