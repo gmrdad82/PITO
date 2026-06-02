@@ -38,6 +38,8 @@ module Pito
           Pito::Event::EchoComponent.new(payload:, event:)
         elsif kind == "thinking"
           Pito::Event::ThinkingComponent.new(payload:, event:)
+        elsif kind == "confirmation_prompt"
+          Pito::Event::ConfirmationPromptComponent.new(payload:, event:)
         elsif (component_class = COMPONENT_CLASSES[kind])
           component_class.new(payload:)
         else

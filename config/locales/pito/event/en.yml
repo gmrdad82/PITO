@@ -111,6 +111,29 @@ en:
             - "Cranked the hamster wheel"
             - "Tickled the mainframe"
             - "Consulted the manual nobody wrote"
+        confirmation:
+          doing:
+            - "Weighing"
+            - "Deliberating"
+            - "Reckoning"
+            - "Tallying the casualties"
+            - "Counting the cost"
+            - "Contemplating the damage"
+            - "Arming the cascade"
+            - "Preparing to execute"
+            - "Considering consequences"
+            - "Accounting for the wreckage"
+          done:
+            - "Weighed"
+            - "Deliberated"
+            - "Reckoned"
+            - "Tallied the casualties"
+            - "Counted the cost"
+            - "Contemplated the damage"
+            - "Armed the cascade"
+            - "Executed"
+            - "Considered consequences"
+            - "Accounted for the wreckage"
         chat:
           doing:
             - "Thinkering"

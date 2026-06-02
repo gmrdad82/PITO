@@ -3,72 +3,117 @@
 require "rails_helper"
 
 RSpec.describe Pito::Event::ConfirmationPromptComponent do
-  let(:payload) do
-    {
-      prompt_key: "pito.slash.confirm_demo.prompt",
-      command_text: "/confirm_demo"
-    }
+  let(:body_text) { "You're about to disconnect from @gmrdad82." }
+
+  let(:pending_payload) do
+    { body: body_text, confirmation_handle: "alpha-1322", authenticated: true }
   end
 
-  describe "#initialize" do
-    it "resolves the prompt via I18n" do
-      comp = described_class.new(payload: payload)
-      node = render_inline(comp)
+  describe "orange accent" do
+    it "renders data-accent='orange'" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.css(".pito-segment__bar").first["data-accent"]).to eq("orange")
+    end
+  end
+
+  describe "body text" do
+    it "renders body: text" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.css("span.text-fg").first.text).to include("@gmrdad82")
+    end
+
+    it "falls back to prompt_key i18n for legacy payloads" do
+      node = render_inline(described_class.new(
+        payload: { prompt_key: "pito.slash.confirm_demo.prompt" }
+      ))
       expect(node.css("span.text-fg").first.text).to include("Confirm running this demo command?")
     end
+  end
 
-    it "stores command_text as a string" do
-      comp = described_class.new(payload: payload)
-      node = render_inline(comp)
-      expect(node.css("span.text-cyan").text).to include("/confirm_demo")
+  describe "meta line" do
+    it "shows the #handle in the meta line" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      meta = node.css(".pito-echo__meta").first
+      expect(meta.text).to include("#alpha-1322")
     end
 
-    it "coerces nil command_text to an empty string" do
-      comp = described_class.new(payload: { prompt_key: "pito.slash.confirm_demo.prompt" })
-      node = render_inline(comp)
-      expect(node.css("span.text-cyan").text.strip).to eq("")
+    it "shows @all when authenticated" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.css(".pito-echo__meta span.text-cyan").text).to include("@all")
     end
 
-    it "interpolates prompt_args into the translation" do
-      comp = described_class.new(
-        payload: {
-          prompt_key: "pito.slash.help.entry",
-          prompt_args: { verb: "test", description: "Test cmd" },
-          command_text: ""
-        }
+    it "hides @all when authenticated: false" do
+      payload = pending_payload.merge(authenticated: false)
+      node = render_inline(described_class.new(payload:))
+      expect(node.css(".pito-echo__meta span.text-cyan")).to be_empty
+    end
+
+    it "shows no handle when confirmation_handle is absent" do
+      node = render_inline(described_class.new(payload: { body: body_text }))
+      expect(node.css(".pito-echo__meta").text).not_to include("#")
+    end
+  end
+
+  describe "pending state (default)" do
+    it "renders no processing indicator" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.css(".pito-thinking")).to be_empty
+    end
+
+    it "renders no outcome section" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.css(".border-t")).to be_empty
+    end
+  end
+
+  describe "processing state" do
+    let(:payload) { pending_payload.merge(processing: true, processing_word_index: 2) }
+
+    it "renders the Braille thinking spinner" do
+      node = render_inline(described_class.new(payload:))
+      expect(node.css(".pito-thinking")).not_to be_empty
+    end
+
+    it "renders a processing word from the confirmation dictionary" do
+      node = render_inline(described_class.new(payload:))
+      expect(node.css(".pito-thinking__word").text).not_to be_empty
+    end
+  end
+
+  describe "resolved: cancelled" do
+    let(:payload) do
+      pending_payload.merge(
+        resolved: true,
+        outcome: "cancelled",
+        outcome_text: "Alright, I won't disconnect from this channel."
       )
-      node = render_inline(comp)
-      expect(node.css("span.text-fg").first.text).to include("/test")
-      expect(node.css("span.text-fg").first.text).to include("Test cmd")
+    end
+
+    it "renders no processing indicator" do
+      node = render_inline(described_class.new(payload:))
+      expect(node.css(".pito-thinking")).to be_empty
+    end
+
+    it "renders the outcome text after a hairline" do
+      node = render_inline(described_class.new(payload:))
+      outcome_div = node.css(".border-t").first
+      expect(outcome_div).not_to be_nil
+      expect(outcome_div.text).to include("won't disconnect")
     end
   end
 
-  describe "rendered output" do
-    subject(:node) { render_inline(described_class.new(payload: payload)) }
-
-    it "renders the prompt text in span.text-fg" do
-      expect(node.css("span.text-fg").first.text).to include("Confirm running this demo command?")
+  describe "resolved: confirmed" do
+    let(:payload) do
+      pending_payload.merge(
+        resolved: true,
+        outcome: "confirmed",
+        outcome_text: "Disconnected from @gmrdad82. Deleted 42 videos."
+      )
     end
 
-    it "renders the command text in span.text-cyan" do
-      expect(node.css("span.text-cyan").text).to include("/confirm_demo")
-    end
-
-    it "renders the confirm hint text" do
-      # pito.slash.confirm_hint => "type /confirm or /cancel"
-      hint_span = node.css("span.text-fg-dim")
-      expect(hint_span.text).to include("/confirm")
-      expect(hint_span.text).to include("/cancel")
-    end
-
-    it "renders an accent bar with data-accent='orange'" do
-      bar = node.css(".pito-segment__bar").first
-      expect(bar).not_to be_nil
-      expect(bar["data-accent"]).to eq("orange")
-    end
-
-    it "wraps content in a flex column container" do
-      expect(node.css("div.flex.flex-col").first).not_to be_nil
+    it "renders the outcome text after a hairline" do
+      node = render_inline(described_class.new(payload:))
+      expect(node.css(".border-t").first.text).to include("Deleted 42 videos")
     end
   end
 end
