@@ -190,6 +190,9 @@ jobs:
       - name: Set up database
         run: bin/rails db:create db:migrate db:seed
 
+      - name: Build Tailwind CSS
+        run: bundle exec rails tailwindcss:build
+
       - name: Set up parallel test databases
         # parallel_tests creates `pito_test`, `pito_test2`, ... one per CPU.
         # `parallel:create` is a no-op for the existing `pito_test` provisioned
