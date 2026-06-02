@@ -26,6 +26,53 @@ en:
       config:
         descriptions:
           config: "Read or write install-wide credentials (/config google|voyage|igdb|webhook)"
+        help:
+          general: |
+            /config <provider> [key=value …]
+
+            Providers:
+              google   — OAuth + YouTube API credentials
+              voyage   — Voyage AI embedding key
+              igdb     — IGDB game database client credentials
+              webhook  — Slack / Discord incoming webhook URLs
+
+            /config <provider> --help   for provider-level key reference.
+            Omit all keys to show current credential status.
+          providers:
+            google: |
+              /config google [key=value …]
+
+              Keys:
+                client_id=      Google OAuth client ID (Google Cloud Console)
+                client_secret=  Google OAuth client secret
+                redirect_uri=   OAuth callback URL (e.g. http://localhost:3027/auth/google_oauth2/callback)
+                api_key=        Google API key (YouTube Data v3)
+
+              Omit all keys to show current credential status.
+              Run /connect after configuring to start the OAuth flow.
+            voyage: |
+              /config voyage [key=value …]
+
+              Keys:
+                api_key=   Voyage AI API key
+
+              Omit to show current status.
+            igdb: |
+              /config igdb [key=value …]
+
+              Keys:
+                client_id=     IGDB / Twitch client ID
+                client_secret= IGDB / Twitch client secret
+
+              Omit to show current status.
+            webhook: |
+              /config webhook [key=value …]
+
+              Keys:
+                slack=    Slack incoming webhook URL
+                discord=  Discord webhook URL
+
+              Omit to show current status.
         status:
           ok: "OK"
           missing: "MISSING"

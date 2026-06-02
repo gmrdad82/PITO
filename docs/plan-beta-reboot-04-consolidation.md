@@ -695,14 +695,13 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 - [ ] T27.10 Commit: `/connect OAuth + multi-channel picker`. complexity: [manual]
 
-## P28.0 — UX polish (blank-home-v1 branch)
+## P28 — `/disconnect @handle|id`
 
 - [x] T28.0.a Auth-aware echo: hide `· @all` channel pill on unauthenticated turns. complexity: [low]
 - [x] T28.0.b `/connect` emit echo before error (fix Turbo silent-drop / must-refresh bug). complexity: [low]
-- [x] T28.0.c `/connect` not-configured error: rich credential-check table (client_id, client_secret, redirect_uri, api_key) with MISSING/[set] colour coding, no expand. complexity: [low]
+- [x] T28.0.c `/connect` not-configured error: always-visible credential table (client_id, client_secret, redirect_uri, api_key) with MISSING/[set] colour coding. complexity: [low]
 - [x] T28.0.d Chatbox filter labels lowercase (`Channel` → `channel`, `Period` → `period`). complexity: [low]
-
-## P28 — `/disconnect @handle|id`
+- [x] T28.0.e `/config --help` + `/config <provider> --help`; fix URL kwarg parsing (`localhost:3027` no longer treated as kwarg key). complexity: [low]
 
 - [ ] T28.1 Resolve target channel by `@handle` or id. complexity: [low]
 - [ ] T28.2 `confirmation_prompt` Segment describing the cascade. complexity: [low]

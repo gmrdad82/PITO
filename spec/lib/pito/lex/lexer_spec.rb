@@ -132,6 +132,34 @@ RSpec.describe Pito::Lex::Lexer do
       end
     end
 
+    context "with URL values" do
+      it "tokenizes a bare http URL as a single word token" do
+        result = tokens("http://localhost:3027/auth/google_oauth2/callback")
+        expect(result.map(&:type)).to eq(%i[word eof])
+        expect(result.first.value).to eq("http://localhost:3027/auth/google_oauth2/callback")
+      end
+
+      it "tokenizes https URLs as a single word token" do
+        result = tokens("https://example.com/path?foo=1&bar=2")
+        expect(result.map(&:type)).to eq(%i[word eof])
+        expect(result.first.value).to eq("https://example.com/path?foo=1&bar=2")
+      end
+
+      it "tokenizes kwarg=URL as word equals word (not split on the port colon)" do
+        result = tokens("redirect_uri=http://localhost:3027/auth/callback")
+        expect(result.map(&:type)).to eq(%i[word equals word eof])
+        expect(result[2].value).to eq("http://localhost:3027/auth/callback")
+      end
+
+      it "does not swallow the next kwarg after a URL" do
+        result = tokens("redirect_uri=http://localhost:3027/cb client_id=abc")
+        types_arr = result.map(&:type)
+        expect(types_arr).to eq(%i[word equals word word equals word eof])
+        expect(result[2].value).to eq("http://localhost:3027/cb")
+        expect(result[3].value).to eq("client_id")
+      end
+    end
+
     context "with a realistic slash command" do
       it "tokenizes /schedule 42 for \"tomorrow at noon\"" do
         result = tokens('/schedule 42 for "tomorrow at noon"')

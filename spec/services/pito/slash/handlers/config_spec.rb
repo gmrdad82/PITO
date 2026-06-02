@@ -5,18 +5,52 @@ require "rails_helper"
 RSpec.describe Pito::Slash::Handlers::Config, type: :service do
   let(:conversation) { Conversation.create! }
 
-  def build_handler(args: [], kwargs: {})
+  def build_handler(args: [], kwargs: {}, raw: nil)
     invocation = Pito::Slash::Invocation.new(
       verb:   :config,
       args:   args,
       kwargs: kwargs,
-      raw:    "/config #{args.join(' ')}"
+      raw:    raw || "/config #{args.join(' ')}"
     )
     described_class.new(invocation:, conversation:)
   end
 
   before { Pito::Credentials.invalidate! }
   after  { Pito::Credentials.invalidate! }
+
+  describe "#call — /config --help (general)" do
+    it "returns general help listing all providers" do
+      result = build_handler(raw: "/config --help").call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      text = result.events.first[:payload][:text]
+      expect(text).to include("google", "voyage", "igdb", "webhook")
+    end
+
+    it "does not treat --help as an unknown provider error" do
+      result = build_handler(raw: "/config --help").call
+      expect(result).not_to be_a(Pito::Slash::Result::Error)
+    end
+  end
+
+  describe "#call — /config google --help" do
+    it "returns google provider key reference" do
+      result = build_handler(args: [ "google" ], raw: "/config google --help").call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      text = result.events.first[:payload][:text]
+      expect(text).to include("client_id", "client_secret", "redirect_uri", "api_key")
+    end
+  end
+
+  describe "#call — URL kwarg value" do
+    it "accepts redirect_uri with a full http URL (no parse error)" do
+      result = build_handler(
+        args:   [ "google" ],
+        kwargs: { redirect_uri: "http://localhost:3027/auth/google_oauth2/callback" }
+      ).call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(AppSetting.google_oauth_redirect_uri).to eq("http://localhost:3027/auth/google_oauth2/callback")
+    end
+  end
 
   describe "#call — unknown provider" do
     it "returns an error" do

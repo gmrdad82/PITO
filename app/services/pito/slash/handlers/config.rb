@@ -72,6 +72,8 @@ module Pito
         MASKED_KEYS = %w[client_id client_secret api_key].freeze
 
         def call
+          return show_help if help?
+
           provider = invocation.args.first.to_s.downcase
 
           unless KNOWN_PROVIDERS.include?(provider)
@@ -83,6 +85,15 @@ module Pito
 
           kwargs = invocation.kwargs
           kwargs.empty? ? show_status(provider) : set_values(provider, kwargs)
+        end
+
+        def show_help
+          provider = invocation.args.find { |a| KNOWN_PROVIDERS.include?(a.to_s.downcase) }
+
+          key = provider.present? ? "pito.slash.config.help.providers.#{provider}" : "pito.slash.config.help.general"
+          Pito::Slash::Result::Ok.new(events: [
+            { kind: "assistant_text", payload: { text: I18n.t(key) } }
+          ])
         end
 
         private

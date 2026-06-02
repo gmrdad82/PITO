@@ -82,6 +82,15 @@ module Pito
         start_pos = @pos
         @pos += 1
         @pos += 1 while @pos < @input.length && current_char.match?(/[a-zA-Z0-9_-]/)
+
+        # URL detection: word immediately followed by "://" (e.g. http://, https://).
+        # Consume everything up to the next whitespace as one token so that
+        # "localhost:3027" inside a URL isn't mistaken for a kwarg key.
+        if @input[@pos, 3] == "://"
+          @pos += 3
+          @pos += 1 while @pos < @input.length && !current_char.match?(/\s/)
+        end
+
         emit(:word, @input[start_pos...@pos], start_pos)
       end
 
