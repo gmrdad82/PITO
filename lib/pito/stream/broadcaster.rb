@@ -50,13 +50,13 @@ module Pito
       def emit_thinking(turn:, dictionary:)
         words = I18n.t("pito.event.thinking.#{dictionary}.doing")
         payload = { dictionary:, word_index: rand(words.length) }
-        emit(turn:, kind: "thinking", payload:)
+        emit(turn:, kind: :thinking, payload:)
       end
 
       # Resolve a thinking indicator: update its payload with the resolved state
       # and elapsed time, then broadcast a Turbo Stream replace.
       def resolve_thinking(turn:, elapsed_seconds:)
-        event = turn.events.find_by(kind: "thinking")
+        event = turn.events.find_by(kind: :thinking)
         return unless event
 
         event.update!(

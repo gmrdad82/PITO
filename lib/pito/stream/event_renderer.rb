@@ -11,7 +11,8 @@ module Pito
         "assistant_text"      => Pito::Event::AssistantTextComponent,
         "error"               => Pito::Event::ErrorComponent,
         "confirmation_prompt" => Pito::Event::ConfirmationPromptComponent,
-        "thinking"            => Pito::Event::ThinkingComponent
+        "thinking"            => Pito::Event::ThinkingComponent,
+        "logout"              => Pito::Event::LogoutComponent
       }.freeze
 
       PLAN1_COMPONENTS = %w[

@@ -14,7 +14,7 @@ module Pito
       end
 
       def random_tip
-        tips = I18n.t("pito.start_screen.tip_dictionary")
+        tips = I18n.t("pito.start_screen.tips")
         tips.sample
       end
     end

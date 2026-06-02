@@ -47,13 +47,13 @@ RSpec.describe Pito::Chat::Parser do
       # (echo-only turns are still dispatching via ChatDispatchJob).
       turn = conversation.turns.create!(
         input_text: "list videos",
-        input_kind: "chat",
+        input_kind: :chat,
         position: 1,
         created_at: 5.minutes.ago
       )
       conversation.events.create!(
         turn:, position: 1,
-        kind: "assistant_text",
+        kind: :assistant_text,
         payload: { message_key: "pito.chat.list.descriptions.list", message_args: {} }
       )
 
@@ -66,7 +66,7 @@ RSpec.describe Pito::Chat::Parser do
     it "classifies as :unknown when the only turn is older than 30 minutes" do
       conversation.turns.create!(
         input_text: "list videos",
-        input_kind: "chat",
+        input_kind: :chat,
         position: 1,
         created_at: 45.minutes.ago
       )

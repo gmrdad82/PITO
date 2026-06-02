@@ -11,22 +11,22 @@ module Pito
         [
           # --- First exchange ---
           {
-            kind: "user_message",
+            kind: :user_message,
             payload: { text: "/channels overview" }
           },
           {
-            kind: "assistant_text",
+            kind: :assistant_text,
             payload: { text: "Pulling stats for your 3 active channels…" }
           },
           {
-            kind: "thought",
+            kind: :thought,
             payload: {
               text: "You asked me to provide an overview of your connected channels. I need to fetch subscriber counts, total views, and watch-time data for each one.",
               duration: "4.2s"
             }
           },
           {
-            kind: "tool_output",
+            kind: :tool_output,
             payload: {
               title: "# Channel rollup",
               command: "$ pito channels overview --period 7d",
@@ -34,7 +34,7 @@ module Pito
             }
           },
           {
-            kind: "status_footer",
+            kind: :status_footer,
             payload: {
               mode: "Build",
               agent: "Big Pickle",
@@ -44,22 +44,22 @@ module Pito
 
           # --- Second exchange ---
           {
-            kind: "user_message",
+            kind: :user_message,
             payload: { text: "/channel @gmrdad82-vlog --detail" }
           },
           {
-            kind: "assistant_text",
+            kind: :assistant_text,
             payload: { text: "Here's the detailed breakdown for @gmrdad82-vlog." }
           },
           {
-            kind: "thought",
+            kind: :thought,
             payload: {
               text: "Fetching detailed metrics for the vlog channel — subscriber growth, top-performing videos, and audience retention.",
               duration: "3.1s"
             }
           },
           {
-            kind: "tool_output",
+            kind: :tool_output,
             payload: {
               title: "# @gmrdad82-vlog — detail",
               command: "$ pito channel @gmrdad82-vlog --detail --period 30d",
@@ -67,7 +67,7 @@ module Pito
             }
           },
           {
-            kind: "status_footer",
+            kind: :status_footer,
             payload: {
               mode: "Build",
               agent: "Big Pickle",
@@ -77,18 +77,18 @@ module Pito
 
           # --- Third exchange ---
           {
-            kind: "user_message",
+            kind: :user_message,
             payload: { text: "/notifications --unread" }
           },
           {
-            kind: "thought",
+            kind: :thought,
             payload: {
               text: "Checking for unread notifications across all channels and mentions.",
               duration: "0.8s"
             }
           },
           {
-            kind: "tool_output",
+            kind: :tool_output,
             payload: {
               title: "# Unread notifications",
               command: "$ pito notifications --unread --limit 5",
@@ -96,7 +96,7 @@ module Pito
             }
           },
           {
-            kind: "status_footer",
+            kind: :status_footer,
             payload: {
               mode: "Inspect",
               agent: "Big Pickle",
@@ -106,15 +106,15 @@ module Pito
 
           # --- Fourth exchange ---
           {
-            kind: "user_message",
+            kind: :user_message,
             payload: { text: "/help commands" }
           },
           {
-            kind: "assistant_text",
+            kind: :assistant_text,
             payload: { text: "Here are the commands you can use. Type /help <command> for details on any of them." }
           },
           {
-            kind: "tool_output",
+            kind: :tool_output,
             payload: {
               title: "# Available commands",
               command: "$ pito help",

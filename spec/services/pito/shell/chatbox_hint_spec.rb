@@ -4,9 +4,9 @@ require "rails_helper"
 
 RSpec.describe Pito::Shell::ChatboxHint do
   describe ".sample" do
-    it "returns the authenticate example when unauthenticated" do
+    it "returns the login example when unauthenticated" do
       expect(described_class.sample(authenticated: false))
-        .to eq(I18n.t("pito.shell.chatbox.hints.authenticate"))
+        .to eq(I18n.t("pito.shell.chatbox.hints.login"))
     end
 
     it "returns an implemented-command example when authenticated" do

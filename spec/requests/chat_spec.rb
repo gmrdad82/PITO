@@ -9,12 +9,12 @@ RSpec.describe "Chat requests", type: :request do
   describe "POST /chat" do
     let(:conversation) { Conversation.singleton }
 
-    # Authenticate via /authenticate <code> so subsequent requests are authenticated.
+    # Log in via /login <code> so subsequent requests are authenticated.
     # Clear the auth-round-trip turns so per-test counts start clean.
     before do
       seed = ROTP::Base32.random_base32
       AppSetting.enroll_totp!(seed: seed)
-      post "/chat", params: { input: "/authenticate #{ROTP::TOTP.new(seed).now}" }
+      post "/chat", params: { input: "/login #{ROTP::TOTP.new(seed).now}" }
       conversation.turns.destroy_all
     end
 
@@ -187,7 +187,7 @@ RSpec.describe "Chat requests", type: :request do
         # Create a recent turn so the parser classifies input as :refinement
         conversation.turns.create!(
           input_text: "list videos",
-          input_kind: "chat",
+          input_kind: :chat,
           position: 1,
           created_at: 5.minutes.ago
         )

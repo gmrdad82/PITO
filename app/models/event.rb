@@ -2,12 +2,16 @@
 
 class Event < ApplicationRecord
   KINDS = %w[
-    echo assistant_text error confirmation_prompt thinking
+    echo assistant_text error confirmation_prompt thinking logout
     user_message thought tool_output status_footer
   ].freeze
 
   belongs_to :conversation
   belongs_to :turn
+
+  # Normalize symbol → string so construction sites can use :kind symbols
+  # (e.g. kind: :assistant_text) while the DB column stores strings.
+  normalizes :kind, with: ->(k) { k.to_s }
 
   validates :kind, presence: true, inclusion: { in: KINDS }
   validates :position, presence: true

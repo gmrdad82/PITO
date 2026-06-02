@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Authentication via /authenticate", type: :request do
+RSpec.describe "Authentication via /login", type: :request do
   include ActiveJob::TestHelper
 
   let(:conversation) { Conversation.singleton }
@@ -17,10 +17,10 @@ RSpec.describe "Authentication via /authenticate", type: :request do
 
   describe "valid code" do
     it "masks the code in the echo and never persists it" do
-      post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
+      post "/chat", params: { input: "/login #{totp.now}", uuid: conversation.uuid }
 
       echo = last_turn_events.find { |e| e.kind == "echo" }
-      expect(echo.payload["text"]).to eq("/authenticate ******")
+      expect(echo.payload["text"]).to eq("/login ******")
 
       # The real code appears nowhere in the DB
       expect(Event.pluck(:payload).to_s).not_to include(totp.now)
@@ -28,7 +28,7 @@ RSpec.describe "Authentication via /authenticate", type: :request do
     end
 
     it "emits a greeting assistant_text event" do
-      post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
+      post "/chat", params: { input: "/login #{totp.now}", uuid: conversation.uuid }
 
       kinds = last_turn_events.pluck(:kind)
       expect(kinds).to eq(%w[echo thinking assistant_text])
@@ -38,12 +38,12 @@ RSpec.describe "Authentication via /authenticate", type: :request do
     end
 
     it "sets the session cookie" do
-      post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
+      post "/chat", params: { input: "/login #{totp.now}", uuid: conversation.uuid }
       expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_present
     end
 
     it "lets subsequent commands through" do
-      post "/chat", params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
+      post "/chat", params: { input: "/login #{totp.now}", uuid: conversation.uuid }
       conversation.turns.destroy_all
 
       post "/chat", params: { input: "/help", uuid: conversation.uuid }
@@ -55,7 +55,7 @@ RSpec.describe "Authentication via /authenticate", type: :request do
 
   describe "invalid code" do
     it "emits an auth failed error and sets no cookie" do
-      post "/chat", params: { input: "/authenticate 000000", uuid: conversation.uuid }
+      post "/chat", params: { input: "/login 000000", uuid: conversation.uuid }
 
       error = last_turn_events.find { |e| e.kind == "error" }
       failures = I18n.t("pito.auth.failures")

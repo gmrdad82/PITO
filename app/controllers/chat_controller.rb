@@ -25,10 +25,17 @@ class ChatController < ApplicationController
 
     conversation = resolve_conversation
 
-    if authenticate_command?(input)
+    if login_command?(input)
       # Auth stays synchronous — it mints the session cookie, which can only be
       # set on the HTTP response (a background job can't set cookies).
-      handle_authenticate(input, conversation)
+      handle_login(input, conversation)
+      return respond_to_client(conversation)
+    end
+
+    if logout_command?(input)
+      # Logout stays synchronous — it clears the session cookie, which can only
+      # be done on the HTTP response.
+      handle_logout(input, conversation)
       return respond_to_client(conversation)
     end
 
@@ -58,7 +65,7 @@ class ChatController < ApplicationController
   # ── Async dispatch (P23) ────────────────────────────────────────────────────
 
   def handle_async(input, conversation, authenticated:, echo_text: input)
-    input_kind = input.start_with?("/") ? "slash" : "chat"
+    input_kind = input.start_with?("/") ? :slash : :chat
 
     turn = conversation.turns.create!(
       position:   Turn.next_position_for(conversation),
@@ -70,7 +77,7 @@ class ChatController < ApplicationController
     # echo_text may differ from input when sensitive kwargs are masked (T27.0.d).
     broadcaster  = Pito::Stream::Broadcaster.new(conversation:)
     echo_event   = Event.create_with_position!(
-      conversation:, turn:, kind: "echo", payload: { text: echo_text }
+      conversation:, turn:, kind: :echo, payload: { text: echo_text }
     )
     broadcaster.broadcast_event(echo_event)
 
@@ -114,21 +121,21 @@ class ChatController < ApplicationController
   #
   # Stays synchronous — auth result must be visible before the next command.
 
-  def authenticate_command?(input)
-    input.strip.match?(%r{\A/authenticate(\s|\z)}i)
+  def login_command?(input)
+    input.strip.match?(%r{\A/login(\s|\z)}i)
   end
 
-  def handle_authenticate(input, conversation)
+  def handle_login(input, conversation)
     masked = mask_secret(input)
 
     turn = conversation.turns.create!(
       position:   Turn.next_position_for(conversation),
-      input_kind: "slash",
+      input_kind: :slash,
       input_text: masked
     )
 
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
-    broadcaster.emit(turn:, kind: "echo", payload: { text: masked })
+    broadcaster.emit(turn:, kind: :echo, payload: { text: masked })
 
     thinking = broadcaster.emit_thinking(turn:, dictionary: "slash")
     started_at = Time.current
@@ -158,6 +165,33 @@ class ChatController < ApplicationController
     end
   end
 
+  # ── Logout branch ────────────────────────────────────────────────────────────
+  #
+  # Stays synchronous — must clear the session cookie on the HTTP response.
+
+  def logout_command?(input)
+    input.strip.match?(%r{\A/logout(\s|\z)}i)
+  end
+
+  def handle_logout(input, conversation)
+    turn = conversation.turns.create!(
+      position:   Turn.next_position_for(conversation),
+      input_kind: :slash,
+      input_text: input
+    )
+
+    broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+    broadcaster.emit(turn:, kind: :echo, payload: { text: input })
+    broadcaster.emit(
+      turn:,
+      kind:    :logout,
+      payload: { text: I18n.t("pito.auth.logouts").sample }
+    )
+
+    Pito::Auth::SessionCookie.new(request).clear!
+    Current.session = nil
+  end
+
   def connect_command?(input)
     input.strip.match?(%r{\A/connect(\s|\z)}i)
   end
@@ -167,7 +201,7 @@ class ChatController < ApplicationController
   def handle_connect(input, conversation)
     turn = conversation.turns.create!(
       position:   Turn.next_position_for(conversation),
-      input_kind: "slash",
+      input_kind: :slash,
       input_text: input
     )
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
@@ -195,7 +229,7 @@ class ChatController < ApplicationController
       return nil
     end
 
-    broadcaster.emit(turn:, kind: "echo", payload: { text: input })
+    broadcaster.emit(turn:, kind: :echo, payload: { text: input })
     stash_youtube_connect_intent
     stash_connect_conversation_uuid(conversation.uuid)
 

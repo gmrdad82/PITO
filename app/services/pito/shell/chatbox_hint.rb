@@ -4,8 +4,8 @@ module Pito
   module Shell
     # Supplies the chatbox placeholder hint.
     #
-    # Unauthenticated visitors always get the authenticate example — nothing else
-    # works until they authenticate. Authenticated users get a random example
+    # Unauthenticated visitors always get the login example — nothing else
+    # works until they log in. Authenticated users get a random example
     # sampled from the implemented commands/messages.
     #
     # BOILERPLATE: `AUTHENTICATED_HINTS` is the extension point. As commands land,
@@ -18,7 +18,7 @@ module Pito
       AUTHENTICATED_HINTS = %i[help].freeze
 
       def sample(authenticated:)
-        key = authenticated ? AUTHENTICATED_HINTS.sample : :authenticate
+        key = authenticated ? AUTHENTICATED_HINTS.sample : :login
         I18n.t("pito.shell.chatbox.hints.#{key}")
       end
     end

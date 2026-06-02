@@ -92,7 +92,7 @@ module Pito
           lines = pairs.map { |label, val| "#{label}: #{val}" }.join(" · ")
 
           Pito::Slash::Result::Ok.new(events: [
-            { kind: "assistant_text", payload: { text: lines } }
+            { kind: :assistant_text, payload: { text: lines } }
           ])
         end
 

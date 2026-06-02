@@ -6,7 +6,7 @@ RSpec.describe Pito::Event::ThinkingComponent do
   let(:conversation) { create(:conversation) }
   let(:turn) { create(:turn, conversation:) }
   let(:event) do
-    create(:event, turn:, kind: "thinking", payload: { "dictionary" => "slash", "word_index" => 2 })
+    create(:event, turn:, kind: :thinking, payload: { "dictionary" => "slash", "word_index" => 2 })
   end
 
   it "renders a spinning Braille indicator when the turn is incomplete" do
@@ -14,7 +14,9 @@ RSpec.describe Pito::Event::ThinkingComponent do
 
     expect(node.css(".pito-thinking[data-controller='pito--thinking']")).not_to be_empty
     expect(node.css(".pito-thinking__braille").text).to eq("⠋")
-    expect(node.css(".pito-thinking__word").text).to eq("Running…")
+    expect(node.css(".pito-thinking__word").text).to eq(
+      "#{I18n.t('pito.event.thinking.slash.doing')[2]}…"
+    )
   end
 
   it "renders a resolved message when the turn is complete" do
@@ -23,24 +25,29 @@ RSpec.describe Pito::Event::ThinkingComponent do
 
     node = render_inline(described_class.new(payload: event.payload, event:))
 
-    expect(node.css(".pito-thinking__message").text).to eq("Ran for 3.0s")
+    done_word = I18n.t("pito.event.thinking.slash.done")[2]
+    expect(node.css(".pito-thinking__message").text).to eq(
+      I18n.t("pito.event.thinking.resolved", word: done_word, elapsed: 3.0)
+    )
     expect(node.css(".pito-thinking__braille")).to be_empty
   end
 
   it "picks the chat dictionary" do
-    chat_event = create(:event, turn:, kind: "thinking", payload: { "dictionary" => "chat", "word_index" => 1 })
+    chat_event = create(:event, turn:, kind: :thinking, payload: { "dictionary" => "chat", "word_index" => 1 })
     node = render_inline(described_class.new(payload: chat_event.payload, event: chat_event))
 
     expect(node.css(".pito-thinking__word").text).to eq("Pondering…")
   end
 
   it "uses the word_index from payload (idempotent)" do
+    expected_word = "#{I18n.t('pito.event.thinking.slash.doing')[2]}…"
+
     node1 = render_inline(described_class.new(payload: event.payload, event:))
-    expect(node1.css(".pito-thinking__word").text).to eq("Running…")
+    expect(node1.css(".pito-thinking__word").text).to eq(expected_word)
 
     # Re-render with the same payload — same word
     node2 = render_inline(described_class.new(payload: event.payload, event:))
-    expect(node2.css(".pito-thinking__word").text).to eq("Running…")
+    expect(node2.css(".pito-thinking__word").text).to eq(expected_word)
   end
 
   it "assigns a DOM id when the event is present" do
@@ -57,14 +64,14 @@ RSpec.describe Pito::Event::ThinkingComponent do
     component = described_class.new(payload: event.payload, event:)
     words = JSON.parse(component.doing_words_json)
     expect(words).to include("Executing")
-    expect(words).to include("Running")
+    expect(words).to include("Frobnicating")
   end
 
   it "exposes done words as JSON for the dictionary" do
     component = described_class.new(payload: event.payload, event:)
     words = JSON.parse(component.done_words_json)
     expect(words).to include("Executed")
-    expect(words).to include("Ran")
+    expect(words).to include("Frobnicated")
   end
 
   describe "fallbacks" do

@@ -13,7 +13,6 @@ en:
         already_linked:
           one: "Google account connected. Channel '%{title}' is already linked."
           other: "Google account connected. These channels are already linked: %{titles}."
-        mixed: "Google account connected. %{added_summary}. %{dup_summary}."
         discovery_error: >-
           Google account connected. Couldn't list channels right now (%{error}).
           Run /connect again to retry.

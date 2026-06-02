@@ -2,20 +2,66 @@
 
 require "rails_helper"
 
-RSpec.describe "Logout", type: :request do
+RSpec.describe "Logout via /logout", type: :request do
+  let(:conversation) { Conversation.singleton }
   let!(:seed) { ROTP::Base32.random_base32 }
+  let(:totp) { ROTP::TOTP.new(seed) }
 
   before { AppSetting.enroll_totp!(seed: seed) }
 
-  it "clears the session cookie and redirects to root" do
-    # First authenticate
-    totp = ROTP::TOTP.new(seed)
-    post "/chat", params: { input: "/authenticate #{totp.now}" }
-    expect(cookies["pito_session"]).to be_present
+  def last_turn_events
+    Turn.last_for(conversation).events.order(:position)
+  end
 
-    # Then logout
-    delete "/logout"
-    expect(response).to redirect_to(root_path)
-    expect(cookies["pito_session"]).to be_blank
+  def login!
+    post "/chat", params: { input: "/login #{totp.now}", uuid: conversation.uuid }
+    conversation.turns.destroy_all
+  end
+
+  describe "/logout slash command" do
+    it "clears the session cookie synchronously" do
+      login!
+      expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_present
+
+      post "/chat", params: { input: "/logout", uuid: conversation.uuid }
+
+      expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_blank
+    end
+
+    it "emits an echo then a logout event" do
+      login!
+      post "/chat", params: { input: "/logout", uuid: conversation.uuid }
+
+      kinds = last_turn_events.pluck(:kind)
+      expect(kinds).to include("echo", "logout")
+      echo = last_turn_events.find { |e| e.kind == "echo" }
+      expect(echo.payload["text"]).to eq("/logout")
+    end
+
+    it "logout event payload carries a logout text from the dictionary" do
+      login!
+      post "/chat", params: { input: "/logout", uuid: conversation.uuid }
+
+      logout_event = last_turn_events.find { |e| e.kind == "logout" }
+      expect(I18n.t("pito.auth.logouts")).to include(logout_event.payload["text"])
+    end
+
+    it "works even when already unauthenticated (idempotent cookie clear)" do
+      post "/chat", params: { input: "/logout", uuid: conversation.uuid }
+
+      kinds = last_turn_events.pluck(:kind)
+      expect(kinds).to include("echo", "logout")
+    end
+  end
+
+  describe "DELETE /logout (HTTP route)" do
+    it "clears the session cookie and redirects to root" do
+      login!
+      expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_present
+
+      delete "/logout"
+      expect(response).to redirect_to(root_path)
+      expect(cookies[Pito::Auth::SessionCookie::COOKIE_NAME]).to be_blank
+    end
   end
 end

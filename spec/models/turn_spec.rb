@@ -10,12 +10,12 @@ RSpec.describe Turn, type: :model do
     it { is_expected.to validate_presence_of(:position) }
 
     it "is valid with slash input_kind" do
-      turn = build(:turn, input_kind: "slash")
+      turn = build(:turn, input_kind: :slash)
       expect(turn).to be_valid
     end
 
     it "is valid with chat input_kind" do
-      turn = build(:turn, input_kind: "chat")
+      turn = build(:turn, input_kind: :chat)
       expect(turn).to be_valid
     end
 
@@ -59,8 +59,8 @@ RSpec.describe Turn, type: :model do
 
     it "returns one more than the max position" do
       conversation = create(:conversation)
-      create(:turn, conversation: conversation, position: 1, input_kind: "slash", input_text: "/help")
-      create(:turn, conversation: conversation, position: 2, input_kind: "slash", input_text: "/test")
+      create(:turn, conversation: conversation, position: 1, input_kind: :slash, input_text: "/help")
+      create(:turn, conversation: conversation, position: 2, input_kind: :slash, input_text: "/test")
       expect(described_class.next_position_for(conversation)).to eq(3)
     end
   end

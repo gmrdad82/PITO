@@ -5,8 +5,8 @@ require "rails_helper"
 RSpec.describe Pito::Palette::Slash::Component do
   # Commands use description_key which maps to i18n translations.
   # Keys from config/locales/pito/palette/en.yml (pito.palette.slash.descriptions.*)
-  let(:cmd_authenticate) do
-    { verb: "authenticate", description_key: "pito.palette.slash.descriptions.authenticate" }
+  let(:cmd_login) do
+    { verb: "login", description_key: "pito.palette.slash.descriptions.login" }
   end
   let(:cmd_channels) do
     { verb: "channels", description_key: "pito.palette.slash.descriptions.channels" }
@@ -23,17 +23,17 @@ RSpec.describe Pito::Palette::Slash::Component do
   # ──────────────────────────────────────────
   describe "#initialize" do
     it "accepts commands with default selected_index and typed" do
-      comp = described_class.new(commands: [ cmd_authenticate ])
+      comp = described_class.new(commands: [ cmd_login ])
       expect(comp).to be_a(described_class)
     end
 
     it "accepts explicit selected_index" do
-      comp = described_class.new(commands: [ cmd_authenticate, cmd_channels ], selected_index: 1)
+      comp = described_class.new(commands: [ cmd_login, cmd_channels ], selected_index: 1)
       expect(comp).to be_a(described_class)
     end
 
     it "accepts an explicit typed string" do
-      comp = described_class.new(commands: [ cmd_authenticate ], typed: "/aut")
+      comp = described_class.new(commands: [ cmd_login ], typed: "/log")
       expect(comp).to be_a(described_class)
     end
   end
@@ -42,7 +42,7 @@ RSpec.describe Pito::Palette::Slash::Component do
   # Rendering: structural chrome
   # ──────────────────────────────────────────
   describe "rendered structure" do
-    let(:node) { render_inline(described_class.new(commands: [ cmd_authenticate ])) }
+    let(:node) { render_inline(described_class.new(commands: [ cmd_login ])) }
 
     it "renders the outer flex container" do
       expect(node.css("div.flex").first).not_to be_nil
@@ -83,19 +83,19 @@ RSpec.describe Pito::Palette::Slash::Component do
   # Rendering: single command
   # ──────────────────────────────────────────
   describe "with a single command" do
-    let(:node) { render_inline(described_class.new(commands: [ cmd_authenticate ])) }
+    let(:node) { render_inline(described_class.new(commands: [ cmd_login ])) }
 
     it "renders the verb prefixed with /" do
-      expect(node.css("span.text-fg").map(&:text)).to include(include("/authenticate"))
+      expect(node.css("span.text-fg").map(&:text)).to include(include("/login"))
     end
 
     it "renders the translated description" do
-      expect(node.text).to include("Authenticate to access pito")
+      expect(node.text).to include("Log in to access pito")
     end
 
     it "renders the description in a text-fg-dim span" do
       descriptions = node.css("span.text-fg-dim").map(&:text)
-      expect(descriptions).to include("Authenticate to access pito")
+      expect(descriptions).to include("Log in to access pito")
     end
   end
 
@@ -103,18 +103,18 @@ RSpec.describe Pito::Palette::Slash::Component do
   # Rendering: multiple commands
   # ──────────────────────────────────────────
   describe "with multiple commands" do
-    let(:commands) { [ cmd_authenticate, cmd_channels, cmd_videos ] }
+    let(:commands) { [ cmd_login, cmd_channels, cmd_videos ] }
     let(:node) { render_inline(described_class.new(commands: commands, selected_index: 0)) }
 
     it "renders all command verbs" do
       verbs = node.css("span.text-fg").map(&:text)
-      expect(verbs).to include(include("/authenticate"))
+      expect(verbs).to include(include("/login"))
       expect(verbs).to include(include("/channels"))
       expect(verbs).to include(include("/videos"))
     end
 
     it "renders all descriptions" do
-      expect(node.text).to include("Authenticate to access pito")
+      expect(node.text).to include("Log in to access pito")
       expect(node.text).to include("List your YouTube channels")
       expect(node.text).to include("List videos for a channel")
     end
@@ -124,7 +124,7 @@ RSpec.describe Pito::Palette::Slash::Component do
   # Selection highlight
   # ──────────────────────────────────────────
   describe "selection highlight" do
-    let(:commands) { [ cmd_authenticate, cmd_channels, cmd_help ] }
+    let(:commands) { [ cmd_login, cmd_channels, cmd_help ] }
 
     # Command rows have `py-0.5 px-2.5` classes; the horizontal divider
     # also uses `bg-line-default` but has `h-px` class instead.
@@ -144,7 +144,7 @@ RSpec.describe Pito::Palette::Slash::Component do
 
     it "highlights the first command when selected_index is 0" do
       node = render_inline(described_class.new(commands: commands, selected_index: 0))
-      expect(selected_command_rows(node).first.text).to include("/authenticate")
+      expect(selected_command_rows(node).first.text).to include("/login")
     end
 
     it "highlights the second command when selected_index is 1" do
@@ -169,7 +169,7 @@ RSpec.describe Pito::Palette::Slash::Component do
   # ──────────────────────────────────────────
   describe "verb span formatting" do
     it "renders verb spans with fixed width style" do
-      node = render_inline(described_class.new(commands: [ cmd_authenticate ]))
+      node = render_inline(described_class.new(commands: [ cmd_login ]))
       verb_spans = node.css("span.text-fg[style*='width: 16ch']")
       expect(verb_spans.first).not_to be_nil
     end
@@ -181,7 +181,7 @@ RSpec.describe Pito::Palette::Slash::Component do
   describe "typed parameter" do
     it "renders without error when typed is a partial verb" do
       node = render_inline(
-        described_class.new(commands: [ cmd_authenticate ], typed: "/aut")
+        described_class.new(commands: [ cmd_login ], typed: "/log")
       )
       expect(node.to_html).not_to be_empty
     end

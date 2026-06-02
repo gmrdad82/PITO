@@ -3,183 +3,134 @@
 require "rails_helper"
 
 RSpec.describe Pito::Palette::CtrlK::Component do
-  # Minimal reusable section data using real i18n keys
-  let(:section_suggested) do
+  let(:youtube_section) do
     {
-      title_key: "pito.palette.ctrl_k.sections.suggested",
+      title_key: "pito.palette.ctrl_k.sections.youtube",
       items: [
-        { label_key: "pito.palette.ctrl_k.commands.new_session", shortcut: "ctrl+n" },
-        { label_key: "pito.palette.ctrl_k.commands.open_editor" }
+        { label_key: "pito.palette.ctrl_k.commands.connect",    insert: "/connect" },
+        { label_key: "pito.palette.ctrl_k.commands.disconnect", insert: "/disconnect <@handle>" }
       ]
     }
   end
 
-  let(:section_session) do
+  let(:general_section) do
     {
-      title_key: "pito.palette.ctrl_k.sections.session",
+      title_key: "pito.palette.ctrl_k.sections.general",
       items: [
-        { label_key: "pito.palette.ctrl_k.commands.rename_session" },
-        { label_key: "pito.palette.ctrl_k.commands.fork_session" }
+        { label_key: "pito.palette.ctrl_k.commands.help",        insert: "/help" },
+        { label_key: "pito.palette.ctrl_k.commands.login", insert: "/login <code>" }
       ]
     }
   end
 
-  # ──────────────────────────────────────────
-  # Initializer defaults
-  # ──────────────────────────────────────────
-  describe "#initialize" do
-    it "accepts sections with default indices" do
-      comp = described_class.new(sections: [ section_suggested ])
-      expect(comp).to be_a(described_class)
+  # ── Chrome ─────────────────────────────────────────────────────────────────
+
+  describe "chrome (title, esc hint, search)" do
+    subject(:node) { render_inline(described_class.new(sections: [])) }
+
+    it "renders the palette title from i18n" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.title"))
     end
 
-    it "accepts explicit selected_section_index and selected_item_index" do
-      comp = described_class.new(
-        sections: [ section_suggested, section_session ],
-        selected_section_index: 1,
-        selected_item_index: 0
-      )
-      expect(comp).to be_a(described_class)
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: chrome (title, esc hint, search)
-  # ──────────────────────────────────────────
-  describe "rendered chrome" do
-    let(:node) { render_inline(described_class.new(sections: [])) }
-
-    it "renders the palette title" do
-      expect(node.text).to include("Commands")
+    it "renders the esc hint from i18n" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.esc_hint"))
     end
 
-    it "renders the esc hint" do
-      expect(node.text).to include("esc")
+    it "renders a real search input (not a fake cursor)" do
+      expect(node.css("input[type='text']")).not_to be_empty
     end
 
-    it "renders the search placeholder text" do
-      expect(node.text).to include("earch")
+    it "search input has the correct Stimulus data-action" do
+      input = node.css("input[type='text']").first
+      expect(input["data-action"]).to include("input->pito--command-palette#filter")
     end
 
-    it "renders the outer modal container" do
-      modal = node.css("div").find { |div| div["class"]&.include?("w-[600px]") }
-      expect(modal).not_to be_nil
+    it "search input has the correct Stimulus target" do
+      input = node.css("input[type='text']").first
+      expect(input["data-pito--command-palette-target"]).to eq("search")
+    end
+
+    it "renders the 600px-wide modal container" do
+      expect(node.css("div.w-\\[600px\\]")).not_to be_empty
+    end
+
+    it "has no inline color/background styles (CSS class for theming)" do
+      node.css("*").each do |el|
+        next if el["style"].blank?
+        expect(el["style"]).not_to match(/color:|background[-\s]*:.*#|background[-\s]*:.*rgb/i),
+          "Unexpected inline color style on #{el.name}.#{el['class']}: #{el['style']}"
+      end
     end
   end
 
-  # ──────────────────────────────────────────
-  # Rendering: empty sections
-  # ──────────────────────────────────────────
+  # ── Sections and items ─────────────────────────────────────────────────────
+
+  describe "with a single section" do
+    subject(:node) { render_inline(described_class.new(sections: [ youtube_section ])) }
+
+    it "renders the section title from i18n" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.sections.youtube"))
+    end
+
+    it "renders item labels" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.connect"))
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.disconnect"))
+    end
+
+    it "embeds data-insert on each item" do
+      inserts = node.css("[data-pito--command-palette-target='item']").map { |el| el["data-insert"] }
+      expect(inserts).to include("/connect", "/disconnect <@handle>")
+    end
+
+    it "embeds data-label on each item (present and lowercased)" do
+      labels = node.css("[data-pito--command-palette-target='item']").map { |el| el["data-label"] }
+      expect(labels).to all(be_a(String))
+      labels.each { |l| expect(l).to eq(l.downcase) }
+    end
+
+    it "renders items with Stimulus item target" do
+      items = node.css("[data-pito--command-palette-target='item']")
+      expect(items.length).to eq(youtube_section[:items].length)
+    end
+  end
+
+  describe "with multiple sections" do
+    subject(:node) { render_inline(described_class.new(sections: [ youtube_section, general_section ])) }
+
+    it "renders all section titles" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.sections.youtube"))
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.sections.general"))
+    end
+
+    it "renders items from all sections" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.login"))
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.help"))
+    end
+
+    it "renders section-gap divs between sections (not after the last)" do
+      gaps = node.css("[data-pito--command-palette-target='sectionGap']")
+      expect(gaps.length).to eq(1)
+    end
+  end
+
   describe "with no sections" do
     it "renders without crashing" do
       node = render_inline(described_class.new(sections: []))
       expect(node.to_html).not_to be_empty
     end
-
-    it "does not render any section titles" do
-      node = render_inline(described_class.new(sections: []))
-      %w[Suggested Session Channel Output].each do |label|
-        expect(node.text).not_to include(label)
-      end
-    end
   end
 
-  # ──────────────────────────────────────────
-  # Rendering: single section
-  # ──────────────────────────────────────────
-  describe "with a single section" do
-    let(:node) { render_inline(described_class.new(sections: [ section_suggested ])) }
+  # ── Scrollable list container ───────────────────────────────────────────────
 
-    it "renders the section title" do
-      expect(node.text).to include("Suggested")
+  describe "scrollable container" do
+    subject(:node) { render_inline(described_class.new(sections: [ youtube_section ])) }
+
+    it "has the pito-hide-scrollbar class" do
+      expect(node.css(".pito-hide-scrollbar")).not_to be_empty
     end
 
-    it "renders the item labels" do
-      expect(node.text).to include("New session")
-      expect(node.text).to include("Open editor")
-    end
-
-    it "renders the shortcut for items that have one" do
-      expect(node.text).to include("ctrl+n")
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: multiple sections
-  # ──────────────────────────────────────────
-  describe "with multiple sections" do
-    let(:node) do
-      render_inline(
-        described_class.new(
-          sections: [ section_suggested, section_session ],
-          selected_section_index: 0,
-          selected_item_index: 0
-        )
-      )
-    end
-
-    it "renders all section titles" do
-      expect(node.text).to include("Suggested")
-      expect(node.text).to include("Session")
-    end
-
-    it "renders items from all sections" do
-      expect(node.text).to include("New session")
-      expect(node.text).to include("Rename session")
-    end
-
-    it "renders a 12px gap div between sections (not after last)" do
-      gaps = node.css("div.h-3")
-      # 1 gap between 2 sections; also the chrome has a 12px gap div
-      # At least one inter-section gap should be present
-      expect(gaps.length).to be >= 1
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Selection propagation
-  # ──────────────────────────────────────────
-  describe "selection propagation to SectionComponent" do
-    it "passes selected: true only to the section at selected_section_index" do
-      node = render_inline(
-        described_class.new(
-          sections: [ section_suggested, section_session ],
-          selected_section_index: 1,
-          selected_item_index: 0
-        )
-      )
-      # The selected row in section_session (index 0 = "Rename session") should be highlighted
-      highlighted = node.css("div[style*='background: var(--border-default)']")
-      expect(highlighted.length).to eq(1)
-      expect(highlighted.first.text).to include("Rename session")
-    end
-
-    it "highlights the correct item when selected_section_index is 0" do
-      node = render_inline(
-        described_class.new(
-          sections: [ section_suggested, section_session ],
-          selected_section_index: 0,
-          selected_item_index: 1
-        )
-      )
-      highlighted = node.css("div[style*='background: var(--border-default)']")
-      expect(highlighted.length).to eq(1)
-      expect(highlighted.first.text).to include("Open editor")
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Scrollable container
-  # ──────────────────────────────────────────
-  describe "scrollable sections container" do
-    it "renders the pito-hide-scrollbar container" do
-      node = render_inline(described_class.new(sections: [ section_suggested ]))
-      expect(node.css("div.pito-hide-scrollbar").first).not_to be_nil
-    end
-
-    it "renders the pito-scroll-fade-slim container" do
-      node = render_inline(described_class.new(sections: [ section_suggested ]))
-      expect(node.css("div.pito-scroll-fade-slim").first).not_to be_nil
+    it "has the list Stimulus target" do
+      expect(node.css("[data-pito--command-palette-target='list']")).not_to be_empty
     end
   end
 end

@@ -23,13 +23,13 @@ RSpec.describe Pito::StartScreen::Component do
     end
 
     it "renders a random tip from the dictionary" do
-      tips = I18n.t("pito.start_screen.tip_dictionary")
+      tips = I18n.t("pito.start_screen.tips")
       expect(tips).not_to be_empty
       expect(tips.any? { |tip| node.to_html.include?(tip) }).to be true
     end
 
     it "does not render the old placeholder text" do
-      expect(node.to_html).not_to include("[placeholder for tip dictionary]")
+      expect(node.to_html).not_to include("[placeholder for tips]")
     end
 
     it "preserves the tip colors (orange exclamation, yellow prefix, faded text)" do

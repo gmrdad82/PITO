@@ -78,14 +78,14 @@ RSpec.describe "Conversation requests", type: :request do
   describe "GET /chat/:uuid event grouping" do
     it "wraps each turn's events in a #turn_<id> container, echo before result" do
       conversation = create(:conversation)
-      turn_a = conversation.turns.create!(position: 1, input_kind: "chat", input_text: "first")
-      turn_b = conversation.turns.create!(position: 2, input_kind: "chat", input_text: "second")
+      turn_a = conversation.turns.create!(position: 1, input_kind: :chat, input_text: "first")
+      turn_b = conversation.turns.create!(position: 2, input_kind: :chat, input_text: "second")
       # Interleaved positions mimic concurrent dispatch: both echoes, then both results.
-      conversation.events.create!(turn: turn_a, position: 1, kind: "echo", payload: { text: "first" })
-      conversation.events.create!(turn: turn_b, position: 2, kind: "echo", payload: { text: "second" })
-      conversation.events.create!(turn: turn_a, position: 3, kind: "assistant_text",
+      conversation.events.create!(turn: turn_a, position: 1, kind: :echo, payload: { text: "first" })
+      conversation.events.create!(turn: turn_b, position: 2, kind: :echo, payload: { text: "second" })
+      conversation.events.create!(turn: turn_a, position: 3, kind: :assistant_text,
                                   payload: { message_key: "pito.chat.list.descriptions.list", message_args: {} })
-      conversation.events.create!(turn: turn_b, position: 4, kind: "assistant_text",
+      conversation.events.create!(turn: turn_b, position: 4, kind: :assistant_text,
                                   payload: { message_key: "pito.chat.list.descriptions.list", message_args: {} })
 
       get conversation_path(uuid: conversation.uuid)
@@ -108,10 +108,10 @@ RSpec.describe "Conversation requests", type: :request do
     it "echo events render a segment bar with data-accent='purple'" do
       conversation = create(:conversation)
       turn = conversation.turns.create!(
-        position: 1, input_kind: "slash", input_text: "/help"
+        position: 1, input_kind: :slash, input_text: "/help"
       )
       event = conversation.events.create!(
-        turn:, position: 1, kind: "echo", payload: { text: "/help" }
+        turn:, position: 1, kind: :echo, payload: { text: "/help" }
       )
       html = Pito::Stream::EventRenderer.render(event)
       expect(html).to include('data-accent="purple"')
@@ -120,10 +120,10 @@ RSpec.describe "Conversation requests", type: :request do
     it "non-echo events render a segment bar without data-accent='purple'" do
       conversation = create(:conversation)
       turn = conversation.turns.create!(
-        position: 1, input_kind: "slash", input_text: "/help"
+        position: 1, input_kind: :slash, input_text: "/help"
       )
       event = conversation.events.create!(
-        turn:, position: 2, kind: "error",
+        turn:, position: 2, kind: :error,
         payload: { message_key: "pito.auth.required", message_args: {} }
       )
       html = Pito::Stream::EventRenderer.render(event)

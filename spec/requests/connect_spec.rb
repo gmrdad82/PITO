@@ -19,7 +19,7 @@ RSpec.describe "P27 /connect + OAuth callback", type: :request do
     seed = ROTP::Base32.random_base32
     AppSetting.enroll_totp!(seed: seed)
     totp = ROTP::TOTP.new(seed)
-    post chat_path, params: { input: "/authenticate #{totp.now}", uuid: conversation.uuid }
+    post chat_path, params: { input: "/login #{totp.now}", uuid: conversation.uuid }
   end
 
   # Build a minimal OmniAuth auth hash
@@ -65,8 +65,8 @@ RSpec.describe "P27 /connect + OAuth callback", type: :request do
       post chat_path, params: { input: "/connect", uuid: conversation.uuid }
 
       expect(response).to have_http_status(:no_content)
-      expect(conversation.events.where(kind: "error").count).to eq(1)
-      error_event = conversation.events.where(kind: "error").first
+      expect(conversation.events.where(kind: :error).count).to eq(1)
+      error_event = conversation.events.where(kind: :error).first
       # text: is used for the not_configured error; message_key: may also be set
       text = error_event.payload["text"] || error_event.payload["message_key"]
       expect(text).to include("not configured").or include("config")
@@ -91,7 +91,7 @@ RSpec.describe "P27 /connect + OAuth callback", type: :request do
 
     it "persists an echo Event for the /connect command" do
       post chat_path, params: { input: "/connect", uuid: conversation.uuid }
-      echo = conversation.events.where(kind: "echo").last
+      echo = conversation.events.where(kind: :echo).last
       expect(echo).to be_present
       expect(echo.payload["text"]).to eq("/connect")
     end
@@ -138,7 +138,7 @@ RSpec.describe "P27 /connect + OAuth callback", type: :request do
         get "/auth/google/callback"
 
         expect(response).to redirect_to(conversation_path(uuid: conversation.uuid))
-        result_event = conversation.events.where(kind: "assistant_text").last
+        result_event = conversation.events.where(kind: :assistant_text).last
         expect(result_event).to be_present
         expect(result_event.payload["text"]).to include("Alpha Channel")
       end
@@ -161,7 +161,7 @@ RSpec.describe "P27 /connect + OAuth callback", type: :request do
           )
 
         expect { get "/auth/google/callback" }.not_to change(Channel, :count)
-        result = conversation.events.where(kind: "assistant_text").last
+        result = conversation.events.where(kind: :assistant_text).last
         expect(result.payload["text"]).to include("already linked")
       end
     end

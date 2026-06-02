@@ -10,11 +10,11 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         expect(node.css("div.chatbox-wrapper")).not_to be_empty
       end
 
-      it "renders the textarea with the sampled auth hint (unauthenticated → authenticate)" do
+      it "renders the textarea with the sampled auth hint (unauthenticated → login)" do
         node = render_inline(described_class.new)
         textarea = node.css("textarea")
         expect(textarea).not_to be_empty
-        expect(textarea.first["placeholder"]).to include("/authenticate")
+        expect(textarea.first["placeholder"]).to include("/login")
       end
     end
 

@@ -25,7 +25,7 @@ class ChatDispatchJob < ApplicationJob
     input        = turn.input_text
     broadcaster  = Pito::Stream::Broadcaster.new(conversation:)
 
-    # Auth gating: only /authenticate works while unauthenticated (handled
+    # Auth gating: only /login works while unauthenticated (handled
     # synchronously in the controller). Every other command from an
     # unauthenticated session is refused here with the auth-required error.
     result = if !authenticated && !help_command?(input)
@@ -37,7 +37,7 @@ class ChatDispatchJob < ApplicationJob
         # NOTE: message_key here is already-translated text — ErrorComponent
         # handles this via the text: fallback path.
       )
-    elsif turn.input_kind == "slash"
+    elsif turn.slash?
       Pito::Slash::Dispatcher.call(input:, conversation:, authenticated:)
     else
       Pito::Chat::Dispatcher.call(input:, conversation:)
@@ -62,7 +62,7 @@ class ChatDispatchJob < ApplicationJob
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
     broadcaster.emit(
       turn:,
-      kind: "error",
+      kind: :error,
       payload: {
         text:             I18n.t("pito.errors.dispatch_failed").sample,
         detail:           e.message,
@@ -110,10 +110,10 @@ class ChatDispatchJob < ApplicationJob
       else
         { text: result.message_key }
       end
-      [ { kind: "error", payload: error_payload.merge(base) } ]
+      [ { kind: :error, payload: error_payload.merge(base) } ]
 
     when Pito::Slash::Result::NeedsConfirmation
-      [ { kind: "confirmation_prompt",
+      [ { kind: :confirmation_prompt,
           payload: { prompt_key:    result.prompt_key,
                      prompt_args:   result.prompt_args,
                      command_text:  result.command_text }.merge(base) } ]

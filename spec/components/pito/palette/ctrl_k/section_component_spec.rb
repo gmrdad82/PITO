@@ -3,197 +3,65 @@
 require "rails_helper"
 
 RSpec.describe Pito::Palette::CtrlK::SectionComponent do
-  # i18n keys from config/locales/pito/palette/en.yml
-  let(:title_key) { "pito.palette.ctrl_k.sections.suggested" }
+  let(:title_key) { "pito.palette.ctrl_k.sections.youtube" }
   let(:item_with_shortcut) do
-    { label_key: "pito.palette.ctrl_k.commands.new_session", shortcut: "ctrl+n" }
+    { label_key: "pito.palette.ctrl_k.commands.login", insert: "/login <code>", shortcut: "ctrl+a" }
   end
   let(:item_without_shortcut) do
-    { label_key: "pito.palette.ctrl_k.commands.switch_channel" }
+    { label_key: "pito.palette.ctrl_k.commands.logout", insert: "/logout" }
   end
 
-  # ──────────────────────────────────────────
-  # Initializer / attribute storage
-  # ──────────────────────────────────────────
-  describe "#initialize" do
-    it "stores title_key, items, selected, and selected_item_index" do
-      comp = described_class.new(
-        title_key: title_key,
-        items: [ item_with_shortcut ],
-        selected: true,
-        selected_item_index: 0
-      )
-      expect(comp).to be_a(described_class)
+  describe "section title" do
+    it "renders the translated title" do
+      node = render_inline(described_class.new(title_key:, items: []))
+      expect(node.text).to include(I18n.t(title_key))
     end
 
-    it "defaults selected to false" do
-      comp = described_class.new(title_key: title_key, items: [])
-      node = render_inline(comp)
-      # No item → no highlight background applied
-      expect(node.css("div[style*='background']")).to be_empty
-    end
-
-    it "defaults selected_item_index to nil" do
-      comp = described_class.new(title_key: title_key, items: [ item_with_shortcut ], selected: true)
-      node = render_inline(comp)
-      # selected: true but selected_item_index: nil → no row gets highlighted
-      expect(node.css("div[style*='background: var(--border-default)']")).to be_empty
+    it "exposes section Stimulus target" do
+      node = render_inline(described_class.new(title_key:, items: []))
+      expect(node.css("[data-pito--command-palette-target='section']")).not_to be_empty
     end
   end
 
-  # ──────────────────────────────────────────
-  # Rendering: section title
-  # ──────────────────────────────────────────
-  describe "rendered section title" do
-    it "renders the translated title text" do
-      node = render_inline(
-        described_class.new(title_key: title_key, items: [])
-      )
-      # "Suggested" is the en translation for pito.palette.ctrl_k.sections.suggested
-      expect(node.text).to include("Suggested")
-    end
-
-    it "renders the session section title" do
-      node = render_inline(
-        described_class.new(title_key: "pito.palette.ctrl_k.sections.session", items: [])
-      )
-      expect(node.text).to include("Session")
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: empty items list
-  # ──────────────────────────────────────────
-  describe "with empty items" do
-    it "renders only the title row, no item rows" do
-      node = render_inline(
-        described_class.new(title_key: title_key, items: [])
-      )
-      # Title div is the only div; items loop produces nothing
-      expect(node.css("div").length).to eq(1)
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: items without shortcut
-  # ──────────────────────────────────────────
-  describe "with an item that has no shortcut" do
+  describe "item rendering" do
     let(:node) do
-      render_inline(
-        described_class.new(title_key: title_key, items: [ item_without_shortcut ])
-      )
+      render_inline(described_class.new(title_key:, items: [ item_with_shortcut, item_without_shortcut ]))
     end
 
-    it "renders the translated item label" do
-      expect(node.text).to include("Switch channel")
+    it "renders all item labels via i18n" do
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.login"))
+      expect(node.text).to include(I18n.t("pito.palette.ctrl_k.commands.logout"))
     end
 
-    it "does not render a shortcut span" do
-      item_div = node.css("div").last
-      spans = item_div.css("span")
-      expect(spans.length).to eq(1)
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: item with shortcut
-  # ──────────────────────────────────────────
-  describe "with an item that has a shortcut" do
-    let(:node) do
-      render_inline(
-        described_class.new(title_key: title_key, items: [ item_with_shortcut ])
-      )
+    it "renders the shortcut when present" do
+      expect(node.text).to include("ctrl+a")
     end
 
-    it "renders the item label" do
-      expect(node.text).to include("New session")
+    it "omits the shortcut span when absent" do
+      logout_item = node.css("[data-pito--command-palette-target='item']").last
+      expect(logout_item.css("span").length).to eq(1)
     end
 
-    it "renders the shortcut text" do
-      expect(node.text).to include("ctrl+n")
+    it "sets data-insert on each item" do
+      items = node.css("[data-pito--command-palette-target='item']")
+      expect(items[0]["data-insert"]).to eq("/login <code>")
+      expect(items[1]["data-insert"]).to eq("/logout")
     end
 
-    it "renders two spans (label + shortcut)" do
-      item_div = node.css("div").last
-      expect(item_div.css("span").length).to eq(2)
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Rendering: multiple items
-  # ──────────────────────────────────────────
-  describe "with multiple items" do
-    let(:items) do
-      [
-        { label_key: "pito.palette.ctrl_k.commands.new_session" },
-        { label_key: "pito.palette.ctrl_k.commands.open_editor" },
-        { label_key: "pito.palette.ctrl_k.commands.toggle_sidebar" }
-      ]
+    it "sets data-label (lowercased) on each item for fuzzy search" do
+      items = node.css("[data-pito--command-palette-target='item']")
+      items.each do |item|
+        expect(item["data-label"]).to be_present
+        expect(item["data-label"]).to eq(item["data-label"].downcase)
+      end
     end
 
-    it "renders all item labels" do
-      node = render_inline(described_class.new(title_key: title_key, items: items))
-      expect(node.text).to include("New session")
-      expect(node.text).to include("Open editor")
-      expect(node.text).to include("Toggle sidebar")
-    end
-
-    it "renders title div + one div per item" do
-      node = render_inline(described_class.new(title_key: title_key, items: items))
-      # 1 title div + 3 item divs
-      expect(node.css("div").length).to eq(4)
-    end
-  end
-
-  # ──────────────────────────────────────────
-  # Selection highlight
-  # ──────────────────────────────────────────
-  describe "selection highlight" do
-    let(:items) do
-      [
-        { label_key: "pito.palette.ctrl_k.commands.new_session" },
-        { label_key: "pito.palette.ctrl_k.commands.open_editor" }
-      ]
-    end
-
-    it "highlights only the selected item row" do
-      node = render_inline(
-        described_class.new(
-          title_key: title_key,
-          items: items,
-          selected: true,
-          selected_item_index: 1
-        )
-      )
-      highlighted = node.css("div[style*='background: var(--border-default)']")
-      expect(highlighted.length).to eq(1)
-      expect(highlighted.first.text).to include("Open editor")
-    end
-
-    it "does not highlight any row when selected is false" do
-      node = render_inline(
-        described_class.new(
-          title_key: title_key,
-          items: items,
-          selected: false,
-          selected_item_index: 0
-        )
-      )
-      expect(node.css("div[style*='background: var(--border-default)']")).to be_empty
-    end
-
-    it "highlights the first item when selected_item_index is 0" do
-      node = render_inline(
-        described_class.new(
-          title_key: title_key,
-          items: items,
-          selected: true,
-          selected_item_index: 0
-        )
-      )
-      highlighted = node.css("div[style*='background: var(--border-default)']")
-      expect(highlighted.length).to eq(1)
-      expect(highlighted.first.text).to include("New session")
+    it "has no inline background/color styles (selection is CSS class only)" do
+      node.css("*").each do |el|
+        next if el["style"].blank?
+        expect(el["style"]).not_to match(/background|color/i),
+          "Unexpected inline style on #{el.name}: #{el['style']}"
+      end
     end
   end
 end

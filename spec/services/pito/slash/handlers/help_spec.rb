@@ -47,7 +47,7 @@ RSpec.describe Pito::Slash::Handlers::Help, type: :service do
 
     it "shows only the authentication instruction" do
       event = build_handler(authenticated: false).call.events.first
-      expect(event[:payload][:text]).to include("/authenticate")
+      expect(event[:payload][:text]).to include("/login")
     end
 
     it "does not include the full command list" do

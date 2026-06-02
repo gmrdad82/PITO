@@ -45,14 +45,14 @@ RSpec.describe ChatDispatchJob, type: :job do
 
       it "injects segment_style: plain for the first assistant_text" do
         described_class.perform_now(turn.id, channel: "@all")
-        assistant_events = turn.events.reload.where(kind: "assistant_text").order(:position)
+        assistant_events = turn.events.reload.where(kind: :assistant_text).order(:position)
         expect(assistant_events.first.payload["segment_style"]).to eq("plain")
       end
 
       it "injects segment_style: plain for the only assistant_text from /help" do
         # /help now returns a single consolidated event; all single-event results get "plain".
         described_class.perform_now(turn.id, channel: "@all")
-        assistant_events = turn.events.reload.where(kind: "assistant_text").order(:position)
+        assistant_events = turn.events.reload.where(kind: :assistant_text).order(:position)
         expect(assistant_events.count).to eq(1)
         expect(assistant_events.first.payload["segment_style"]).to eq("plain")
       end
@@ -69,7 +69,7 @@ RSpec.describe ChatDispatchJob, type: :job do
     end
 
     context "with a chat message" do
-      let(:turn) { setup_turn(input_text: "list videos", input_kind: "chat") }
+      let(:turn) { setup_turn(input_text: "list videos", input_kind: :chat) }
 
       it "creates result events" do
         expect {

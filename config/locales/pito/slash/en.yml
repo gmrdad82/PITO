@@ -4,7 +4,7 @@ en:
       help:
         intro: "%{count} commands available."
         entry: "/%{verb} — %{description}"
-        unauthenticated: "Authenticate first — /authenticate <code>. Type /authenticate <6-digit TOTP code> to unlock all commands."
+        unauthenticated: "Login first — /login <code>. Type /login <6-digit TOTP code> to unlock all commands."
         more_hint: "ctrl+o to see %{count} more"
         fewer_hint: "ctrl+o to collapse"
         descriptions:

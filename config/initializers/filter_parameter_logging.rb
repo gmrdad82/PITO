@@ -8,12 +8,12 @@ Rails.application.config.filter_parameters += [
   # Discord + Slack webhook URLs are delivery secrets.
   :webhook_url,
   # Mask sensitive slash-command values in `input` param logs:
-  #   /authenticate <totp_code>  →  /authenticate ******
+  #   /login <totp_code>  →  /login ******
   #   /config google client_id=x client_secret=y  →  /config google client_id=*** client_secret=***
   lambda do |key, value|
     next unless key.to_s == "input" && value.is_a?(String)
-    # /authenticate — mask everything after the verb
-    if value.strip.match?(%r{\A/authenticate(\s|\z)}i)
+    # /login — mask everything after the verb
+    if value.strip.match?(%r{\A/login(\s|\z)}i)
       verb, rest = value.strip.split(/\s+/, 2)
       value.replace("#{verb} #{'*' * rest.to_s.length}") if rest.present?
     # /config — mask sensitive kwargs

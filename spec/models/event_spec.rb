@@ -6,7 +6,7 @@ RSpec.describe Event, type: :model do
   describe "KINDS" do
     it "includes all expected kinds" do
       expect(described_class::KINDS).to match_array(
-        %w[echo assistant_text error confirmation_prompt thinking user_message thought tool_output status_footer]
+        %w[echo assistant_text error confirmation_prompt thinking logout user_message thought tool_output status_footer]
       )
     end
   end
@@ -37,9 +37,9 @@ RSpec.describe Event, type: :model do
 
     it "returns one more than the max position" do
       conversation = Conversation.create!
-      turn = conversation.turns.create!(position: 1, input_kind: "slash", input_text: "/help")
-      conversation.events.create!(turn:, position: 1, kind: "echo", payload: {})
-      conversation.events.create!(turn:, position: 2, kind: "assistant_text", payload: {})
+      turn = conversation.turns.create!(position: 1, input_kind: :slash, input_text: "/help")
+      conversation.events.create!(turn:, position: 1, kind: :echo, payload: {})
+      conversation.events.create!(turn:, position: 2, kind: :assistant_text, payload: {})
       expect(described_class.next_position_for(conversation)).to eq(3)
     end
   end

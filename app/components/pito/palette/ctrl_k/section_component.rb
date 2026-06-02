@@ -5,14 +5,11 @@ module Pito
     module CtrlK
       class SectionComponent < ViewComponent::Base
         # @param title_key [String] i18n key for the section label.
-        # @param items [Array<Hash>] each with keys :label_key and optional :shortcut.
-        # @param selected [Boolean] whether this section contains the active selection.
-        # @param selected_item_index [Integer, nil] index of the selected item within this section.
-        def initialize(title_key:, items:, selected: false, selected_item_index: nil)
+        # @param items [Array<Hash>] each with keys :label_key, :insert, optional :shortcut.
+        #   Selection highlight is managed by the pito--command-palette Stimulus controller.
+        def initialize(title_key:, items:)
           @title_key = title_key
-          @items = items
-          @selected = selected
-          @selected_item_index = selected_item_index
+          @items     = items
         end
       end
     end

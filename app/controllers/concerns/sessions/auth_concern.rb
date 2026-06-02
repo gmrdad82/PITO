@@ -3,8 +3,8 @@
 # Reads `Pito::Auth::SessionCookie` on every request. If the cookie is
 # valid (not expired, not tampered) populates `Current.session` with a
 # `SessionData` value object. If absent or expired, redirects to the
-# root chat shell, where the owner authenticates by typing
-# `/authenticate <code>` (there is no /login route).
+# root chat shell, where the owner logs in by typing
+# `/login <code>` (there is no dedicated login route).
 #
 # Anonymous-allowed actions (the root chat shell, health check) skip the
 # redirect but still opportunistically load a valid session so the
@@ -45,7 +45,7 @@ module Sessions
       return if anonymous_action?
 
       stash_intended_url
-      redirect_to root_path, alert: "authenticate first: /authenticate <code>"
+      redirect_to root_path, alert: "login first: /login <code>"
     end
 
     def anonymous_action?

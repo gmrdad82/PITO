@@ -118,7 +118,7 @@ class YoutubeConnections::OauthCallbacksController < ApplicationController
     turn = conversation.turns.where(completed_at: nil).order(:position).last ||
            conversation.turns.create!(
              position:   Turn.next_position_for(conversation),
-             input_kind: "slash",
+             input_kind: :slash,
              input_text: "/connect"
            )
 

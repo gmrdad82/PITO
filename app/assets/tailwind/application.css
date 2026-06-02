@@ -307,6 +307,12 @@ html {
   100% { opacity: 1; }    /* rapid fade-in over the last ~1/4 */
 }
 
+/* ── Command palette selected item ──────────────────────────── */
+
+.pito-palette-selected {
+  background: var(--border-default);
+}
+
 /* ── Segment component ──────────────────────────────────────── */
 
 .pito-segment {

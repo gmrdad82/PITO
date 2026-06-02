@@ -1,4 +1,4 @@
-<%# Ctrl+P command palette — centered modal box %>
+<%# Ctrl+K command palette — selection and filtering managed by pito--command-palette controller %>
 <div class="w-[600px] bg-surface border border-line-default p-2.5">
   <%# Title row %>
   <div class="flex justify-between items-center px-1.5">
@@ -9,27 +9,30 @@
   <%# 12px gap %>
   <div class="h-3"></div>
 
-  <%# Search input area %>
+  <%# Real search input — controller filters items on keystrokes %>
   <div class="flex items-center pb-1 border-b border-line-default mx-1.5">
-    <%= render(Pito::Cursor::Component.new(char: t("pito.palette.ctrl_k.search_placeholder")[0])) %>
-    <span class="text-fg-dim"><%= t("pito.palette.ctrl_k.search_placeholder")[1..] %></span>
+    <input type="text"
+           data-pito--command-palette-target="search"
+           data-action="input->pito--command-palette#filter keydown->pito--command-palette#onSearchKey"
+           placeholder="<%= t('pito.palette.ctrl_k.search_placeholder') %>"
+           autocomplete="off"
+           class="bg-transparent text-fg-dim outline-none w-full placeholder:text-fg-dim font-mono text-sm">
   </div>
 
   <%# 16px gap %>
   <div class="h-4"></div>
 
-  <%# Sections container — scrollable, width matches modal, padding creates gap between content and scrollbar %>
-  <div class="pito-hide-scrollbar pito-scroll-fade-slim overflow-y-auto" style="max-height: min(80vh, 600px);">
+  <%# Sections container — scrollable, no visible scrollbar %>
+  <div data-pito--command-palette-target="list"
+       class="pito-hide-scrollbar overflow-y-auto"
+       style="max-height: min(80vh, 500px);">
     <% @sections.each_with_index do |section, s_idx| %>
       <%= render(Pito::Palette::CtrlK::SectionComponent.new(
             title_key: section[:title_key],
-            items: section[:items],
-            selected: (s_idx == @selected_section_index),
-            selected_item_index: (s_idx == @selected_section_index ? @selected_item_index : nil)
+            items:     section[:items]
           )) %>
-      <%# Gap between sections (not after last) %>
       <% if s_idx < @sections.length - 1 %>
-        <div class="h-3"></div>
+        <div class="h-3" data-pito--command-palette-target="sectionGap"></div>
       <% end %>
     <% end %>
   </div>

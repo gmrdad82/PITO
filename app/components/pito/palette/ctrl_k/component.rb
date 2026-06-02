@@ -4,14 +4,11 @@ module Pito
   module Palette
     module CtrlK
       class Component < ViewComponent::Base
-        # @param sections [Array<Hash>] each with keys :title and :items.
-        #   Each item is a Hash with keys :name and optional :shortcut.
-        # @param selected_section_index [Integer] which section has the selected item.
-        # @param selected_item_index [Integer] which item within that section is selected.
-        def initialize(sections:, selected_section_index: 0, selected_item_index: 0)
+        # @param sections [Array<Hash>] each with keys :title_key and :items.
+        #   Each item is a Hash with keys :label_key, :insert, and optional :shortcut.
+        #   Selection state is managed entirely by the pito--command-palette Stimulus controller.
+        def initialize(sections:)
           @sections = sections
-          @selected_section_index = selected_section_index
-          @selected_item_index = selected_item_index
         end
       end
     end
