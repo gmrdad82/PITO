@@ -1,9 +1,18 @@
 # Bridge networking restored after Docker iptables rebuild on 2026-05-01.
 #
-# Host-side ports use the "27" suffix (3027/3028 web, 54327 postgres)
+# Host-side ports use the "27" suffix (3027 web, 54327 postgres)
 # so this stack can run alongside other local projects without collisions.
 # Container-side ports stay default — only the host mapping shifts.
 # All host bindings are pinned to 127.0.0.1 (never 0.0.0.0).
+#
+# Named volumes:
+#   postgres_data  — Postgres WAL / data directory (survives docker compose down)
+#   rails_storage  — ActiveStorage uploads at /var/lib/pito-assets
+
+volumes:
+  postgres_data:
+  rails_storage:
+
 services:
   postgres:
     image: pgvector/pgvector:pg17
@@ -13,12 +22,29 @@ services:
       POSTGRES_USER: pito
       POSTGRES_DB: pito_development
       POSTGRES_HOST_AUTH_METHOD: trust
-    # No named volume — Postgres data lives in the container's writable
-    # layer and is intentionally ephemeral (local-only; recreate with
-    # db:create db:migrate + seeds). Reintroduce a volume when persistence
-    # matters.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pito:latest
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3027}:80"
+    volumes:
+      - rails_storage:/var/lib/pito-assets
+    environment:
+      RAILS_ENV: production
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      REDIS_URL: ${REDIS_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy

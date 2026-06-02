@@ -188,7 +188,7 @@ jobs:
         run: bin/importmap audit
 
       - name: Set up database
-        run: bin/rails db:create db:migrate db:seed
+        run: bin/rails db:setup
 
       - name: Build Tailwind CSS
         run: bundle exec rails tailwindcss:build
