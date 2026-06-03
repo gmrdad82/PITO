@@ -2,19 +2,30 @@
 
 require "rails_helper"
 require "rake"
+require "tmpdir"
+require "fileutils"
+require "pathname"
 require_relative "../../support/rake_spec_helper"
 
 RSpec.describe "pito:test:seeds:prepare", type: :rake do
   before(:all) { load_tasks }
 
-  before { reenable("pito:test:seeds:prepare") }
+  let(:seeds_dir) { Pathname.new(Dir.mktmpdir("pito_seeds")) }
+
+  before do
+    stub_const("SEEDS_DIR", seeds_dir)
+    stub_const("FILES_DIR", seeds_dir.join("files"))
+    reenable("pito:test:seeds:prepare")
+  end
+
+  after { FileUtils.rm_rf(seeds_dir) }
 
   it "writes YAML files for every table" do
     suppress_output { Rake::Task["pito:test:seeds:prepare"].invoke }
 
-    expect(Rails.root.join("db/test_seeds/manifest.yml")).to exist
-    expect(Rails.root.join("db/test_seeds/channels.yml")).to exist
-    expect(Rails.root.join("db/test_seeds/games.yml")).to exist
+    expect(seeds_dir.join("manifest.yml")).to exist
+    expect(seeds_dir.join("channels.yml")).to exist
+    expect(seeds_dir.join("games.yml")).to exist
   end
 
   it "records row counts in the manifest" do
@@ -23,7 +34,7 @@ RSpec.describe "pito:test:seeds:prepare", type: :rake do
 
     suppress_output { Rake::Task["pito:test:seeds:prepare"].invoke }
 
-    manifest = YAML.load_file(Rails.root.join("db/test_seeds/manifest.yml"))
+    manifest = YAML.load_file(seeds_dir.join("manifest.yml"))
     expect(manifest[:tables]["channels"]).to eq(2)
     expect(manifest[:tables]["games"]).to be >= 1
   end
