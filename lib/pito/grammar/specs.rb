@@ -47,6 +47,13 @@ module Pito
             auth:            :authenticated_only,
             description_key: "pito.grammar.slash.connect"
           ),
+          Spec.new(
+            namespace:       :slash,
+            name:            :new,
+            slots:           [],
+            auth:            :authenticated_only,
+            description_key: "pito.grammar.slash.new"
+          ),
 
           # Task k — chat command specs
           Spec.new(

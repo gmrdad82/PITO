@@ -989,11 +989,11 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ## P39 — `/new`
 
-- [ ] T39.1 `/new` creates a fresh Conversation (uuid, "Unnamed N"). complexity: [low]
-- [ ] T39.2 Navigate to its `/chat/:uuid` (empty). complexity: [low]
-- [ ] T39.3 Spec. complexity: [low]
-- [ ] T39.4 Smoke. complexity: [manual]
-- [ ] T39.5 Commit: `/new conversation`. complexity: [manual]
+- [x] T39.1 `/new` creates a fresh Conversation (uuid, "Unnamed N"). complexity: [low]
+- [x] T39.2 Navigate to its `/chat/:uuid` (empty). complexity: [low]
+- [x] T39.3 Spec. complexity: [low]
+- [x] T39.4 Smoke. complexity: [manual]
+- [x] T39.5 Commit: `/new conversation`. complexity: [manual]
 
 ## P40 — `/resume` (sidebar picker)
 

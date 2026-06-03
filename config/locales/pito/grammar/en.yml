@@ -7,6 +7,7 @@ en:
         help: "Show available commands"
         config: "Read or write install-wide credentials"
         connect: "Connect a YouTube channel via Google OAuth"
+        new: "Start fresh — opens a brand-new conversation"
         disconnect: "Disconnect a YouTube channel"
       chat:
         list: "List videos matching filters"

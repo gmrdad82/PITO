@@ -49,6 +49,16 @@ class ChatController < ApplicationController
       return oauth_url ? render_turbo_navigate(oauth_url) : respond_to_client(conversation)
     end
 
+    if new_command?(input)
+      # /new creates a fresh Conversation and navigates the browser to it.
+      # Auth gating: mirrors /connect — requires an active session; returns a
+      # mandatory-auth error event (broadcast to the current conversation) if not.
+      # Uses render_turbo_navigate so Turbo's fetch-based form submission triggers
+      # a real browser navigation rather than an in-fetch redirect.
+      result = handle_new(input, conversation)
+      return result ? render_turbo_navigate(result) : respond_to_client(conversation)
+    end
+
     if confirmation_response?(input)
       # #handle confirm|cancel — no echo; updates the existing confirmation
       # segment to processing state, then enqueues ConfirmationDispatchJob.
@@ -267,6 +277,32 @@ class ChatController < ApplicationController
     stash_connect_conversation_uuid(conversation.uuid)
 
     "/auth/google_oauth2"
+  end
+
+  def new_command?(input)
+    input.strip.match?(%r{\A/new(\s|\z)}i)
+  end
+
+  # Creates a fresh Conversation and returns its path for a Turbo Stream navigate,
+  # or nil when the user is unauthenticated (auth error is broadcast; caller sends 204).
+  def handle_new(input, conversation)
+    broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+
+    unless Current.session.present?
+      broadcaster.emit(
+        turn:    conversation.turns.create!(
+          position:   Turn.next_position_for(conversation),
+          input_kind: :slash,
+          input_text: input
+        ),
+        kind:    "error",
+        payload: { text: I18n.t("pito.auth.mandatories").sample }
+      )
+      return nil
+    end
+
+    new_conversation = Conversation.create!
+    conversation_path(new_conversation)
   end
 
   def confirmation_response?(input)
