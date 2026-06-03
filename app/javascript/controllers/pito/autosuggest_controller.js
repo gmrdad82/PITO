@@ -2,11 +2,13 @@
 //
 // Float-above autocomplete palette for the chatbox textarea.
 //
-// Implements tasks ad+ae+af+ag:
+// Implements tasks ad+ae+af+ag+aj+ak:
 //   ad — skeleton: connect, modeFor, onInput
 //   ae — slash/hashtag palette (menu, filter, navigate, insert)
 //   af — key coordination (handleKeydown intercepts BEFORE chat-form + home-transition)
 //   ag — auth re-filter on Turbo auth-update
+//   aj — free-form inline ghost text (locally computed, grammar-gated)
+//   ak — debounced dynamic fetch for dynamic vocab slots (e.g. game_titles)
 //
 // DOM Contract (set by chatbox ERB — build against this exactly):
 //   Controller:  pito--autosuggest  on  #pito-chatbox
@@ -29,6 +31,11 @@
 //   Enter submits, Shift+Tab/Shift+Space (chat-form) still work, plain Tab is
 //   a no-op as documented in chat-form.
 //
+//   aj extension — when a ghost completion is active and the user presses TAB:
+//     preventDefault + stopImmediatePropagation so chat-form#handleKeydown and
+//     home-transition never see the Tab.  Enter always passes through in free mode
+//     (no ghost palette), so chat-form submission works normally.
+//
 // Auth re-filter (ag):
 //   The catalog <script> is rendered server-side with the correct auth-aware
 //   slash list.  After /login or /logout the server replaces #pito-chatbox via
@@ -36,9 +43,19 @@
 //   the fresh catalog automatically.  As a belt-and-suspenders measure we also
 //   listen for turbo:before-stream-render to re-read isAuthenticated() so that if
 //   the palette happens to be open during the swap it collapses cleanly.
+//
+// aj — free-form inline ghost text:
+//   When mode is "free", renders a <span class="pito-ghost"> positioned absolutely
+//   at the caret (using pito:caret CustomEvent coords from terminal-caret controller).
+//   Ghost is computed locally (grammar-gated, static vocabs) or via debounced POST
+//   (dynamic vocabs, task ak).  TAB accepts the complete_current completion; Enter
+//   passes through to submit.
 
 import { Controller } from "@hotwired/stimulus"
 import { isAuthenticated } from "pito/auth"
+
+// ── Dynamic fetch debounce delay (ms) ─────────────────────────────────────────
+const DYNAMIC_DEBOUNCE_MS = 150
 
 export default class extends Controller {
   // ── Targets ────────────────────────────────────────────────────────────────
@@ -57,6 +74,25 @@ export default class extends Controller {
     this._selectedIndex = 0
     this._mode          = "none"
 
+    // aj: ghost text state
+    this._ghostSpan          = null   // lazily created <span class="pito-ghost">
+    this._ghostComplete      = ""     // current complete_current value
+    this._caretLeft          = 0
+    this._caretTop           = 0
+
+    // ak: dynamic fetch state
+    this._dynamicTimer       = null   // debounce timer id
+    this._dynamicRequestId   = 0      // monotonic counter to ignore stale responses
+    this._dynamicAbort       = null   // AbortController for in-flight fetch
+
+    // aj: listen for caret position events from terminal-caret controller
+    this._onCaret = (e) => {
+      this._caretLeft = e.detail.left
+      this._caretTop  = e.detail.top
+      this._positionGhost()
+    }
+    this.element.addEventListener("pito:caret", this._onCaret)
+
     // ag: belt-and-suspenders listener for Turbo stream renders that may swap
     // #pito-auth-gate (and therefore change auth state) without replacing the
     // chatbox.  If the chatbox IS replaced, connect() re-runs automatically.
@@ -74,6 +110,13 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("turbo:before-stream-render", this._onTurboStream)
+    this.element.removeEventListener("pito:caret", this._onCaret)
+    this._cancelDynamicFetch()
+    // Remove ghost span if it was created
+    if (this._ghostSpan && this._ghostSpan.parentNode) {
+      this._ghostSpan.parentNode.removeChild(this._ghostSpan)
+    }
+    this._ghostSpan = null
   }
 
   // ── Public actions (wired via data-action on the textarea) ─────────────────
@@ -108,7 +151,17 @@ export default class extends Controller {
           return
       }
     }
-    // Palette is closed (or key is not a palette key) → let the event pass through
+
+    // aj: when a ghost completion is active and TAB is pressed, accept it.
+    // Enter always passes through so chat-form can submit.
+    if (!this._open && this._ghostComplete && event.key === "Tab" && !event.shiftKey) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      this._acceptGhost()
+      return
+    }
+
+    // Palette is closed (or key is not a palette/ghost key) → let the event pass through
     // so chat-form#handleKeydown and home-transition#interceptEnter can handle it.
   }
 
@@ -143,11 +196,23 @@ export default class extends Controller {
 
     if (this._mode === "slash") {
       this._items = this._buildSlashItems(value, cursor)
+      this._clearGhost()
+      this._cancelDynamicFetch()
     } else if (this._mode === "hashtag") {
       this._items = this._buildHashtagItems(value, cursor)
-    } else {
-      // free / none → no slash/hashtag menu (ghost is a later task)
+      this._clearGhost()
+      this._cancelDynamicFetch()
+    } else if (this._mode === "free") {
+      // aj: free mode — no palette, only ghost text
       this._items = []
+      this._close()
+      this._refreshGhost(value, cursor)
+      return
+    } else {
+      // none — clear everything
+      this._items = []
+      this._clearGhost()
+      this._cancelDynamicFetch()
     }
 
     if (this._items.length === 0) {
@@ -283,8 +348,11 @@ export default class extends Controller {
     this.paletteTarget.innerHTML = ""
     this._items         = []
     this._selectedIndex = 0
-    // Reset mode so next onInput recomputes cleanly
-    this._mode = "none"
+    // Reset mode so next onInput recomputes cleanly — but only if not in free mode
+    // (free mode ghost does its own cleanup via _clearGhost)
+    if (this._mode !== "free") {
+      this._mode = "none"
+    }
   }
 
   // ── ag: catalog parsing (called on connect + on auth change) ───────────────
@@ -296,5 +364,348 @@ export default class extends Controller {
       console.warn("[pito--autosuggest] Failed to parse catalog JSON:", e)
       return { slash: [], hashtag: [], chat: [], vocabularies: {} }
     }
+  }
+
+  // ── aj: ghost text ─────────────────────────────────────────────────────────
+
+  // Main entry point for free-mode ghost: determine if we should fetch dynamically
+  // or compute locally, then update the ghost span.
+  _refreshGhost(value, cursor) {
+    const ghost = this._computeLocalGhost(value, cursor)
+
+    if (ghost === null) {
+      // The active slot is a dynamic vocab — defer to debounced fetch (task ak)
+      this._scheduleDynamicFetch(value, cursor)
+      return
+    }
+
+    // Static result — cancel any pending dynamic fetch and show immediately
+    this._cancelDynamicFetch()
+    this._setGhost(ghost.complete_current, ghost.next_hint)
+  }
+
+  // Compute ghost text locally from the catalog.
+  // Returns { complete_current, next_hint } for static vocab slots.
+  // Returns null if the active slot is dynamic (triggers ak path).
+  // Returns { complete_current: "", next_hint: "" } if grammar gate fails or no match.
+  _computeLocalGhost(value, cursor) {
+    const before = value.slice(0, cursor)
+    const words  = this._lexWords(before)
+
+    // Grammar gate: first word must be a known chat verb
+    if (words.length === 0) return { complete_current: "", next_hint: "" }
+
+    const verbWord = words[0].toLowerCase()
+    const chatSpec = this._findChatSpec(verbWord)
+    if (!chatSpec) return { complete_current: "", next_hint: "" }
+
+    const endsWithSpace = before.endsWith(" ")
+    const typedSlotWords = endsWithSpace ? words.slice(1) : words.slice(1, -1)
+    const currentPartial = endsWithSpace ? "" : (words[words.length - 1] || "")
+
+    // Get enum slots from chat spec (mirrors engine.rb chat_shared_slots)
+    const enumSlots = this._chatEnumSlots()
+
+    // Walk already-typed words to track which slots are consumed
+    const alreadyFilled = {}
+    const fillerWords = this._fillerSet()
+
+    for (const word of typedSlotWords) {
+      const wl = word.toLowerCase()
+      if (fillerWords.has(wl)) continue
+
+      for (const slot of enumSlots) {
+        if (alreadyFilled[slot.name] && !slot.repeatable) continue
+        const vocab = this._getVocab(slot.source)
+        if (!vocab) continue
+        if (vocab.dynamic) {
+          // Dynamic: treat any word as consuming this slot (mirror server logic)
+          alreadyFilled[slot.name] = true
+          break
+        }
+        const resolved = this._resolveVocab(vocab, wl)
+        if (resolved !== null) {
+          alreadyFilled[slot.name] = true
+          break
+        }
+      }
+    }
+
+    // Find active slot: first enum slot not yet fully consumed (or repeatable)
+    const activeSlot = enumSlots.find(s => !alreadyFilled[s.name] || s.repeatable)
+
+    if (endsWithSpace) {
+      // next_hint: show hint for next expected slot
+      const hint = this._nextHintForSlot(activeSlot)
+      return { complete_current: "", next_hint: hint }
+    } else {
+      // complete_current: if currentPartial uniquely prefixes one vocab member
+      if (!currentPartial) return { complete_current: "", next_hint: "" }
+
+      // Check if the active slot's vocab is dynamic
+      if (activeSlot) {
+        const vocab = this._getVocab(activeSlot.source)
+        if (vocab && vocab.dynamic) {
+          // Signal caller to use dynamic fetch (task ak)
+          return null
+        }
+      }
+
+      const completion = this._computeCurrentCompletion(activeSlot, currentPartial)
+      return { complete_current: completion, next_hint: "" }
+    }
+  }
+
+  // Lex the text into word tokens, splitting on whitespace and skipping empty strings.
+  _lexWords(text) {
+    return text.split(/\s+/).filter(w => w.length > 0)
+  }
+
+  // Find a chat spec by verb name (case-insensitive).
+  _findChatSpec(verbWord) {
+    const chatSpecs = this._catalog.chat || []
+    return chatSpecs.find(s => s.name.toLowerCase() === verbWord) || null
+  }
+
+  // Extract the ordered enum slots from the chat grammar.
+  // Mirrors chat_shared_slots from specs.rb:
+  //   status   → release_status
+  //   genre    → genres (repeatable)
+  //   platform → platforms
+  _chatEnumSlots() {
+    return [
+      { name: "status",   source: "release_status", repeatable: false },
+      { name: "genre",    source: "genres",          repeatable: true  },
+      { name: "platform", source: "platforms",       repeatable: false },
+    ]
+  }
+
+  // Get vocabulary entry from catalog by name (string key).
+  _getVocab(sourceName) {
+    const vocabs = this._catalog.vocabularies || {}
+    return vocabs[sourceName] || null
+  }
+
+  // Get the set of filler words from the catalog.
+  _fillerSet() {
+    const fillers = this._catalog.vocabularies && this._catalog.vocabularies.fillers
+    if (!fillers || !fillers.fillers) return new Set()
+    return new Set(fillers.fillers.map(f => f.toLowerCase()))
+  }
+
+  // Resolve a word against a static vocab's canonical members and synonyms.
+  // Returns canonical form string if found, null otherwise.
+  _resolveVocab(vocab, wordLower) {
+    if (!vocab) return null
+    const canonical = vocab.canonical || []
+    // Check canonical members (case-insensitive)
+    const canonMatch = canonical.find(c => c.toLowerCase() === wordLower)
+    if (canonMatch) return canonMatch
+    // Check synonyms
+    const synonyms = vocab.synonyms || {}
+    if (synonyms[wordLower] !== undefined) return synonyms[wordLower]
+    return null
+  }
+
+  // Compute the remaining chars if currentPartial uniquely prefixes exactly one
+  // candidate in the active slot's vocab (canonical + synonym keys).
+  _computeCurrentCompletion(activeSlot, partial) {
+    if (!partial || !activeSlot) return ""
+    const vocab = this._getVocab(activeSlot.source)
+    if (!vocab || vocab.dynamic) return ""
+
+    const partialLower = partial.toLowerCase()
+    const candidates   = this._vocabAllForms(vocab)
+
+    const matches = candidates.filter(c => c.toLowerCase().startsWith(partialLower))
+    if (matches.length !== 1) return ""
+
+    // Return the remaining characters after the partial
+    return matches[0].slice(partial.length)
+  }
+
+  // All completable forms of a static vocab: canonical members only.
+  // (Synonyms are accepted input but we complete to canonical forms.)
+  _vocabAllForms(vocab) {
+    return (vocab.canonical || [])
+  }
+
+  // Generate a next_hint string for the active slot.
+  _nextHintForSlot(activeSlot) {
+    if (!activeSlot) return ""
+    const vocab = this._getVocab(activeSlot.source)
+    if (vocab && !vocab.dynamic) {
+      const canonical = vocab.canonical || []
+      if (canonical.length > 0) return `<${canonical[0]}>`
+    }
+    return `<${activeSlot.name}>`
+  }
+
+  // ── aj: ghost span management ──────────────────────────────────────────────
+
+  // Lazily create (or get) the ghost span inside the field-wrap.
+  _ghostEl() {
+    if (!this._ghostSpan) {
+      const wrap = this.fieldTarget.closest(".pito-chatbox__field-wrap")
+      if (!wrap) return null
+
+      const span = document.createElement("span")
+      span.className  = "pito-ghost"
+      span.setAttribute("aria-hidden", "true")
+      // Position absolutely within the field-wrap (which is position:relative)
+      span.style.position      = "absolute"
+      span.style.top           = "0"
+      span.style.left          = "0"
+      span.style.whiteSpace    = "pre"
+      span.style.pointerEvents = "none"
+      span.style.userSelect    = "none"
+      wrap.appendChild(span)
+      this._ghostSpan = span
+    }
+    return this._ghostSpan
+  }
+
+  // Set ghost content and position it at the caret.
+  _setGhost(completeText, hintText) {
+    this._ghostComplete = completeText || ""
+    const hasContent    = this._ghostComplete || hintText
+
+    const span = this._ghostEl()
+    if (!span) return
+
+    if (!hasContent) {
+      span.textContent = ""
+      return
+    }
+
+    // Build ghost text: complete_current immediately + optional dim hint
+    if (this._ghostComplete) {
+      // Show completion directly (no dim separator needed)
+      span.textContent = this._ghostComplete
+    } else if (hintText) {
+      // Trailing space — show dim next_hint
+      span.textContent = hintText
+    } else {
+      span.textContent = ""
+    }
+
+    this._positionGhost()
+  }
+
+  // Position the ghost span at the current caret coords.
+  _positionGhost() {
+    const span = this._ghostSpan
+    if (!span) return
+    span.style.transform = `translate(${this._caretLeft}px, ${this._caretTop}px)`
+  }
+
+  // Clear ghost text and reset state.
+  _clearGhost() {
+    this._ghostComplete = ""
+    this._cancelDynamicFetch()
+    if (this._ghostSpan) {
+      this._ghostSpan.textContent = ""
+    }
+  }
+
+  // aj: TAB accept — insert the ghost completion into the field.
+  _acceptGhost() {
+    if (!this._ghostComplete) return
+
+    const field      = this.fieldTarget
+    const cursor     = field.selectionStart ?? field.value.length
+    const completion = this._ghostComplete
+
+    // Insert the completion at the cursor position
+    field.value = field.value.slice(0, cursor) + completion + field.value.slice(cursor)
+
+    // Move cursor to after the inserted text
+    const newPos = cursor + completion.length
+    field.selectionStart = field.selectionEnd = newPos
+
+    // Clear ghost state before dispatching input (which will recompute)
+    this._ghostComplete = ""
+    if (this._ghostSpan) this._ghostSpan.textContent = ""
+
+    // Dispatch input so all controllers (chat-form sync, terminal-caret, onInput)
+    // see the updated value
+    field.dispatchEvent(new Event("input", { bubbles: true }))
+    field.focus({ preventScroll: true })
+  }
+
+  // ── ak: debounced dynamic fetch ────────────────────────────────────────────
+
+  _scheduleDynamicFetch(value, cursor) {
+    // Cancel any previous pending timer or in-flight request
+    this._cancelDynamicFetch()
+
+    this._dynamicTimer = setTimeout(() => {
+      this._dynamicTimer = null
+      this._fetchDynamicGhost(value, cursor)
+    }, DYNAMIC_DEBOUNCE_MS)
+  }
+
+  async _fetchDynamicGhost(value, cursor) {
+    // Increment request id so any older response can be discarded
+    const myRequestId = ++this._dynamicRequestId
+
+    // Create AbortController for this request
+    const abortCtrl = new AbortController()
+    this._dynamicAbort = abortCtrl
+
+    // Gather CSRF token and optional conversation uuid from the DOM
+    const csrfToken      = document.querySelector('meta[name="csrf-token"]')?.content
+    const uuidInput      = document.querySelector('input[name="uuid"]')
+    const conversationId = uuidInput ? uuidInput.value : undefined
+
+    const body = { input: value, cursor }
+    if (conversationId) body.uuid = conversationId
+
+    try {
+      const resp = await fetch("/autocomplete", {
+        method:  "POST",
+        signal:  abortCtrl.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "Accept":        "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
+        body: JSON.stringify(body),
+      })
+
+      // Discard stale responses
+      if (myRequestId !== this._dynamicRequestId) return
+
+      if (!resp.ok) {
+        this._clearGhost()
+        return
+      }
+
+      const data = await resp.json()
+
+      // Discard stale responses again (in case another fetch started while awaiting json)
+      if (myRequestId !== this._dynamicRequestId) return
+
+      const ghost = data.ghost || {}
+      this._setGhost(ghost.complete_current || "", ghost.next_hint || "")
+    } catch (err) {
+      // Abort errors are expected when we cancel; swallow all errors defensively
+      if (myRequestId === this._dynamicRequestId) {
+        this._clearGhost()
+      }
+    }
+  }
+
+  _cancelDynamicFetch() {
+    if (this._dynamicTimer !== null) {
+      clearTimeout(this._dynamicTimer)
+      this._dynamicTimer = null
+    }
+    if (this._dynamicAbort) {
+      this._dynamicAbort.abort()
+      this._dynamicAbort = null
+    }
+    // Bump request id so any in-flight response is discarded when it arrives
+    this._dynamicRequestId++
   }
 }

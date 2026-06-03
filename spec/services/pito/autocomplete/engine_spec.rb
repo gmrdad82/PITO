@@ -227,6 +227,49 @@ RSpec.describe Pito::Autocomplete::Engine, type: :service do
     end
   end
 
+  # ── FREE MODE — ghost text (P31.0.al required cases) ────────────────────────
+
+  describe "free-mode ghost" do
+    # Case 1: fully-resolved command — no spurious complete_current
+    it "returns empty complete_current for a fully-typed command 'list upcoming RPG games for PS5'" do
+      input = "list upcoming RPG games for PS5"
+      result = call(input: input, cursor: input.length, authenticated: true)
+      expect(result[:mode]).to eq(:free)
+      expect(result[:ghost][:complete_current]).to eq("")
+    end
+
+    # Case 2: multi-genre + platform — all tokens resolve, no completion needed
+    it "returns empty complete_current for 'list upcoming racing and rpg games for playstation'" do
+      input = "list upcoming racing and rpg games for playstation"
+      result = call(input: input, cursor: input.length, authenticated: true)
+      expect(result[:mode]).to eq(:free)
+      expect(result[:ghost][:complete_current]).to eq("")
+    end
+
+    # Case 3: partial token — unique prefix completion
+    it "returns 'oming' for complete_current when input is 'list upc'" do
+      input = "list upc"
+      result = call(input: input, cursor: input.length, authenticated: true)
+      expect(result[:ghost][:complete_current]).to eq("oming")
+    end
+
+    # Case 4: trailing space — next_hint present
+    it "returns a non-empty next_hint String when input is 'list '" do
+      input = "list "
+      result = call(input: input, cursor: input.length, authenticated: true)
+      expect(result[:ghost][:next_hint]).to be_a(String)
+      expect(result[:ghost][:next_hint]).not_to be_empty
+    end
+
+    # Case 5: unmatched verb — empty ghost
+    it "returns empty ghost for unmatched verb 'frobnicate stuff'" do
+      input = "frobnicate stuff"
+      result = call(input: input, cursor: input.length, authenticated: true)
+      expect(result[:ghost][:complete_current]).to eq("")
+      expect(result[:ghost][:next_hint]).to eq("")
+    end
+  end
+
   # ── HASHTAG MODE ─────────────────────────────────────────────────────────────
 
   describe "hashtag mode" do

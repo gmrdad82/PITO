@@ -83,14 +83,31 @@ export default class extends Controller {
     this.blockTarget.textContent = glyph && glyph !== "\n" ? glyph : " "
   }
 
+  // Returns the current caret pixel position { left, top } relative to the
+  // field's border box. Public so sibling controllers (e.g. pito--autosuggest)
+  // can read it on demand.
+  caretCoords() {
+    const value = this.field.value
+    const empty = value.length === 0
+    const index = empty ? 0 : (this.field.selectionStart ?? value.length)
+    return this.#caretCoords(index)
+  }
+
   // ── internals ──────────────────────────────────────────────────────────────
+
+  #emitCaret() {
+    const { left, top } = this.caretCoords()
+    this.element.dispatchEvent(
+      new CustomEvent("pito:caret", { bubbles: true, detail: { left, top } })
+    )
+  }
 
   #bind() {
     this.abort = new AbortController()
     const { signal } = this.abort
-    const onCaretMove = () => this.render()
-    const onInput = () => { this.autosize(); this.render() }
-    const onFocus = () => { this.#setActive(true); this.render() }
+    const onCaretMove = () => { this.render(); this.#emitCaret() }
+    const onInput = () => { this.autosize(); this.render(); this.#emitCaret() }
+    const onFocus = () => { this.#setActive(true); this.render(); this.#emitCaret() }
     const onBlur = () => { this.#setActive(false); this.render() }
 
     this.field.addEventListener("input", onInput, { signal })
@@ -102,7 +119,7 @@ export default class extends Controller {
     // `input` does not fire when the field is cleared programmatically (e.g. the
     // chat form on submit) — that path dispatches its own "input" event.
     document.addEventListener("selectionchange", () => {
-      if (document.activeElement === this.field) this.render()
+      if (document.activeElement === this.field) { this.render(); this.#emitCaret() }
     }, { signal })
 
     // Re-sync mirror width + re-grow when the field is resized by layout.

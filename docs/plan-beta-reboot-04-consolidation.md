@@ -866,11 +866,11 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 **Free-form inline ghost-text (grammar-gated)**
 
-- [ ] P31.0.ai Expose `caretCoords()` / dispatch `pito:caret {left,top}` from `terminal_caret_controller.js` (reuse existing mirror); add `ghost` span target. complexity: [low]
-- [ ] P31.0.aj Free mode (no `/`/`#`, **no palette**): compute `complete_current` (remaining of current token when it uniquely prefixes a vocab member) + dim `next_hint`; position ghost at caret via `pito:caret`; **grammar-gated**; **TAB** accepts + advances; Enter submits. complexity: [high]
-- [ ] P31.0.ak Debounced (~150ms) `POST /autocomplete` only when current slot `source` is `:dynamic`; static slots stay local. complexity: [low]
-- [ ] P31.0.al `engine_spec.rb` ghost cases: `list upcoming RPG games for PS5`, `list upcoming racing and rpg games for playstation`, `list upc`→`oming`, `list `→next_hint, unmatched→empty ghost. complexity: [low]
-- [ ] P31.0.am Commit: `Free-form inline ghost-text autocomplete`. complexity: [manual]
+- [x] P31.0.ai Expose `caretCoords()` / dispatch `pito:caret {left,top}` from `terminal_caret_controller.js` (reuse existing mirror); add `ghost` span target. complexity: [low]
+- [x] P31.0.aj Free mode (no `/`/`#`, **no palette**): compute `complete_current` (remaining of current token when it uniquely prefixes a vocab member) + dim `next_hint`; position ghost at caret via `pito:caret`; **grammar-gated**; **TAB** accepts + advances; Enter submits. complexity: [high]
+- [x] P31.0.ak Debounced (~150ms) `POST /autocomplete` only when current slot `source` is `:dynamic`; static slots stay local. complexity: [low]
+- [x] P31.0.al `engine_spec.rb` ghost cases: `list upcoming RPG games for PS5`, `list upcoming racing and rpg games for playstation`, `list upc`→`oming`, `list `→next_hint, unmatched→empty ghost. complexity: [low]
+- [x] P31.0.am Commit: `Free-form inline ghost-text autocomplete`. complexity: [manual]
 
 **Cross-cutting + verification**
 
