@@ -855,14 +855,14 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 **Slash/hashtag popup palette (float-above)**
 
-- [ ] P31.0.aa Generalize orphaned slash palette → `Pito::Palette::Autocomplete::Component(mode:, items:, selected_index:, typed:)` (port bar+16ch-col+description+cursor-echo; parameterize left column `/verb` vs `#metric` + accent); component spec. complexity: [low]
-- [ ] P31.0.ab `chatbox_component.{rb,html.erb}`: embed `<script type="application/json" data-pito--autosuggest-target="catalog">` (auth-aware), hidden float-above palette container, `data-controller="pito--autosuggest"`, `field` target on textarea. complexity: [low]
-- [ ] P31.0.ac `application.css`: `.pito-autosuggest-palette { position:absolute; bottom:100%; left:0; right:0; margin-bottom:8px; z-index:40 }`, selected-row, `.pito-ghost { color: var(--fg-faded); pointer-events:none }`. complexity: [low]
-- [ ] P31.0.ad `autosuggest_controller.js` skeleton: `connect()` parse catalog + read `isAuthenticated()` + bind input/keydown; `modeFor(value)` → slash/hashtag/free. complexity: [low]
-- [ ] P31.0.ae Slash/hashtag mode: show+filter palette from catalog; Arrows navigate; **Enter/TAB** select → insert `"/verb "`/`"#handle "` (trailing space), dispatch `input`, keep focus, hide on prefix clear; auth-filter slash list. complexity: [high]
-- [ ] P31.0.af Key coordination: `keydown->pito--autosuggest#handleKeydown` **first** in textarea `data-action`; when palette open/ghost active `preventDefault()`+`stopImmediatePropagation()` on Arrows/Enter/TAB/Esc so chat-form Enter-submit + `home-transition#interceptEnter` don't fire; when idle pass through (Enter submits; SHIFT+TAB channel + SHIFT+SPACE period intact). complexity: [high]
-- [ ] P31.0.ag Auth re-filter on Turbo auth-update: observe `#pito-auth-gate` replacement → re-filter slash commands (`/authenticate` disappears post-login; authenticated-only verbs appear) without reload. complexity: [low]
-- [ ] P31.0.ah Commit: `Slash/hashtag float-above autocomplete palette`. complexity: [manual]
+- [x] P31.0.aa Generalize orphaned slash palette → `Pito::Palette::Autocomplete::Component(mode:, items:, selected_index:, typed:)` (port bar+16ch-col+description+cursor-echo; parameterize left column `/verb` vs `#metric` + accent); component spec. complexity: [low]
+- [x] P31.0.ab `chatbox_component.{rb,html.erb}`: embed `<script type="application/json" data-pito--autosuggest-target="catalog">` (auth-aware), hidden float-above palette container, `data-controller="pito--autosuggest"`, `field` target on textarea. complexity: [low]
+- [x] P31.0.ac `application.css`: `.pito-autosuggest-palette { position:absolute; bottom:100%; left:0; right:0; margin-bottom:8px; z-index:40 }`, selected-row, `.pito-ghost { color: var(--fg-faded); pointer-events:none }`. complexity: [low]
+- [x] P31.0.ad `autosuggest_controller.js` skeleton: `connect()` parse catalog + read `isAuthenticated()` + bind input/keydown; `modeFor(value)` → slash/hashtag/free. complexity: [low]
+- [x] P31.0.ae Slash/hashtag mode: show+filter palette from catalog; Arrows navigate; **Enter/TAB** select → insert `"/verb "`/`"#handle "` (trailing space), dispatch `input`, keep focus, hide on prefix clear; auth-filter slash list. complexity: [high]
+- [x] P31.0.af Key coordination: `keydown->pito--autosuggest#handleKeydown` **first** in textarea `data-action`; when palette open/ghost active `preventDefault()`+`stopImmediatePropagation()` on Arrows/Enter/TAB/Esc so chat-form Enter-submit + `home-transition#interceptEnter` don't fire; when idle pass through (Enter submits; SHIFT+TAB channel + SHIFT+SPACE period intact). complexity: [high]
+- [x] P31.0.ag Auth re-filter on Turbo auth-update: observe `#pito-auth-gate` replacement → re-filter slash commands (`/authenticate` disappears post-login; authenticated-only verbs appear) without reload. complexity: [low]
+- [x] P31.0.ah Commit: `Slash/hashtag float-above autocomplete palette`. complexity: [manual]
 
 **Free-form inline ghost-text (grammar-gated)**
 

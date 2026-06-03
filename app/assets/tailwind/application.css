@@ -441,6 +441,39 @@ html {
   margin-top: 10px;
 }
 
+/* ── Autocomplete palette — floats above the chatbox ────────── */
+
+/* The palette is anchored to `.chatbox-wrapper`, which must be
+   position:relative so the absolute child lands in the right spot. */
+.chatbox-wrapper {
+  position: relative;
+}
+
+.pito-autosuggest-palette {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  z-index: 40;
+}
+
+/* Selected row in the autosuggest palette */
+.pito-autosuggest-palette .is-selected {
+  background: var(--border-default);
+}
+
+/* Hide when JS toggles via class (hidden attribute is handled natively) */
+.pito-autosuggest-palette.hidden {
+  display: none;
+}
+
+/* Inline grammar-gated ghost text (free-form completion hint) */
+.pito-ghost {
+  color: var(--fg-faded);
+  pointer-events: none;
+}
+
 /* ── Theme system ──────────────────────────────────────────────
  *
  * Add a new theme: drop another `[data-theme="<name>"]` block
