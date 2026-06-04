@@ -883,114 +883,12 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] P31.0.ao Verify: `bin/rspec` green. Manual — `/` palette auth-filtered + Enter/TAB insert with trailing space; `#tag add ctr and views` metric palette; `list upc`→ghost `oming`→TAB; `… racing and rpg games for playstation`→Enter submits; `/authenticate <TOTP>` updates palette live; bogus URL → 404 autocomplete; SHIFT+TAB channel, SHIFT+SPACE period, plain TAB drives autocomplete only. complexity: [manual]
 - [x] P31.0.ap Commit: `Wire P31.0 grammar + autocomplete; dynamic 404`. complexity: [manual]
 
-## P31 — `/import videos` (smart incremental pull)
+## P31–P38 — Videos & Games pipelines → **moved to `docs/follow-up.md`**
 
-> Pull YouTube → `Video` (read-only mirror). Quota-aware. Channel from TAB; period is dead data (carried only).
-
-- [ ] T31.1 `/import videos` handler reads the selected channels (TAB). (Period is carried but unused.) complexity: [low]
-- [ ] T31.2 `@all` → one `ImportVideosJob` per channel; single channel → one. complexity: [low]
-- [ ] T31.3 Per job: persist + broadcast a per-channel progress Segment. complexity: [low]
-- [ ] T31.4 Progress Segment payload updated via Turbo Stream replace (targets its DOM id). complexity: [high]
-- [ ] T31.5 `ImportVideosJob` walks the channel's uploads playlist newest-first (`playlistItems.list`), paginating. complexity: [high]
-- [ ] T31.6 Batch `videos.list` only for new/changed ids; compare stored `etag`/checksum; skip unchanged. complexity: [high]
-- [ ] T31.7 Stop paging after a run of K consecutive known-unchanged videos (incremental tail cutoff). complexity: [high]
-- [ ] T31.8 Upsert `Video` (dedupe by `youtube_video_id`); store `etag` + `last_synced_at`. complexity: [low]
-- [ ] T31.9 Update the progress Segment; summary (N new / M updated / skipped) on finish. complexity: [low]
-- [ ] T31.10 Specs (stubbed API; incremental stop; checksum skip; dedupe; progress). complexity: [high]
-- [ ] T31.11 Smoke: `@all` → multiple Segments; single → one. complexity: [manual]
-- [ ] T31.12 Commit: `/import videos: smart incremental pull`. complexity: [manual]
-
-## P32 — VideoPreview model + edit UI
-
-> Stage edits without touching `Video`. Full edit experience this plan.
-
-- [ ] T32.1 Confirm the `VideoPreview` model + `has_one_attached :thumbnail` (from P6). complexity: [low]
-- [ ] T32.2 Edit surface: `/edit video <id>` opens the edit form for that video (or `/edit video` with no id opens the video picker, reusing P34's). complexity: [high]
-- [ ] T32.3 Form fields (YouTube Studio parity): title, description, tags, category + game title, made-for-kids (Yes/No), paid promotion, AI/altered-content (Yes/No), allow embedding, allow automatic chapters, allow automatic places, allow automatic concepts, notify subscribers, Shorts remixing, thumbnail upload (Active Storage). complexity: [high]
-- [ ] T32.4 Save creates/updates a `VideoPreview` (status `draft`); never mutates `Video`. complexity: [low]
-- [ ] T32.5 Show a diff/preview of the draft vs current `Video` values. complexity: [high]
-- [ ] T32.6 Thumbnail preview render (the uploaded image). complexity: [low]
-- [ ] T32.7 Stimulus for the form (keyboard + mouse). complexity: [high]
-- [ ] T32.8 i18n all copy. complexity: [low]
-- [ ] T32.9 Model/component/request specs. complexity: [low]
-- [ ] T32.10 Smoke: compose a preview; persists as draft; `Video` unchanged. complexity: [manual]
-- [ ] T32.11 Commit: `VideoPreview model + edit UI`. complexity: [manual]
-
-## P33 — `/update videos` (publish previews → re-import)
-
-> Push pending VideoPreviews to YouTube; on success re-import that video. Per-channel fan-out + progress Segments.
-
-- [ ] T33.1 `/update videos` handler reads channels + period; collects pending (`draft`) previews in scope. complexity: [low]
-- [ ] T33.2 Per channel → one `PublishPreviewsJob` + one progress Segment (reuse P31's fan-out helper). complexity: [low]
-- [ ] T33.3 Job maps the preview → the **API-supported fields** and publishes (`videos.update` snippet/status + `thumbnails.set`); flags staged Studio-only fields as not-published; status `publishing` → `published`/`failed`. complexity: [high]
-- [ ] T33.4 On each success → enqueue a single-video `ImportVideosJob` (`videos.list` by id) to refresh `Video`. complexity: [low]
-- [ ] T33.5 On failure → mark `failed` + surface the error in the Segment. complexity: [low]
-- [ ] T33.6 Progress Segment updates; summary (published / failed) on finish. complexity: [low]
-- [ ] T33.7 Specs (stubbed API; publish → reimport enqueued; failure path). complexity: [high]
-- [ ] T33.8 Smoke: edit a title/thumbnail → `/update videos` → YouTube updated → `Video` re-synced. complexity: [manual]
-- [ ] T33.9 Commit: `/update videos: publish previews → re-import`. complexity: [manual]
-
-## P34 — Video lifecycle (`/publish` `/schedule` `/unlist` `/delete`)
-
-> Each command opens a **sidebar picker** of eligible videos → select → echo + async job → Braille → result Segment **with a link to the video**. Direct YouTube state changes (not via VideoPreview); re-import after; `/delete` removes the local mirror.
-
-- [ ] T34.1 Shared video-picker sidebar: backend returns the eligible set for the command; render with keyboard + mouse selection (reuse the `Pito::Sidebar` picker pattern). complexity: [high]
-- [ ] T34.2 `/publish` → picker of publishable videos (private/draft, unlisted, scheduled). complexity: [low]
-- [ ] T34.3 On select → set privacy `public` on YouTube (`videos.update`). complexity: [high]
-- [ ] T34.4 `/schedule` → same picker + an **additional date step** (pick publish date/time) → set privacy `private` + `status.publishAt`. complexity: [high]
-- [ ] T34.5 `/unlist` → picker of public/unlisted videos → set privacy `unlisted`. complexity: [low]
-- [ ] T34.6 After publish/schedule/unlist success → enqueue a single-video import to refresh `Video`. complexity: [low]
-- [ ] T34.7 `/delete` → picker (any video) → `confirmation` Segment → on confirm `videos.delete`. complexity: [high]
-- [ ] T34.8 On delete success → remove the local `Video` (+ dependent rows). complexity: [low]
-- [ ] T34.9 Common flow: echo + dispatch async job → Braille thinking → result Segment **with a link to the video** when done. complexity: [low]
-- [ ] T34.10 Specs (eligible-set per command; stubbed API state changes; schedule date; delete confirm). complexity: [high]
-- [ ] T34.11 Smoke each command via the picker. complexity: [manual]
-- [ ] T34.12 Commit: `Video lifecycle via picker (publish/schedule/unlist/delete)`. complexity: [manual]
-
-## P35 — Re-wire IGDB services
-
-> Backend mostly in tree (`game/igdb/*`, `game/search_service`, `pito/search/search_games`, jobs).
-
-- [ ] T35.1 Verify IGDB credentials path (`Game::Igdb::TokenCache` / AppSetting / credentials). complexity: [low]
-- [ ] T35.2 Smoke `Game::Igdb` client search (or stubbed spec). complexity: [high]
-- [ ] T35.3 Confirm `Game::Igdb::SyncGame` populates a Game + recompute `score`. complexity: [high]
-- [ ] T35.4 Confirm `Game::SearchService` / `Pito::Search::SearchGames` work. complexity: [low]
-- [ ] T35.5 Add/fix specs (WebMock stubbed IGDB). complexity: [low]
-- [ ] T35.6 Commit: `Re-wire + verify IGDB search/sync services`. complexity: [manual]
-
-## P36 — `/add game` + sidebar search UI
-
-> Rebuild the dropped search UI as a sidebar. Adds to the global game library.
-
-- [ ] T36.1 `/add game` opens the sidebar in "game search" mode. complexity: [low]
-- [ ] T36.2 Sidebar search box; min-char gate; debounce. complexity: [low]
-- [ ] T36.3 Search endpoint returns IGDB matches (+ flag already-in-DB). complexity: [high]
-- [ ] T36.4 Render results; in-DB rows get a marker. complexity: [low]
-- [ ] T36.5 Keyboard nav (↑/↓ + Enter) + mouse click select a result. complexity: [high]
-- [ ] T36.6 Selecting a result shows its game details in the sidebar. complexity: [high]
-- [ ] T36.7 Reuse `Pito::Sidebar::*`; i18n all copy. complexity: [low]
-- [ ] T36.8 Component/request specs. complexity: [low]
-- [ ] T36.9 Smoke. complexity: [manual]
-- [ ] T36.10 Commit: `/add game sidebar search UI`. complexity: [manual]
-
-## P37 — Add → async sync-once
-
-- [ ] T37.1 "Add" creates a Game stub from the IGDB result (igdb_id, title) in the global library. complexity: [low]
-- [ ] T37.2 Enqueue `GameIgdbSync(game)` **once** (full details + score + Voyage index). complexity: [low]
-- [ ] T37.3 Dedupe: adding an already-in-DB game is a no-op (marker informs the UI). complexity: [low]
-- [ ] T37.4 Confirmation Segment / sidebar update on completion. complexity: [low]
-- [ ] T37.5 Job spec. complexity: [low]
-- [ ] T37.6 Smoke. complexity: [manual]
-- [ ] T37.7 Commit: `Add game → async one-shot IGDB sync`. complexity: [manual]
-
-## P38 — Daily unreleased-games refresh
-
-- [ ] T38.1 Confirm `game_igdb_nightly_refresh.rb`; scope to **not-yet-released** games (P8 fields). complexity: [high]
-- [ ] T38.2 Register as a recurring daily job (SolidQueue `config/recurring.yml`). complexity: [low]
-- [ ] T38.3 On refresh: re-sync release info + recompute `score`; stop once released. complexity: [low]
-- [ ] T38.4 Job spec. complexity: [low]
-- [ ] T38.5 Smoke. complexity: [manual]
-- [ ] T38.6 Commit: `Daily refresh for unreleased games`. complexity: [manual]
+> `/import videos`, `VideoPreview` + `/edit video`, `/update videos`, video lifecycle
+> (`/publish`/`/schedule`/`/unlist`/`/delete`), IGDB re-wire, `/add game`, async sync,
+> and the nightly unreleased-games refresh are **deferred out of the Beta**. Full task
+> lists live in `docs/follow-up.md` (sections A & B).
 
 ## P39 — `/new`
 
@@ -1027,20 +925,10 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T42.5 Spec; smoke. complexity: [manual]
 - [x] T42.6 Commit: `Conversation rename + Unnamed N`. complexity: [manual]
 
-## P43 — AGENTS.md conventions
+## P43 — AGENTS.md conventions → **moved to `docs/follow-up.md`** (section C)
 
-- [ ] T43.1 Add `## Auth` section — cookie session (24h idle, no hard max), no Session model, TOTP retained. complexity: [low]
-- [ ] T43.2 Add `## Factories` section — every model; `factories_spec` auto-validates. complexity: [low]
-- [ ] T43.3 Add `## Rake` section — `pito:test:*` / `pito:tools:*`; seeds prepare/populate; specced. complexity: [low]
-- [ ] T43.4 Add `## Component CSS` section — `data-accent`; no inline `style=`. complexity: [low]
-- [ ] T43.5 Add `## Footage / ffprobe` section — Probe, `pito:tools:probe`, needs_grading/orientation. complexity: [low]
-- [ ] T43.6 Add `## Dispatch` section — async, persist-before-broadcast, turn timing, backend elapsed, command context (channel used, period dead). complexity: [low]
-- [ ] T43.7 Add `## Conversations` section — uuid routing, naming, sidebar grouping, `/new`/`/resume`. complexity: [low]
-- [ ] T43.8 Add `## Chatbox` section — TAB channels, Shift+TAB periods (dead), thinking indicator + dictionaries. complexity: [low]
-- [ ] T43.9 Add `## Videos` section — read-only mirror; smart `/import`; `VideoPreview` + `/edit video`; `/update` publish→re-import; lifecycle `/publish`/`/schedule`/`/unlist`/`/delete`. complexity: [low]
-- [ ] T43.10 Add `## Games` section — IGDB search sidebar, `/add game`, async sync, nightly unreleased refresh. complexity: [low]
-- [ ] T43.11 Add `## Analytics namespaces` section — `Pito::Stats` vs `Pito::Analytics` (directional). complexity: [low]
-- [ ] T43.12 Commit: `AGENTS.md conventions`. complexity: [manual]
+> Documenting the established conventions is deferred (several sections describe the
+> still-to-build video/game pipelines). Full task list in `docs/follow-up.md`.
 
 ## P44 — Verification & cleanup
 
@@ -1237,21 +1125,21 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 > A recurring job, **daily at 01:00**, deletes notifications that were read more than 7 days ago. NOTE: `Notification.read_at` **already exists** (set when a notification is marked read) — no new column needed; the job is `Notification.where("read_at < ?", 7.days.ago).delete_all`. Unread notifications are never deleted.
 
-- [ ] T59.1 `CleanupNotificationsJob` (ActiveJob) — `Notification.where.not(read_at: nil).where("read_at < ?", 7.days.ago).delete_all`. complexity: [low]
-- [ ] T59.2 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00 (server TZ). complexity: [low]
-- [ ] T59.3 Specs: job deletes notifications read > 7 days ago; keeps unread + recently-read; recurring entry present. complexity: [low]
-- [ ] T59.4 Commit: `Daily job: prune notifications read over 7 days ago`. complexity: [manual]
+- [x] T59.1 `CleanupNotificationsJob` (ActiveJob) — `Notification.where.not(read_at: nil).where(read_at: ..7.days.ago).delete_all`. complexity: [low]
+- [x] T59.2 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00 (server TZ). complexity: [low]
+- [x] T59.3 Specs: job deletes notifications read > 7 days ago; keeps unread + recently-read. complexity: [low]
+- [x] T59.4 Commit: `Daily job: prune notifications read over 7 days ago`. complexity: [manual]
 
 ## P60 — Daily channel stats sync job (subscribers, views, watch hours)
 
 > A recurring job, **daily at 01:00**, syncs each connected channel's general stats — subscribers, total views, watch hours — from the YouTube Data/Analytics API into the `Channel` mirror (and/or a stats snapshot). Pairs with the eventual `Pito::Stats` work (see follow-ups).
 
-- [ ] T60.1 Stats fetch service: pull subscribers / views / watch hours per `Channel` via the YouTube API (reuse existing API client/credentials). complexity: [high]
-- [ ] T60.2 Persist onto `Channel` (and/or a daily snapshot row for history — decide vs `Pito::Stats`). complexity: [high]
-- [ ] T60.3 `SyncChannelStatsJob` iterating all connected channels; resilient per-channel (one failure doesn't abort the rest). complexity: [low]
-- [ ] T60.4 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00. complexity: [low]
-- [ ] T60.5 Specs (service with stubbed API; job iterates + persists; recurring entry). complexity: [low]
-- [ ] T60.6 Commit: `Daily job: sync channel general stats`. complexity: [manual]
+- [x] T60.1 Stats fetch service `Channel::Youtube::StatsFetcher` — subscribers / views (Data API statistics) + watch hours (Analytics `estimatedMinutesWatched` → hours). complexity: [high]
+- [x] T60.2 Persist onto existing `Channel` columns (`subscriber_count`, `view_count`, `watched_hours`, `last_synced_at`) — no migration needed. complexity: [high]
+- [x] T60.3 `SyncChannelStatsJob` iterating all connected channels; resilient per-channel (one failure doesn't abort the rest). complexity: [low]
+- [x] T60.4 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00. complexity: [low]
+- [x] T60.5 Specs (service with stubbed API; job iterates + persists). complexity: [low]
+- [x] T60.6 Commit: `Daily job: sync channel general stats`. complexity: [manual]
 
 ## P61 — Align typewriter reveal speed with the chatbox typing (System/Enhanced)
 
@@ -1279,34 +1167,12 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 _Resolved this round:_ video commands = `/import` + `/update` + lifecycle `/publish`/`/schedule`/`/unlist`/`/delete`; `Video` + `Channel` read-only mirrors, `Playlist` dropped; smart import (etag/checksum + incremental); VideoPreview field set matches Studio (screenshots); VideoPreview edit via `/edit video <id>`; `/add game` → global library; **period is dead data**; **cookie 24h idle, no hard max**; Active Storage on; transition approved (must feel live/cool); **video targeting = sidebar picker** (`/publish`/`/schedule`/`/unlist`/`/delete` pick eligible videos; `/schedule` adds a date step; result links to the video).
 
-## Still to cover (not yet discussed)
+## Follow-ups → **moved to `docs/follow-up.md`**
 
-- **Chat box autocomplete / autosuggestions** (deferred — discuss later).
-- Further UI enhancements beyond those listed.
-- `Pito::Stats` design (daily snapshot tables/jobs for channel + video totals).
-- `Pito::Analytics` (wire TAB channel + Shift+TAB period into real queries).
-- Real chat/slash domain handlers (list videos, channel overview…).
-- Games detail screen (host for ScoreBar + TTB + probe snippet + `/add game` detail pane).
-- A **videos list screen** (host for `/edit video` + lifecycle actions + a friendlier video target picker).
-
-## Open follow-ups (explicitly later)
-
-- `Pito::Stats` / `Pito::Analytics` plans; wire TAB/period.
-- Games detail screen; videos list screen.
-- `Calendar`/`CalendarEntry` models — add when needed. (Playlist dropped — not supported.)
-- Remote footage ingest (script + HTTP endpoint) if/when on Hetzner.
-- At merge: delete `plan-beta-reboot-*.md`; fold durable content into `architecture.md` / `design.md` / `installation.md` / `tools.md`.
-- Game im main screen
-- Sidebar only for preview
-- List
-- Show
-- List top channels
-- List top channels by subs|subscribers
-- List top channels by views and watched hours|time
-- List channels ordered by subs|subscribers (count)
-- List first|last 3 channels ordered|sorted by subs|subscribers (count)
-- View|show @handle
-- force / refresh stats with --fresh argument maybe
+All deferred work (videos & games pipelines P31–P38, AGENTS.md conventions P43,
+the future **Playlists** plan, `Pito::Stats`/`Pito::Analytics`, query-language
+ideas, the component-extraction backlog, and the at-merge doc cleanup) now lives in
+`docs/follow-up.md`. Plan 4 keeps only what ships in the Beta.
 
 ## How to use this plan
 
