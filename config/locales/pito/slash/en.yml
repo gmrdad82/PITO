@@ -75,8 +75,8 @@ en:
           fx:
             label: "FX"
           state:
-            on: "on"
-            off: "off"
+            "on": "on"
+            "off": "off"
           status: "%{label}: %{state}"
           confirmed: "%{label} %{state}."
         errors:
