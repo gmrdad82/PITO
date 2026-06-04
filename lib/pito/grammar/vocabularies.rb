@@ -138,6 +138,23 @@ module Pito
         resolver: ->(context) { ::Game.where("title ILIKE ?", "#{context}%").limit(20).pluck(:title) }
       ).freeze
 
+      # Per-provider kv key lists — single source of truth for autocomplete.
+      # These mirror the keys in Pito::Slash::Handlers::Config::PROVIDER_SETTERS.
+      PROVIDER_KEYS = {
+        "google"  => %w[client_id client_secret redirect_uri api_key],
+        "voyage"  => %w[api_key],
+        "igdb"    => %w[client_id client_secret],
+        "webhook" => %w[slack discord],
+        "sound"   => [],
+        "fx"      => []
+      }.freeze
+
+      # Returns the allowed kv keys for +provider+ (downcased string).
+      # Returns [] for unknown providers.
+      def self.provider_keys(provider)
+        PROVIDER_KEYS.fetch(provider.to_s.downcase, [])
+      end
+
       # ── Public API ───────────────────────────────────────────────────────────
 
       def self.all

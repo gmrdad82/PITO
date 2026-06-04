@@ -90,7 +90,8 @@ module Pito
           consumed_args = build_consumed_args(after_slash, partial)
 
           items = arg_stage_completions(spec, consumed_args, partial, authenticated:)
-          { menu_items: items, ghost: EMPTY_GHOST }
+          ghost = kv_ghost_for(spec, consumed_args, partial)
+          { menu_items: items, ghost: ghost }
         end
 
         # Returns all args that have been fully typed (before the current partial).
@@ -145,10 +146,10 @@ module Pito
         # Walk the spec's slots, track which slots have been consumed, and
         # return suggestions for the active (current) slot.
         def arg_stage_completions(spec, consumed_args, partial, authenticated:)
-          active_slot = find_active_slot(spec, consumed_args)
+          active_slot, resolved_values = find_active_slot_with_context(spec, consumed_args)
           return [] unless active_slot
 
-          suggest_for_slot(active_slot, partial, authenticated:)
+          suggest_for_slot(active_slot, partial, authenticated:, resolved_values:)
         end
 
         # Determine which slot the cursor is currently in.
@@ -157,9 +158,17 @@ module Pito
         # Tracks resolved_values so that conditional slots (slot.eligible?) are
         # honoured — e.g. after "/config sound " only the :state enum is active,
         # after "/config google " only the :settings kv is active.
+        #
+        # Returns the active slot (or nil). Use find_active_slot_with_context to
+        # also receive the resolved_values Hash.
         def find_active_slot(spec, consumed_args)
+          find_active_slot_with_context(spec, consumed_args).first
+        end
+
+        # Like find_active_slot but returns [active_slot, resolved_values].
+        def find_active_slot_with_context(spec, consumed_args)
           slots = spec.slots.reject { |s| s.kind == :free || s.kind == :connective }
-          return eligible_slots(slots, {}).first if consumed_args.empty?
+          return [ eligible_slots(slots, {}).first, {} ] if consumed_args.empty?
 
           remaining_args  = consumed_args.dup
           filled_slots    = []
@@ -198,9 +207,11 @@ module Pito
           # The active slot is the first unfilled slot that is eligible given
           # the resolved values accumulated so far.
           consumed_slot_names = filled_slots.map(&:name)
-          eligible_slots(slots, resolved_values).find do |s|
+          active = eligible_slots(slots, resolved_values).find do |s|
             !consumed_slot_names.include?(s.name) || s.repeatable?
           end || eligible_slots(slots, resolved_values).last
+
+          [ active, resolved_values ]
         end
 
         # Returns slots that pass eligibility for the given resolved_values.
@@ -230,12 +241,12 @@ module Pito
 
         # ── Slot suggestions ─────────────────────────────────────────────────
 
-        def suggest_for_slot(slot, partial, authenticated:)
+        def suggest_for_slot(slot, partial, authenticated:, resolved_values: {})
           case slot.kind
           when :literal, :enum
             suggest_vocab_slot(slot, partial, authenticated:)
           when :kv
-            suggest_kv_slot(slot, partial)
+            suggest_kv_slot(slot, partial, resolved_values:)
           else
             []
           end
@@ -257,7 +268,7 @@ module Pito
           end
         end
 
-        def suggest_kv_slot(slot, _partial)
+        def suggest_kv_slot(slot, partial, resolved_values: {})
           vocab_name = slot.source
           return [] unless vocab_name.is_a?(Symbol)
           vocab = Pito::Grammar::Registry.vocabulary(vocab_name)
@@ -265,7 +276,33 @@ module Pito
 
           masked_keys = Pito::Grammar::Vocabularies::MASKED_CONFIG_KEYS
 
-          vocab.canonical.map do |key|
+          # When the user is still typing the key (no "=" in the partial yet),
+          # filter the candidate keys by the per-provider allowed set so the
+          # menu and ghost text are scoped to the active provider.
+          if partial.present? && !partial.include?("=")
+            provider = resolved_values[:provider].to_s.downcase
+            candidate_keys = Pito::Grammar::Vocabularies.provider_keys(provider)
+            # Fall back to the full vocab if the provider has no specific mapping.
+            candidate_keys = vocab.canonical if candidate_keys.empty?
+
+            matches = candidate_keys.select { |k| k.to_s.downcase.start_with?(partial.downcase) }
+            return matches.map do |key|
+              {
+                label:       key,
+                insert:      "#{key}=",
+                description: "",
+                masked:      masked_keys.include?(key)
+              }
+            end
+          end
+
+          # No partial key typed yet (or partial already has "=") — show all
+          # keys for this provider, or the full vocab when no provider known.
+          provider = resolved_values[:provider].to_s.downcase
+          scoped_keys = Pito::Grammar::Vocabularies.provider_keys(provider)
+          keys = scoped_keys.empty? ? vocab.canonical : scoped_keys
+
+          keys.map do |key|
             {
               label:       key,
               insert:      "#{key}=",
@@ -303,6 +340,33 @@ module Pito
           rescue StandardError
             []
           end
+        end
+
+        # ── KV ghost (P57) ───────────────────────────────────────────────────
+
+        # When the active slot is a :kv slot and the user is still typing the
+        # key portion (no "=" present), compute a ghost for the remaining chars
+        # if exactly one provider key matches the partial prefix.
+        # Returns EMPTY_GHOST when conditions aren't met or prefix is ambiguous.
+        def kv_ghost_for(spec, consumed_args, partial)
+          return EMPTY_GHOST if partial.empty? || partial.include?("=")
+
+          active_slot, resolved_values = find_active_slot_with_context(spec, consumed_args)
+          return EMPTY_GHOST unless active_slot&.kind == :kv
+
+          provider = resolved_values[:provider].to_s.downcase
+          candidate_keys = Pito::Grammar::Vocabularies.provider_keys(provider)
+
+          if candidate_keys.empty?
+            vocab = Pito::Grammar::Registry.vocabulary(active_slot.source)
+            candidate_keys = vocab&.canonical || []
+          end
+
+          matches = candidate_keys.select { |k| k.to_s.downcase.start_with?(partial.downcase) }
+          return EMPTY_GHOST unless matches.size == 1
+
+          remainder = matches.first.to_s[partial.length..]
+          { complete_current: remainder, next_hint: "" }
         end
 
         # ── HASHTAG mode ─────────────────────────────────────────────────────

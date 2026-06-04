@@ -467,4 +467,83 @@ RSpec.describe Pito::Autocomplete::Engine, type: :service do
       expect(result[:menu_items]).to be_an(Array)
     end
   end
+
+  # ── P57 — Partial kv-key ghost completion ─────────────────────────────────────
+
+  describe "slash mode — P57 partial kv-key ghost completion" do
+    context "unique prefix" do
+      it "returns ghost 'ecret' for '/config igdb client_s'" do
+        result = call(input: "/config igdb client_s", cursor: 21, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("ecret")
+        expect(result[:ghost][:next_hint]).to eq("")
+      end
+
+      it "returns ghost 'irect_uri' for '/config google redi'" do
+        result = call(input: "/config google redi", cursor: 19, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("rect_uri")
+        expect(result[:ghost][:next_hint]).to eq("")
+      end
+
+      it "returns ghost '_key' for '/config voyage api'" do
+        result = call(input: "/config voyage api", cursor: 18, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("_key")
+        expect(result[:ghost][:next_hint]).to eq("")
+      end
+
+      it "returns ghost 'cord' for '/config webhook dis'" do
+        result = call(input: "/config webhook dis", cursor: 19, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("cord")
+        expect(result[:ghost][:next_hint]).to eq("")
+      end
+    end
+
+    context "ambiguous prefix (matches >1 key)" do
+      it "returns empty ghost for '/config igdb cl' (client_id and client_secret both match)" do
+        result = call(input: "/config igdb cl", cursor: 15, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("")
+      end
+
+      it "returns empty ghost for '/config google cl' (client_id and client_secret both match)" do
+        result = call(input: "/config google cl", cursor: 17, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("")
+      end
+    end
+
+    context "non-matching prefix" do
+      it "returns empty ghost for '/config igdb xyz'" do
+        result = call(input: "/config igdb xyz", cursor: 16, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("")
+      end
+    end
+
+    context "key already typed (partial has '=')" do
+      it "returns empty ghost for '/config igdb client_id='" do
+        result = call(input: "/config igdb client_id=", cursor: 23, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("")
+      end
+    end
+
+    context "menu items are provider-scoped when partial is typed" do
+      it "restricts menu items to igdb keys for '/config igdb client_s'" do
+        result = call(input: "/config igdb client_s", cursor: 21, authenticated: true)
+        labels = result[:menu_items].map { |i| i[:label] }
+        expect(labels).to include("client_secret")
+        expect(labels).not_to include("redirect_uri", "api_key", "slack", "discord")
+      end
+
+      it "restricts menu items to google keys for '/config google redi'" do
+        result = call(input: "/config google redi", cursor: 19, authenticated: true)
+        labels = result[:menu_items].map { |i| i[:label] }
+        expect(labels).to include("redirect_uri")
+        expect(labels).not_to include("slack", "discord", "client_id")
+      end
+
+      it "shows all igdb keys when no partial is typed yet" do
+        result = call(input: "/config igdb ", cursor: 13, authenticated: true)
+        labels = result[:menu_items].map { |i| i[:label] }
+        expect(labels).to include("client_id", "client_secret")
+        expect(labels).not_to include("redirect_uri", "api_key", "slack", "discord")
+      end
+    end
+  end
 end
