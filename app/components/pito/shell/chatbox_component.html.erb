@@ -4,7 +4,8 @@
                   class: "text-fg placeholder:text-fg-faded bg-transparent outline-none border-none w-full pito-chatbox__input",
                   data: { action: "keydown->pito--autosuggest#handleKeydown keydown->pito--chat-form#handleKeydown input->pito--autosuggest#onInput",
                           pito__autosuggest_target: "field",
-                          pito__terminal_caret_target: "field" } }
+                          pito__terminal_caret_target: "field",
+                          pito__type_fx_target: "field" } }
   input_attrs[:data].merge!(@input_data) if @input_data
 %>
 <div id="pito-chatbox" class="chatbox-wrapper" data-controller="pito--autosuggest" data-action="click->pito--chat-form#focusField">
@@ -22,7 +23,7 @@
     <% end %>
 
     <%# Line 1: text input + terminal block caret overlay %>
-    <div class="pito-chatbox__field-wrap" data-controller="pito--terminal-caret"
+    <div class="pito-chatbox__field-wrap" data-controller="pito--terminal-caret pito--type-fx"
          data-pito--terminal-caret-autofocus-value="true">
       <%= text_area_tag :input_field, nil, **input_attrs %>
       <span class="terminal-caret" data-pito--terminal-caret-target="block" aria-hidden="true"></span>

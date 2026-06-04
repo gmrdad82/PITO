@@ -403,6 +403,63 @@ html {
   line-height: 20px; /* caret block height syncs to this (see #syncBlockMetrics) */
 }
 
+/* ── Type-fx: per-character phase-in (Pito::TypeFxController) ── */
+
+/* When JS activates the overlay the native text is hidden; the visible
+   character layer above the textarea carries all readable content.
+   The native selection highlight still shows because it renders below
+   the transparent text. */
+.pito-chatbox__input.is-fx {
+  color: transparent;
+}
+
+/* The visible character overlay: absolutely positioned on top of the
+   textarea, same content-box, same font metrics (copied by JS).
+   z-index: 1  →  above the transparent textarea (z-index auto)
+             but below .terminal-caret and .pito-ghost (z-index higher).
+   pointer-events:none so clicks/selections fall through to the textarea. */
+.pito-type-layer {
+  position: absolute;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Each character in the overlay. inline keeps them flowing with
+   line wrapping identical to the textarea text. */
+.pito-type-char {
+  display: inline;
+}
+
+/* New characters animate in: fade up from slightly below. */
+@keyframes pito-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pito-type-char--new {
+  animation: pito-char-in 70ms ease-out both;
+}
+
+/* Reduced-motion: skip all overlay theatrics entirely and keep
+   the textarea text directly visible. */
+@media (prefers-reduced-motion: reduce) {
+  .pito-chatbox__input.is-fx {
+    color: inherit;
+  }
+  .pito-type-layer {
+    display: none;
+  }
+}
+
 /* ── Terminal block caret (Pito::TerminalCaretController) ─────── */
 
 .pito-chatbox__field-wrap {

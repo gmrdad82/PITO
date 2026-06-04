@@ -135,7 +135,20 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         node = render_inline(described_class.new)
         field_wrap = node.css("div.pito-chatbox__field-wrap").first
         expect(field_wrap).not_to be_nil
-        expect(field_wrap["data-controller"]).to eq("pito--terminal-caret")
+        expect(field_wrap["data-controller"]).to include("pito--terminal-caret")
+      end
+
+      it "renders the field-wrap div with the type-fx Stimulus controller" do
+        node = render_inline(described_class.new)
+        field_wrap = node.css("div.pito-chatbox__field-wrap").first
+        expect(field_wrap).not_to be_nil
+        expect(field_wrap["data-controller"]).to include("pito--type-fx")
+      end
+
+      it "renders the textarea with the type-fx field target" do
+        node = render_inline(described_class.new)
+        textarea = node.css("textarea[data-pito--type-fx-target='field']").first
+        expect(textarea).not_to be_nil
       end
 
       it "renders the textarea with the terminal-caret field target" do
