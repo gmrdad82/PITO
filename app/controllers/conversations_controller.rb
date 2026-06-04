@@ -52,6 +52,10 @@ class ConversationsController < ApplicationController
   private
 
   def conversation_params
-    params.permit(:title, :draft)
+    # Slice to the attributes we accept BEFORE permitting, so the route param
+    # (:uuid) and any param-wrapper duplicate (:conversation) are never seen by
+    # `permit` — avoids spurious "Unpermitted parameters" log noise. The client
+    # sends a top-level { draft: … } / { title: … }; both are picked up here.
+    params.slice(:title, :draft).permit(:title, :draft)
   end
 end
