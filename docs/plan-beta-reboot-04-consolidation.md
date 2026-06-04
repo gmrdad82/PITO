@@ -115,7 +115,7 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ## Phase index
 
-> Phases are the `## P0`–`## P47` headings below (each is an independently-committable unit). **A–L are organizational group labels only**, and the names listed here are abbreviated — the `## P<N> — …` headings are canonical.
+> Phases are the `## P0`–`## P48` headings below (each is an independently-committable unit). **A–L are organizational group labels only**, and the names listed here are abbreviated — the `## P<N> — …` headings are canonical.
 
 **A — Cleanup:** P0 Pre-flight · P1 Remove dead surfaces · P2 Auth → cookie · P3 Stale rake · P4 Dead-code sweep
 **B — Schema/models:** P5 Single migration · P6 Model updates · P7 Game score · P8 IGDB sync investigation
@@ -128,7 +128,7 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 **I — Games:** P35 Re-wire IGDB · P36 `/add game` sidebar · P37 Add → async sync · P38 Daily unreleased refresh
 **J — Conversations:** P39 `/new` · P40 `/resume` · P41 Sidebar list · P42 Rename
 **K — Docs/verify:** P43 AGENTS.md · P44 Verification
-**L — Chat-UI polish (post-P42, after `/new`/`/resume`):** P45 Typing phase-in · P46 Typewriter reveal · P47 Draft persistence
+**L — Chat-UI polish (post-P42, after `/new`/`/resume`):** P45 Typing phase-in · P46 Typewriter reveal · P47 Draft persistence · P48 Sound/FX settings
 
 ---
 
@@ -1097,6 +1097,20 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 - [x] T47.6 Specs: PATCH persists draft; `#show` prefills; `create` clears on send; `ChatboxComponent` `initial_value:` + conditional uuid wiring. complexity: [low]
 - [ ] T47.7 Smoke (browser): refresh restores; accepting a suggestion is saved; send clears; `/` + bogus URL never autosave. complexity: [manual]
 - [x] T47.8 Commit: `Server-persisted chatbox draft`. complexity: [manual]
+
+## P48 — Sound / FX settings via AppSetting + `/config sound|fx`
+
+> Move sound (mute) and animation (fx) on/off into **server-side AppSetting flags**, surfaced to the client via a `#pito-settings` DOM element (rendered on load, Turbo-Stream-replaced on change — the `#pito-auth-gate` pattern), NOT embedded per-broadcast. **Decisions:** animations gate on `fxEnabled && !prefers-reduced-motion` (OS reduced-motion still wins); **ctrl+m fully dropped** (sound controlled only via `/config sound on|off`). No migration — `AppSetting` key/value store. New commands `/config sound on|off` + `/config fx on|off` with descriptions in `/help` + palettes.
+
+- [x] T48.1 `AppSetting` flag helpers (key/value store, default true): `sound_enabled?`/`fx_enabled?` + setters; spec. complexity: [low]
+- [x] T48.2 `#pito-settings` element in the layout (`data-sound`/`data-fx` from AppSetting) + `app/javascript/pito/settings.js` exposing `soundEnabled()`/`fxEnabled()` (mirror `auth.js`/`#pito-auth-gate`). complexity: [low]
+- [x] T48.3 `Broadcaster#broadcast_settings_update` — Turbo Stream replace `#pito-settings`; called when `/config sound|fx` changes. complexity: [low]
+- [x] T48.4 `/config sound|fx on|off` in the config handler: recognize `sound`/`fx` providers with a positional on|off; getter shows state; setter writes AppSetting + broadcasts; keep credential providers + masking intact; i18n. complexity: [high]
+- [x] T48.5 Grammar: add `sound`/`fx` to `:config_providers` + an `:on_off` vocab (on/off + synonyms true/false/enable/disable). (Config grammar on|off slot dropped — it conflicted with `/config` kv autocomplete; sound/fx still listed as providers in catalog/palette; runtime handler parses on|off from args.) complexity: [low]
+- [x] T48.6 Wire consumers: `audio_controller` reads `soundEnabled()` (drop ctrl+m keybinding + localStorage); `type_fx` + `typewriter` gate on `fxEnabled() && !prefers-reduced-motion`; remove the ctrl+m hint from `MiniStatusComponent` + its i18n. complexity: [low]
+- [x] T48.7 Specs: AppSetting flags; `/config sound|fx` getter+setter+broadcast; mini-status no-ctrl+m; request/grammar specs. complexity: [low]
+- [ ] T48.8 Smoke (browser): `/config sound off` silences chirps; `/config fx off` disables animations (and OS reduced-motion still disables when fx on); settings persist across refresh; no ctrl+m. complexity: [manual]
+- [x] T48.9 Commit: `Sound/FX settings via AppSetting + /config`. complexity: [manual]
 
 ---
 

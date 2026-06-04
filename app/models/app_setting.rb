@@ -128,4 +128,29 @@ class AppSetting < ApplicationRecord
   def self.voyage_api_key
     singleton_row.voyage_api_key
   end
+
+  # ── Sound / FX toggles ────────────────────────────────────────────────
+  #
+  # Stored as plain key/value rows ("sound_enabled", "fx_enabled").
+  # Default is true — the flag is only false when the stored value is
+  # explicitly "false".
+
+  SOUND_ENABLED_KEY = "sound_enabled"
+  FX_ENABLED_KEY    = "fx_enabled"
+
+  def self.sound_enabled?
+    get(SOUND_ENABLED_KEY) != "false"
+  end
+
+  def self.sound_enabled=(bool)
+    set(SOUND_ENABLED_KEY, bool.to_s)
+  end
+
+  def self.fx_enabled?
+    get(FX_ENABLED_KEY) != "false"
+  end
+
+  def self.fx_enabled=(bool)
+    set(FX_ENABLED_KEY, bool.to_s)
+  end
 end

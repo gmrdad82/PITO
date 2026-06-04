@@ -25,7 +25,8 @@ module Pito
           description_key "pito.grammar.slash.config"
         end
 
-        KNOWN_PROVIDERS = %w[google voyage igdb webhook].freeze
+        KNOWN_PROVIDERS   = %w[google voyage igdb webhook].freeze
+        TOGGLE_PROVIDERS  = %w[sound fx].freeze
 
         # Maps each provider's supported kwargs to their AppSetting writers.
         PROVIDER_SETTERS = {
@@ -90,6 +91,8 @@ module Pito
             )
           end
 
+          return handle_toggle(provider) if TOGGLE_PROVIDERS.include?(provider)
+
           kwargs = invocation.kwargs
           kwargs.empty? ? show_status(provider) : set_values(provider, kwargs)
         end
@@ -108,12 +111,13 @@ module Pito
         end
 
         def general_help_events
+          all_providers = known_providers
           Pito::Slash::Result::Ok.new(events: [
             {
               kind:    "system",
               payload: {
                 body:       I18n.t("pito.slash.config.help.general.body"),
-                table_rows: known_providers.map do |p|
+                table_rows: all_providers.map do |p|
                   {
                     key:   p,
                     value: I18n.t("pito.slash.config.help.general.providers.#{p}")
@@ -154,6 +158,76 @@ module Pito
         end
 
         private
+
+        # Handle /config sound [on|off] and /config fx [on|off].
+        def handle_toggle(provider)
+          raw_state = invocation.args[1].to_s.strip.downcase
+
+          # Getter — no argument supplied.
+          if raw_state.empty?
+            return show_toggle_status(provider)
+          end
+
+          bool = parse_on_off(raw_state)
+          if bool.nil?
+            return Pito::Slash::Result::Error.new(
+              message_key:  "pito.slash.config.errors.invalid_toggle_value",
+              message_args: { value: raw_state }
+            )
+          end
+
+          if provider == "sound"
+            AppSetting.sound_enabled = bool
+          else
+            AppSetting.fx_enabled = bool
+          end
+
+          broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+          broadcaster.broadcast_settings_update
+
+          label       = I18n.t("pito.slash.config.toggle.#{provider}.label")
+          state_str   = I18n.t("pito.slash.config.toggle.state.#{bool ? 'on' : 'off'}")
+
+          Pito::Slash::Result::Ok.new(events: [
+            {
+              kind:    "system",
+              payload: {
+                text: I18n.t(
+                  "pito.slash.config.toggle.confirmed",
+                  label: label,
+                  state: state_str
+                )
+              }
+            }
+          ])
+        end
+
+        def show_toggle_status(provider)
+          enabled = provider == "sound" ? AppSetting.sound_enabled? : AppSetting.fx_enabled?
+          label   = I18n.t("pito.slash.config.toggle.#{provider}.label")
+          state   = I18n.t("pito.slash.config.toggle.state.#{enabled ? 'on' : 'off'}")
+
+          Pito::Slash::Result::Ok.new(events: [
+            {
+              kind:    "system",
+              payload: {
+                text: I18n.t(
+                  "pito.slash.config.toggle.status",
+                  label: label,
+                  state: state
+                )
+              }
+            }
+          ])
+        end
+
+        # Returns true/false for accepted on/off synonyms; nil for unrecognised input.
+        def parse_on_off(raw)
+          case raw
+          when "on",  "true",  "enable",  "enabled"  then true
+          when "off", "false", "disable", "disabled" then false
+          end
+        end
 
         def show_status(provider)
           pairs = PROVIDER_STATUS[provider].call
@@ -214,12 +288,12 @@ module Pito
         end
 
         # Returns the authoritative provider list, preferring the grammar registry
-        # vocabulary when available and falling back to KNOWN_PROVIDERS otherwise.
+        # vocabulary when available and falling back to the combined list otherwise.
         def known_providers
           vocab = Pito::Grammar::Registry.vocabulary(:config_providers)
-          vocab&.canonical || KNOWN_PROVIDERS
+          vocab&.canonical || (KNOWN_PROVIDERS + TOGGLE_PROVIDERS)
         rescue StandardError
-          KNOWN_PROVIDERS
+          KNOWN_PROVIDERS + TOGGLE_PROVIDERS
         end
       end
     end

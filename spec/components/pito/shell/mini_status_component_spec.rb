@@ -113,26 +113,11 @@ RSpec.describe Pito::Shell::MiniStatusComponent do
         expect(faded_texts).to include("·")
       end
 
-      it "renders the audio hint ('ctrl+m') in a bold yellow span" do
+      it "does not render the audio/mute hint (ctrl+m removed)" do
         node = render_inline(described_class.new)
-        yellow_bold = node.css("span.font-bold.text-yellow")
-        expect(yellow_bold.map(&:text)).to include("ctrl+m")
-      end
-
-      it "renders the 'mute' label in a dim span with the toggle id" do
-        node = render_inline(described_class.new)
-        label = node.css("span#pito-audio-label").first
-        expect(label).not_to be_nil
-        expect(label.text).to include("mute")
-        expect(label["class"]).to include("text-fg-dim")
-      end
-
-      it "places ctrl+m before ctrl+k" do
-        node = render_inline(described_class.new)
-        html = node.to_html
-        ctrl_m_pos = html.index("ctrl+m")
-        ctrl_k_pos = html.index("ctrl+k")
-        expect(ctrl_m_pos).to be < ctrl_k_pos
+        expect(node.to_html).not_to include("ctrl+m")
+        expect(node.to_html).not_to include("mute")
+        expect(node.css("span#pito-audio-label").first).to be_nil
       end
     end
   end

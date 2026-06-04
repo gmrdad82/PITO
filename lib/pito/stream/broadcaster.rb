@@ -105,6 +105,24 @@ module Pito
         )
       end
 
+      # Broadcast a Turbo Stream replacement for #pito-settings after a
+      # sound/fx toggle. The element carries the current flag values as
+      # data attributes so the JS audio controller can react immediately.
+      def broadcast_settings_update
+        helper = ApplicationController.helpers
+
+        settings_html = %(
+          <div id="pito-settings" class="hidden" data-sound="#{AppSetting.sound_enabled?}" data-fx="#{AppSetting.fx_enabled?}"></div>
+        ).html_safe
+
+        content = helper.turbo_stream.replace("pito-settings", settings_html)
+
+        Turbo::StreamsChannel.broadcast_stream_to(
+          "pito:conversation:#{@conversation.uuid}",
+          content:
+        )
+      end
+
       # Create and broadcast a thinking indicator for a turn.
       # The word_index is chosen once and frozen in the payload.
       def emit_thinking(turn:, dictionary:)

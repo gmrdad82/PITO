@@ -12,15 +12,17 @@ en:
           not_configured: "Google OAuth credentials are not configured."
       config:
         descriptions:
-          config: "Read or write install-wide credentials (/config google|voyage|igdb|webhook)"
+          config: "Read or write install-wide credentials or toggle sound/fx (/config google|voyage|igdb|webhook|sound|fx)"
         help:
           general:
-            body: "/config <provider> [key=value …]"
+            body: "/config <provider> [on|off | key=value …]"
             providers:
               google: "OAuth + YouTube API credentials"
               voyage: "Voyage AI embedding key"
               igdb: "IGDB game database client credentials"
               webhook: "Slack / Discord incoming webhook URLs"
+              sound: "Toggle sound effects on or off"
+              fx: "Toggle visual FX on or off"
             info_lines:
               - "`/config <provider> --help` for provider-level key reference."
               - "Omit all keys to show current credential status."
@@ -67,9 +69,20 @@ en:
             igdb: "IGDB credentials"
             webhook: "Webhook URLs"
         updated: "Updated %{provider} credentials (%{keys}). Changes take effect immediately."
+        toggle:
+          sound:
+            label: "Sound"
+          fx:
+            label: "FX"
+          state:
+            on: "on"
+            off: "off"
+          status: "%{label}: %{state}"
+          confirmed: "%{label} %{state}."
         errors:
-          unknown_provider: "Unknown provider '%{provider}'. Supported: google, voyage, igdb, webhook"
+          unknown_provider: "Unknown provider '%{provider}'. Supported: google, voyage, igdb, webhook, sound, fx"
           unknown_keys: "Unknown keys for %{provider}: %{keys}"
+          invalid_toggle_value: "Invalid value '%{value}'. Use on or off."
       import:
         imported:
           one: "Imported 1 video from %{channel}."

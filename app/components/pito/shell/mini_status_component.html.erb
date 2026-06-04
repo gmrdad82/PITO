@@ -22,12 +22,6 @@
         )) %>
     <span class="text-fg-faded mx-2">·</span>
     <%= render(Pito::Shell::MiniStatus::KeyHintComponent.new(
-          hint:     t("pito.shell.mini_status.audio_hint"),
-          label:    t("pito.shell.mini_status.audio_label"),
-          label_id: "pito-audio-label"
-        )) %>
-    <span class="text-fg-faded mx-2">·</span>
-    <%= render(Pito::Shell::MiniStatus::KeyHintComponent.new(
           hint:      t("pito.shell.mini_status.commands_hint"),
           label:     t("pito.shell.mini_status.commands_label"),
           hint_data: {

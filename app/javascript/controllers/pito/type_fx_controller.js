@@ -37,6 +37,7 @@
 //   The terminal-caret and autosuggest controllers are unmodified.
 
 import { Controller } from "@hotwired/stimulus"
+import { fxEnabled } from "pito/settings"
 
 // Computed styles to copy onto the overlay so wrapping matches the textarea.
 // Identical list to terminal_caret_controller.js — keep in sync.
@@ -56,8 +57,9 @@ export default class extends Controller {
   static targets = ["field"]
 
   connect() {
-    // Reduced-motion opt-out: leave native textarea fully visible.
+    // Reduced-motion or fx-off opt-out: leave native textarea fully visible.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    if (!fxEnabled()) return
 
     this.field = this.hasFieldTarget
       ? this.fieldTarget

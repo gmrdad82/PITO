@@ -17,7 +17,7 @@ RSpec.describe Pito::Grammar::Vocabularies do
     it "includes all expected vocabulary names" do
       names = described_class.all.map(&:name)
       expect(names).to include(
-        :slash_verbs, :config_providers, :config_keys, :genres, :platforms,
+        :slash_verbs, :config_providers, :config_keys, :on_off, :genres, :platforms,
         :release_status, :metrics, :hashtag_verbs, :fillers, :connectives,
         :channels, :conversations, :game_titles
       )
@@ -45,6 +45,48 @@ RSpec.describe Pito::Grammar::Vocabularies do
   describe "MASKED_CONFIG_KEYS" do
     it "contains client_id, client_secret, and api_key" do
       expect(described_class::MASKED_CONFIG_KEYS).to include("client_id", "client_secret", "api_key")
+    end
+  end
+
+  # ── Static vocab: :config_providers ──────────────────────────────────────────
+  describe ":config_providers" do
+    subject(:config_providers) { vocab(:config_providers) }
+
+    it "includes sound and fx" do
+      expect(config_providers.canonical).to include("sound", "fx")
+    end
+
+    it "still includes the credential providers" do
+      expect(config_providers.canonical).to include("google", "voyage", "igdb", "webhook")
+    end
+  end
+
+  # ── Static vocab: :on_off ──────────────────────────────────────────────────
+  describe ":on_off" do
+    subject(:on_off) { vocab(:on_off) }
+
+    it "is not dynamic" do
+      expect(on_off.dynamic?).to be false
+    end
+
+    it "has canonical values on and off" do
+      expect(on_off.canonical).to contain_exactly("on", "off")
+    end
+
+    it 'resolves "true" to "on"' do
+      expect(on_off.resolve("true")).to eq("on")
+    end
+
+    it 'resolves "false" to "off"' do
+      expect(on_off.resolve("false")).to eq("off")
+    end
+
+    it 'resolves "enable" to "on"' do
+      expect(on_off.resolve("enable")).to eq("on")
+    end
+
+    it 'resolves "disable" to "off"' do
+      expect(on_off.resolve("disable")).to eq("off")
     end
   end
 

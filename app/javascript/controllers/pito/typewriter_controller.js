@@ -24,6 +24,7 @@
 
 import { Controller } from "@hotwired/stimulus"
 import { enqueue } from "pito/reveal_queue"
+import { fxEnabled } from "pito/settings"
 
 const TICK_MS     = 12   // ms per tick
 const CHARS_TICK  = 2    // characters per tick (fast reveal)
@@ -99,6 +100,7 @@ export default class extends Controller {
   #skipAnimation() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true
     if (!window.__pitoReady) return true
+    if (!fxEnabled()) return true
     return false
   }
 }

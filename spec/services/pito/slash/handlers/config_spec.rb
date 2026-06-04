@@ -134,6 +134,98 @@ RSpec.describe Pito::Slash::Handlers::Config, type: :service do
     end
   end
 
+  # ── Sound / FX toggle path ──────────────────────────────────────────────────
+
+  describe "#call — /config sound (getter, no arg)" do
+    it "returns a system event with the current sound state" do
+      AppSetting.sound_enabled = true
+      result = build_handler(args: [ "sound" ]).call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      text = result.events.first[:payload][:text]
+      expect(text).to include("Sound").and include("on")
+    end
+
+    it "reflects false when sound is disabled" do
+      AppSetting.sound_enabled = false
+      result = build_handler(args: [ "sound" ]).call
+      text = result.events.first[:payload][:text]
+      expect(text).to include("off")
+      AppSetting.sound_enabled = true # restore
+    end
+  end
+
+  describe "#call — /config sound on (setter)" do
+    it "enables sound and broadcasts a settings update" do
+      AppSetting.sound_enabled = false
+      broadcaster_double = instance_double(Pito::Stream::Broadcaster, broadcast_settings_update: nil)
+      allow(Pito::Stream::Broadcaster).to receive(:new).and_return(broadcaster_double)
+
+      result = build_handler(args: [ "sound", "on" ]).call
+
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(AppSetting.sound_enabled?).to be true
+      expect(broadcaster_double).to have_received(:broadcast_settings_update)
+      AppSetting.sound_enabled = true # restore
+    end
+
+    it "accepts 'true' as a synonym for on" do
+      AppSetting.sound_enabled = false
+      allow_any_instance_of(Pito::Stream::Broadcaster).to receive(:broadcast_settings_update)
+
+      result = build_handler(args: [ "sound", "true" ]).call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(AppSetting.sound_enabled?).to be true
+      AppSetting.sound_enabled = true # restore
+    end
+
+    it "accepts 'disable' as a synonym for off" do
+      allow_any_instance_of(Pito::Stream::Broadcaster).to receive(:broadcast_settings_update)
+
+      result = build_handler(args: [ "sound", "disable" ]).call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(AppSetting.sound_enabled?).to be false
+      AppSetting.sound_enabled = true # restore
+    end
+
+    it "returns an error for invalid toggle values" do
+      result = build_handler(args: [ "sound", "maybe" ]).call
+      expect(result).to be_a(Pito::Slash::Result::Error)
+      expect(result.message_key).to eq("pito.slash.config.errors.invalid_toggle_value")
+    end
+  end
+
+  describe "#call — /config fx off (setter)" do
+    it "disables fx and broadcasts a settings update" do
+      AppSetting.fx_enabled = true
+      broadcaster_double = instance_double(Pito::Stream::Broadcaster, broadcast_settings_update: nil)
+      allow(Pito::Stream::Broadcaster).to receive(:new).and_return(broadcaster_double)
+
+      result = build_handler(args: [ "fx", "off" ]).call
+
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(AppSetting.fx_enabled?).to be false
+      expect(broadcaster_double).to have_received(:broadcast_settings_update)
+      AppSetting.fx_enabled = true # restore
+    end
+  end
+
+  describe "#call — credential path still works (non-toggle provider)" do
+    it "/config google client_id=x still uses credential path unchanged" do
+      result = build_handler(args: [ "google" ], kwargs: { client_id: "new-id" }).call
+      expect(result).to be_a(Pito::Slash::Result::Ok)
+      expect(result.events.first[:payload][:message_key]).to eq("pito.slash.config.updated")
+    end
+  end
+
+  describe "#call — general help lists sound and fx" do
+    it "includes sound and fx in the help table rows" do
+      result = build_handler(raw: "/config --help").call
+      rows = result.events.first[:payload][:table_rows]
+      keys = rows.map { |r| r[:key] }
+      expect(keys).to include("sound", "fx")
+    end
+  end
+
   describe "echo masking in ChatController" do
     it "masks client_id and client_secret but shows redirect_uri" do
       ctrl = ChatController.new

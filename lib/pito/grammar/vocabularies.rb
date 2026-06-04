@@ -17,7 +17,7 @@ module Pito
 
       CONFIG_PROVIDERS = Vocabulary.define(
         name:      :config_providers,
-        canonical: %w[google voyage igdb webhook]
+        canonical: %w[google voyage igdb webhook sound fx]
       ).freeze
 
       CONFIG_KEYS = Vocabulary.define(
@@ -82,6 +82,17 @@ module Pito
         fillers:   %w[count ratio]
       ).freeze
 
+      ON_OFF = Vocabulary.define(
+        name:      :on_off,
+        canonical: %w[on off],
+        synonyms:  {
+          "true"    => "on",
+          "false"   => "off",
+          "enable"  => "on",
+          "disable" => "off"
+        }
+      ).freeze
+
       HASHTAG_VERBS = Vocabulary.define(
         name:      :hashtag_verbs,
         canonical: %w[add remove],
@@ -130,6 +141,7 @@ module Pito
           SLASH_VERBS,
           CONFIG_PROVIDERS,
           CONFIG_KEYS,
+          ON_OFF,
           GENRES,
           PLATFORMS,
           RELEASE_STATUS,
