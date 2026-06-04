@@ -37,7 +37,7 @@
       <%
         sent_history = @conversation.turns
                          .where(input_kind: [ :slash, :chat, :hashtag ])
-                         .order(position: :desc)
+                         .reorder(position: :desc)
                          .limit(50)
                          .pluck(:input_text)
       %>
