@@ -1229,6 +1229,40 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 ---
 
+# Group N — Scheduled jobs & reveal polish (post-P58)
+
+> Recurring background work (SolidQueue recurring tasks, `config/recurring.yml`) + a tuning pass on the typewriter reveal. Not yet started.
+
+## P59 — Daily notifications cleanup job (read > 7 days)
+
+> A recurring job, **daily at 01:00**, deletes notifications that were read more than 7 days ago. NOTE: `Notification.read_at` **already exists** (set when a notification is marked read) — no new column needed; the job is `Notification.where("read_at < ?", 7.days.ago).delete_all`. Unread notifications are never deleted.
+
+- [ ] T59.1 `CleanupNotificationsJob` (ActiveJob) — `Notification.where.not(read_at: nil).where("read_at < ?", 7.days.ago).delete_all`. complexity: [low]
+- [ ] T59.2 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00 (server TZ). complexity: [low]
+- [ ] T59.3 Specs: job deletes notifications read > 7 days ago; keeps unread + recently-read; recurring entry present. complexity: [low]
+- [ ] T59.4 Commit: `Daily job: prune notifications read over 7 days ago`. complexity: [manual]
+
+## P60 — Daily channel stats sync job (subscribers, views, watch hours)
+
+> A recurring job, **daily at 01:00**, syncs each connected channel's general stats — subscribers, total views, watch hours — from the YouTube Data/Analytics API into the `Channel` mirror (and/or a stats snapshot). Pairs with the eventual `Pito::Stats` work (see follow-ups).
+
+- [ ] T60.1 Stats fetch service: pull subscribers / views / watch hours per `Channel` via the YouTube API (reuse existing API client/credentials). complexity: [high]
+- [ ] T60.2 Persist onto `Channel` (and/or a daily snapshot row for history — decide vs `Pito::Stats`). complexity: [high]
+- [ ] T60.3 `SyncChannelStatsJob` iterating all connected channels; resilient per-channel (one failure doesn't abort the rest). complexity: [low]
+- [ ] T60.4 Register a SolidQueue recurring task in `config/recurring.yml` — daily at 01:00. complexity: [low]
+- [ ] T60.5 Specs (service with stubbed API; job iterates + persists; recurring entry). complexity: [low]
+- [ ] T60.6 Commit: `Daily job: sync channel general stats`. complexity: [manual]
+
+## P61 — Align typewriter reveal speed with the chatbox typing (System/Enhanced)
+
+> P46 already queues System/Enhanced + their follow-ups through the client reveal queue and types them out character-by-character. This phase TUNES it so the reveal cadence matches the chatbox per-character phase-in (the pulsing characters) — same speed or a touch faster — so the response "types" at the same rhythm the user does, Claude/ChatGPT-mobile style.
+
+- [ ] T61.1 Factor the per-char interval into a shared constant so `type_fx` (chatbox phase-in) and `typewriter` (reveal) use one source of truth; reveal tick = chatbox tick (or slightly faster). complexity: [low]
+- [ ] T61.2 Verify the reveal stays smooth under the queue + backpressure at the new cadence; reduced-motion still instant. complexity: [low]
+- [ ] T61.3 Commit: `Match typewriter reveal speed to chatbox typing`. complexity: [manual]
+
+---
+
 ## Open questions / needs clarification
 
 1. **`release_year` + `igdb_checksum` (P8):** both decided by the P8 investigation.
