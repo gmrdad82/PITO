@@ -97,6 +97,8 @@ class ChatController < ApplicationController
     input_kind = input.start_with?("/") ? :slash : :chat
     channel = input_kind == :chat ? (params[:channel].presence || "@all") : nil
     period  = input_kind == :chat ? params[:period].presence : nil
+    # T47.3: clear any persisted draft when a real message is sent.
+    conversation.update_column(:draft, nil) if conversation.draft.present?
     enqueue_turn(input, conversation, input_kind:, authenticated:, echo_text:, channel:, period:)
   end
 

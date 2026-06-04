@@ -1089,14 +1089,14 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 > The unsent textarea is preserved across refresh / browser crash by storing it **server-side at the conversation level** (`conversations.draft`). Autosaves on change (typing or accepting a suggestion — both fire `input`), debounced. **Conversation-only:** the start screen (`/`) and 404 are ignored (no draft there). Restore on `/chat/:uuid`; clear on send.
 
-- [ ] T47.1 Migration: add `draft` (text, nullable) to `conversations`. complexity: [low]
-- [ ] T47.2 `ConversationsController#update` permits + persists `:draft` (alongside `:title`). complexity: [low]
-- [ ] T47.3 `ChatController#create` clears the conversation's `draft` when a message is sent. complexity: [low]
-- [ ] T47.4 `#show` prefills the chatbox via `ChatboxComponent(initial_value:)`; render the draft-uuid wiring ONLY on `/chat/:uuid` (start/404 omit it). complexity: [low]
-- [ ] T47.5 `draft_controller.js`: debounced (~600–1000ms) `PATCH /chat/:uuid {draft:}` on `input`; no-op when no conversation uuid (`/`, 404). complexity: [high]
-- [ ] T47.6 Specs: PATCH persists draft; `#show` prefills; `create` clears on send; `ChatboxComponent` `initial_value:` + conditional uuid wiring. complexity: [low]
+- [x] T47.1 Migration: add `draft` (text, nullable) to `conversations`. complexity: [low]
+- [x] T47.2 `ConversationsController#update` permits + persists `:draft` (alongside `:title`). complexity: [low]
+- [x] T47.3 `ChatController#create` clears the conversation's `draft` when a message is sent. complexity: [low]
+- [x] T47.4 `#show` prefills the chatbox via `ChatboxComponent(initial_value:)`; render the draft-uuid wiring ONLY on `/chat/:uuid` (start/404 omit it). complexity: [low]
+- [x] T47.5 `draft_controller.js`: debounced (~600–1000ms) `PATCH /chat/:uuid {draft:}` on `input`; no-op when no conversation uuid (`/`, 404). complexity: [high]
+- [x] T47.6 Specs: PATCH persists draft; `#show` prefills; `create` clears on send; `ChatboxComponent` `initial_value:` + conditional uuid wiring. complexity: [low]
 - [ ] T47.7 Smoke (browser): refresh restores; accepting a suggestion is saved; send clears; `/` + bogus URL never autosave. complexity: [manual]
-- [ ] T47.8 Commit: `Server-persisted chatbox draft`. complexity: [manual]
+- [x] T47.8 Commit: `Server-persisted chatbox draft`. complexity: [manual]
 
 ---
 

@@ -228,5 +228,53 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         expect(action).to include("input->pito--autosuggest#onInput")
       end
     end
+
+    # ── T47.4 — initial_value + draft_uuid ─────────────────────────────────────
+
+    context "initial_value param" do
+      it "renders the given value in the textarea" do
+        node = render_inline(described_class.new(initial_value: "my draft text"))
+        textarea = node.css("textarea").first
+        expect(textarea.text).to include("my draft text")
+      end
+
+      it "renders an empty textarea by default" do
+        node = render_inline(described_class.new)
+        textarea = node.css("textarea").first
+        expect(textarea.text.strip).to eq("")
+      end
+    end
+
+    context "draft_uuid param" do
+      it "adds pito--draft to data-controller when draft_uuid is present" do
+        node = render_inline(described_class.new(draft_uuid: "some-uuid-1234"))
+        wrapper = node.css("div#pito-chatbox").first
+        expect(wrapper["data-controller"]).to include("pito--draft")
+      end
+
+      it "adds the uuid as data-pito--draft-uuid-value when draft_uuid is present" do
+        node = render_inline(described_class.new(draft_uuid: "some-uuid-1234"))
+        wrapper = node.css("div#pito-chatbox").first
+        expect(wrapper["data-pito--draft-uuid-value"]).to eq("some-uuid-1234")
+      end
+
+      it "does NOT add pito--draft when draft_uuid is nil" do
+        node = render_inline(described_class.new(draft_uuid: nil))
+        wrapper = node.css("div#pito-chatbox").first
+        expect(wrapper["data-controller"]).not_to include("pito--draft")
+      end
+
+      it "does NOT add the uuid value attribute when draft_uuid is nil" do
+        node = render_inline(described_class.new(draft_uuid: nil))
+        wrapper = node.css("div#pito-chatbox").first
+        expect(wrapper["data-pito--draft-uuid-value"]).to be_nil
+      end
+
+      it "still includes pito--autosuggest in data-controller with draft_uuid" do
+        node = render_inline(described_class.new(draft_uuid: "abc-123"))
+        wrapper = node.css("div#pito-chatbox").first
+        expect(wrapper["data-controller"]).to include("pito--autosuggest")
+      end
+    end
   end
 end

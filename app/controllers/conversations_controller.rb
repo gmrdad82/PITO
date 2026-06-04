@@ -15,6 +15,15 @@ class ConversationsController < ApplicationController
   def update
     @conversation = Conversation.find_by!(uuid: params[:uuid])
 
+    # Draft-save path: params contain :draft but NOT :title.
+    # Quiet background autosave — no Turbo Stream, just 204 No Content.
+    if conversation_params.key?(:draft) && !conversation_params.key?(:title)
+      @conversation.update!(draft: conversation_params[:draft].presence)
+      head :no_content
+      return
+    end
+
+    # Rename path: params contain :title (existing behaviour — keep intact).
     new_title = conversation_params[:title]
 
     if new_title.blank?
@@ -43,6 +52,6 @@ class ConversationsController < ApplicationController
   private
 
   def conversation_params
-    params.permit(:title)
+    params.permit(:title, :draft)
   end
 end

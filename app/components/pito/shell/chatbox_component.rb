@@ -10,12 +10,18 @@ module Pito
       #   Known keys: :channel (String), :period (String).
       # @param input_data [Hash, nil] Stimulus data attributes for the text input
       #   (e.g. `{ pito__chat_form_target: "inputField" }`).
-      def initialize(state: :default, placeholder_key: nil, filter: nil, input_data: nil, authenticated: nil)
+      # @param initial_value [String] pre-filled textarea value (restored draft).
+      # @param draft_uuid [String, nil] when present, wires the pito--draft
+      #   Stimulus controller + uuid value on #pito-chatbox so the JS can
+      #   autosave. When nil (start screen, 404) the draft controller is omitted.
+      def initialize(state: :default, placeholder_key: nil, filter: nil, input_data: nil, authenticated: nil, initial_value: "", draft_uuid: nil)
         @state = state
         @placeholder_key = placeholder_key
         @filter = filter
         @input_data = input_data
         @authenticated = authenticated
+        @initial_value = initial_value.to_s
+        @draft_uuid = draft_uuid
       end
 
       # The placeholder hint. An explicit `placeholder_key` wins (static override);
