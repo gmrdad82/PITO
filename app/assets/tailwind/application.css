@@ -506,18 +506,25 @@ html {
   position: relative;
 }
 
+/* Reads as a continuation of the chatbox: same elevated surface, the purple
+   left accent with the SAME bar+gap geometry as .pito-segment (4px bar, 6px
+   gap showing the page bg, then the surface), flush against the chatbox top,
+   with a hairline at the bottom to separate the two. Drawn with inset shadows
+   so no DOM/JS change is needed. Sits BELOW the sidebar (see z-index there). */
 .pito-autosuggest-palette {
   position: absolute;
   bottom: 100%;
   left: 0;
   right: 0;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   z-index: 40;
   background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  padding-block: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 4px 0 0 0 var(--accent-purple), /* purple bar */
+    inset 10px 0 0 0 var(--bg-root);      /* 6px gap (bg shows through) */
+  border-bottom: 1px solid var(--border-default);
+  border-radius: 0;
+  padding-block: 6px;
 }
 
 .pito-autosuggest-row {
@@ -525,7 +532,8 @@ html {
   justify-content: space-between;
   align-items: baseline;
   gap: 2rem;
-  padding-inline: 12px;
+  /* 22px left = bar(4) + gap(6) + content(12): aligns with the chatbox input. */
+  padding-inline: 22px 16px;
 }
 
 /* Command name (left) + muted right-aligned description */

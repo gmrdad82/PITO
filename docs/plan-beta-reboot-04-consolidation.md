@@ -1173,9 +1173,9 @@ migration, every model factoried + auto-validated, rake split, `pito:tools:probe
 
 > Make the `/command` suggest-palette read as a seamless extension of the chatbox: purple left accent border, the same elevated surface, flush border-to-border / surface-to-surface (no gap/shadow seam). CSS-led (`.pito-autosuggest-palette`), verified against the float-above behavior + ghost/caret coexistence.
 
-- [ ] T53.1 Restyle `.pito-autosuggest-palette` (purple left border, shared surface, flush, square the adjoining corner). complexity: [low]
-- [ ] T53.2 Verify positioning + ghost/caret coexistence; `node --check`. complexity: [low]
-- [ ] T53.3 Smoke + commit: `Style /command palette as a chatbox continuation`. complexity: [manual]
+- [x] T53.1 Restyle `.pito-autosuggest-palette` (purple left border, shared surface, flush, square the adjoining corner; rows pad to the segment's 22px text inset). complexity: [low]
+- [x] T53.2 Verify positioning + ghost/caret coexistence; `node --check`. complexity: [low]
+- [x] T53.3 Commit: `Style /command palette as a chatbox continuation`. complexity: [manual]
 
 ## P54 — Cross-instance cable sync (notification read + rename)
 
