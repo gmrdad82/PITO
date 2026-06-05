@@ -6,7 +6,7 @@ gem "stimulus-rails", "~> 1.3"
 gem "importmap-rails", "~> 2.1"
 gem "propshaft", "~> 1.3"
 gem "tailwindcss-rails", "~> 4.4"
-gem "view_component", "~> 4.11"
+gem "view_component", "~> 4.12"
 gem "pg", "~> 1.5"
 gem "puma", ">= 5.0"
 gem "thruster", "~> 0.1", require: false
@@ -23,7 +23,7 @@ gem "solid_cache", "~> 1.0"
 gem "solid_cable", "~> 4.0"
 
 # YouTube APIs
-gem "google-apis-youtube_v3", "~> 0.64"
+gem "google-apis-youtube_v3", "~> 0.65"
 gem "google-apis-youtube_analytics_v2", "~> 0.18"
 
 # Phase 7 — Step A (7a-google-oauth-and-identity.md). OmniAuth-based
