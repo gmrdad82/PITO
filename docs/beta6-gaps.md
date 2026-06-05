@@ -64,7 +64,7 @@ PR; squash-merge at the end.
   no-match); slash `Dispatcher` `--help` (subcommand, `-h`, mid-arg, unknown, case).
 - JS: `autosuggest_controller`.
 
-### [ ] Phase B — Command dispatch: handlers + action bus
+### [x] Phase B — Command dispatch: handlers + action bus
 
 - Doc-blocks: `Slash::Handler` base + subclasses (config/help/disconnect) + chat/
   hashtag handler bases/subclasses.
