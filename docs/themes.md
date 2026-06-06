@@ -313,14 +313,25 @@ the unaltered default.
 > assumptions. Existing pieces reused: `Pito::HandleGenerator` (generalized), the
 > `*_follow_up` kinds + their `--bg-elevated`/surface backgrounds.
 
-### P13 — Follow-up engine core
+**Execution (Sonnet-first + parallelization).** Each task goes to a Sonnet
+sub-agent first; escalate to Opus only on repeated failure. **P13 → done.** P14
+and P15 are disjoint _consumers_ of the P13 engine and could run side by side —
+but both touch the shared controller seam (`#create` branch retirement / stem
+removal), the registry, and i18n, and we work on ONE branch with no worktrees, so
+the **phases stay sequential (P14 then P15)** to avoid clashes. _Within_ each
+phase, parallelize the genuinely disjoint files: the new `FollowUp::Handlers::*`
+class, its component, and its i18n can be built concurrently, then the
+controller/spec wiring lands serially. P12b (diff-reveal JS) runs after P15 and is
+independent of P14.
+
+### P13 — Follow-up engine core _(done)_
 
 - [x] T13.1 Generalize `Pito::HandleGenerator`: uniqueness across ANY event carrying a `reply_handle` (query `payload->>'reply_handle'`, incl. consumed); keep the `<greek>-<4d>` format; doc-block. complexity: [low]
 - [x] T13.2 Payload contract + a stamping helper (e.g. `Pito::FollowUp.make_followupable!(payload, target:, conversation:)`) that injects `reply_handle` + `reply_target`; doc-block. complexity: [low]
 - [x] T13.3 `Pito::FollowUp::Router` — parse `#<handle> <rest>`, find the non-consumed event by `reply_handle`, return `{event:, rest:}` / `:not_found` / `:not_a_follow_up`. (Replaces `Pito::ConfirmationRouter`.) complexity: [high]
 - [x] T13.4 `Pito::FollowUp::Registry` (`reply_target` → handler) + `Pito::FollowUp::Handler` base (`actions`, `#call(event:, rest:, conversation:)` → result) + `Pito::FollowUp::Result` value types: `Mutation(kind:, payload:)`, `Append(events:)`, `Error(message_key:, message_args:)`. complexity: [high]
 - [x] T13.5 `Pito::FollowUp::AffordanceComponent` — renders `#<handle> <usage>`; hidden when `reply_consumed`. complexity: [low]
-- [x] T13.6 Controller wiring: replace `confirmation_response?`/`handle_confirmation` with generic follow-up detection (`Router.classify`); if a target is found, branch by kind — mutate path (no echo/turn) vs append path (echo + turn). Unresolved `#…` → existing hashtag fallback. complexity: [high]
+- [x] T13.6 Controller wiring: ADD an inert generic follow-up branch (`FollowUp::Router.call`) BEFORE `confirmation_response?`; on a found target, branch by handler `mode` — `:mutate` (no echo/turn) vs `:append` (echo + turn). `:not_found`/`:not_a_follow_up` fall through to the existing confirmation/hashtag paths UNCHANGED (confirmations still use `confirmation_handle`; they migrate in P14). complexity: [high]
 - [x] T13.7 `FollowUpDispatchJob` — run the domain handler: `Mutation` → `event.update!` + `replace_event`; `Append` → persist `*_follow_up` events + broadcast; consume the source per its kind. complexity: [high]
 - [x] T13.8 Specs: generator uniqueness incl. consumed; router resolve/not-found/consumed; registry + handler base; affordance hidden-when-consumed; controller echo-vs-no-echo branch by target kind. complexity: [low]
 - [x] T13.9 Commit: `P13: reusable follow-up engine (generator/router/registry/dispatch)`. complexity: [manual]
