@@ -21,27 +21,35 @@ No production data exists → destructive migrations are free.
 
 ## Locked decisions
 
-| Topic              | Decision                                                                                                                                                                                                                                                                     |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Branch / PR        | Continue on `themes` / PR #62; **never merge** until validated                                                                                                                                                                                                               |
-| Rename `/themes`   | `/theme` → `/themes` (verb, fast-path, grammar, help/palette, i18n, specs, docs)                                                                                                                                                                                             |
-| Follow-up engine   | Keep the name **`Pito::FollowUp`** (no rename)                                                                                                                                                                                                                               |
-| Suggestions engine | `Pito::Autocomplete::*` → **`Pito::Suggestions::*`**, `pito--autosuggest` → `pito--suggestions`, route `/autocomplete` → `/suggestions`, **all `pito-autosuggest-*` CSS → `pito-suggestions-*`** (full). New: game-title argument ghosting.                                  |
-| Command surface    | Chat verbs (repliable): `list games`/`ls games`, `show game <title>`, `delete game <title>`/`rm game <title>`. Slash: `/games import [title]` (IGDB search sidebar).                                                                                                         |
-| Genres             | Drop `PrimaryGenrePicker` + `primary_genre_id`; store **all** IGDB genres (`game_genres`, keep `position`)                                                                                                                                                                   |
-| Editions           | Drop `version_parent_id` + `version_title` + version-parent resolution; **main titles only** (`game_type=(0)`)                                                                                                                                                               |
-| Game schema        | Add `games.last_sync_error`, `games.resyncing`; **wire** `games.platforms[]`; drop dead `games.notes`, `games.played_at`                                                                                                                                                     |
-| Stats              | Polymorphic **`Stat`**(`entity_type`/`entity_id`, `kind`, `value`, `synced_at`); kinds **`subscribers`, `views`**; `Pito::Stats` facade; move off Channel/Video columns                                                                                                      |
-| watched_hours      | **Dropped now** (Analytics-sourced) → future `Pito::Analytics`; remove `channels.watched_hours` + its Analytics fetch                                                                                                                                                        |
-| Game stats         | `views` **materialized** via a refresh job (sum of `linked_videos` views)                                                                                                                                                                                                    |
-| Stack              | **`Pito::Stack`** engine + tracking ONLY (no UI): `api_requests` table; instrument Voyage/IGDB/YouTube chokepoints; `Stack::{Voyage,YouTube,IGDB}` = request counts (24h + month); `Stack::Local` = Postgres MB + Game/Video counts. Replaces `Pito::ExternalApiTracker::*`. |
-| Search             | Modular `Pito::Search` registry + base module + **IGDB game-search module** (port `Client#search_games`). Local search + a `search` chat verb deferred to **after Video**.                                                                                                   |
-| Embeddings         | Game multi-field (title+genres+dev+pub+description+platforms+ttb+ratings, shared `Game::EmbedText`); Channel (title+desc+handle+keywords+tags) — add `channels.summary_embedding`+`keywords`+`tags`; **diff-gated** reindex (cover-art change must NOT reindex)              |
-| Footage/TTB        | Keep `pito:tools:probe` + `Footage`; footage hours = `sum(footages.duration_seconds)/3600` → `TimeToBeatComponent` **4th** tick                                                                                                                                              |
-| Recommendations    | Real `#similar`/`#channel` (multi-field + filters, `ScoreBarComponent`); import step-5 = dummy `Pito::Recommendations` → true                                                                                                                                                |
-| Platform ownership | Tokens `ps/switch/steam`; synonyms ps4/ps5/PlayStation→ps, Switch1/2→switch, Steam/GOG/Epic/PC→steam                                                                                                                                                                         |
-| Sync timing        | IGDB sync on add; future-release games re-sync **daily at 1:00**; stop once released                                                                                                                                                                                         |
-| Dead code          | Remove phantom video/analytics layer (keep `Video` model + operational `ImportVideosJob` + `Voyage::Stats` + working channel sync)                                                                                                                                           |
+| Topic                 | Decision                                                                                                                                                                                                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Branch / PR           | Continue on `themes` / PR #62; **never merge** until validated                                                                                                                                                                                                                                                   |
+| Rename `/themes`      | `/theme` → `/themes` (verb, fast-path, grammar, help/palette, i18n, specs, docs)                                                                                                                                                                                                                                 |
+| Follow-up engine      | Keep the name **`Pito::FollowUp`** (no rename)                                                                                                                                                                                                                                                                   |
+| Suggestions engine    | `Pito::Autocomplete::*` → **`Pito::Suggestions::*`**, `pito--autosuggest` → `pito--suggestions`, route `/autocomplete` → `/suggestions`, **all `pito-autosuggest-*` CSS → `pito-suggestions-*`** (full). New: game-title argument ghosting.                                                                      |
+| Command surface       | Chat verbs (repliable): `list games`/`ls games`, `show game <title>`, `delete game <title>`/`rm game <title>`. Slash: `/games import [title]` (IGDB search sidebar).                                                                                                                                             |
+| Genres                | Drop `PrimaryGenrePicker` + `primary_genre_id`; store **all** IGDB genres (`game_genres`, keep `position`)                                                                                                                                                                                                       |
+| Editions              | Drop `version_parent_id` + `version_title` + version-parent resolution; **main titles only** (`game_type=(0)`)                                                                                                                                                                                                   |
+| Game schema           | Add `games.last_sync_error`, `games.resyncing`; **wire** `games.platforms[]`; drop dead `games.notes`, `games.played_at`                                                                                                                                                                                         |
+| Stats                 | Polymorphic **`Stat`**(`entity_type`/`entity_id`, `kind`, `value`, `synced_at`); kinds **`subscribers`, `views`**; `Pito::Stats` facade; move off Channel/Video columns                                                                                                                                          |
+| watched_hours         | **Dropped now** (Analytics-sourced) → future `Pito::Analytics`; remove `channels.watched_hours` + its Analytics fetch                                                                                                                                                                                            |
+| Game stats            | `views` **materialized** via a refresh job (sum of `linked_videos` views)                                                                                                                                                                                                                                        |
+| Stack                 | **`Pito::Stack`** engine + tracking ONLY (no UI): `api_requests` table; instrument Voyage/IGDB/YouTube chokepoints; `Stack::{Voyage,YouTube,IGDB}` = request counts (24h + month); `Stack::Local` = Postgres MB + Game/Video counts. Replaces `Pito::ExternalApiTracker::*`.                                     |
+| Search                | Modular `Pito::Search` registry + base module + **IGDB game-search module** (port `Client#search_games`). Local search + a `search` chat verb deferred to **after Video**.                                                                                                                                       |
+| Embeddings            | Game multi-field (title+genres+dev+pub+description+platforms+ttb+ratings, shared `Game::EmbedText`); Channel (title+desc+handle+keywords+tags) — add `channels.summary_embedding`+`keywords`+`tags`; **diff-gated** reindex (cover-art change must NOT reindex)                                                  |
+| Footage/TTB           | Keep `pito:tools:probe` + `Footage`; footage hours = `sum(footages.duration_seconds)/3600` → `TimeToBeatComponent` **4th** tick                                                                                                                                                                                  |
+| Recommendations       | Real `#similar`/`#channel` (multi-field + filters, `ScoreBarComponent`); import step-5 = dummy `Pito::Recommendations` → true                                                                                                                                                                                    |
+| Platform ownership    | Tokens `ps/switch/steam`; synonyms ps4/ps5/PlayStation→ps, Switch1/2→switch, Steam/GOG/Epic/PC→steam                                                                                                                                                                                                             |
+| Sync timing           | IGDB sync on add; future-release games re-sync **daily at 1:00**; stop once released                                                                                                                                                                                                                             |
+| Dead code             | Remove phantom video/analytics layer (keep `Video` model + operational `ImportVideosJob` + `Voyage::Stats` + working channel sync)                                                                                                                                                                               |
+| Video indexing        | `Video::EmbedText` = title + description + tags + category (categoryId→name via static map); `Video::VoyageIndexer` (digest-gated) fills `videos.summary_embedding`; enqueued from `ImportVideosJob`; backfill rake. (2026-06-06)                                                                                |
+| Channel embedding     | **Pure video centroid**: `channel.summary_embedding = mean(its videos' embeddings)` (no Voyage call); fall back to channel-level text embedding (Voyage) only when the channel has 0 embedded videos. Recomputed by `ChannelEmbeddingRefreshJob` after a video reindexes. (2026-06-06)                           |
+| Video↔game link       | **No hashtag parsing in pito** (hashtags are the creator's YouTube convention). Explicit `link`/`unlink` verbs over the `video_game_links` HABTM + `#<h> link to video <id\|title>` follow-up. (2026-06-06)                                                                                                      |
+| Game IDs in UI        | `list games` shows **IDs**; `show`/`update`/`delete` + their follow-ups key off the **ID**, not the title. (2026-06-06)                                                                                                                                                                                          |
+| Update verb           | New `update game ownership <id> <platforms>` (+ `#<h> update ownership <platforms>`). Tolerant list parse: split on `,` `.` `*` + whitespace; synonyms → `ps`/`switch`/`steam`. (2026-06-06)                                                                                                                     |
+| Recommendations 3-way | `Pito::Recommendations`: game↔game (`SimilarGames`), game→channel (`ChannelRecommendation`), **channel→game** (`Channel::GameRecommendation`, new). (2026-06-06)                                                                                                                                                 |
+| Nightly sync          | 1:00 **UTC** orchestrator: channel-info sync → video sync → game sync → bulk digest-gated reindex (games+videos) → channel-centroid recompute LAST (depends on video embeddings). On-demand syncs explicitly enqueue targeted reindex. NO model callbacks. Analytics = separate future nightly job. (2026-06-06) |
+| Manual reindex/resync | Operator-triggered `reindex`/`resync` deferred → `docs/follow-up.md` for now. (2026-06-06)                                                                                                                                                                                                                       |
 
 ## Complexity hints
 
@@ -59,11 +67,12 @@ No production data exists → destructive migrations are free.
 - P7 — IGDB sync repair + verification (+ sync-on-add)
 - P8 — Multi-field game embedding + channel embedding + diff-gated reindex
 - P9 — Game detail message component (ScoreBar + TTB-with-footage + cover)
-- P10 — Chat verbs `list/show/delete games` + grammar + title ghost + list follow-up + picker
+- **P9.5 — Video indexing + channel centroid + channel→game recommendation (run NOW, before P10)**
+- P10 — Chat verbs `list/show/delete games` (+ **IDs**, **`update game ownership`**, **`link`/`unlink`**) + grammar + ghost + follow-up + picker
 - P11 — `/games import` sidebar (search → 5-step progress → 2 messages)
-- P12 — Follow-ups on the game messages
-- P13 — `Pito::Recommendations` (similar / channel)
-- P14 — Daily future-games sync (1:00)
+- P12 — Follow-ups on the game messages (+ `update ownership`, `link`)
+- P13 — `Pito::Recommendations` (3-way: game↔game, game→channel, channel→game)
+- P14 — Nightly 1:00 UTC sync orchestration (channel + video + game + reindex)
 - P15 — Extract to `docs/games.md`, AGENTS conventions, finalize
 
 ---
@@ -194,12 +203,35 @@ No production data exists → destructive migrations are free.
 - [x] T9.5 Component specs. complexity: [low]
 - [x] T9.6 Commit: `Game detail message component (score + ttb-with-footage + cover)`. complexity: [manual]
 
+## P9.5 — Video indexing + channel centroid + channel→game recommendation
+
+> Run NOW, before the chat UI. Videos are already imported (title/description/
+> tags/category) but never embedded. Embed them, make the channel embedding the
+> **pure centroid of its videos' embeddings** (fall back to channel text only when
+> 0 embedded videos), and add the **channel→game** recommendation direction.
+> Centroid recompute is pure vector math (NO Voyage call); only the text-fallback
+> path hits Voyage. On-demand: `ImportVideosJob` enqueues the video reindex, which
+> enqueues the channel-centroid refresh.
+
+- [ ] T9.5.1 `Video::EmbedText.call(video)` = title — description — tags(space-joined) — category_name (categoryId→name via a static `YOUTUBE_CATEGORIES` map); blank-skipped, em-dash-joined. complexity: [low]
+- [ ] T9.5.2 Migration: `videos.embedded_digest:string`. complexity: [low]
+- [ ] T9.5.3 `Video::VoyageIndexer.call(video, force: false)` — digest-gated; `AppSetting.voyage_configured?` gate; persist `summary_embedding` + `embedded_digest` via `update_column`; nil-raise contract (mirror Game/Channel). complexity: [low]
+- [ ] T9.5.4 `VideoVoyageIndexJob(video_id)` (queue `:search`); on a successful (re)embed, enqueue `ChannelEmbeddingRefreshJob(channel_id)`. complexity: [low]
+- [ ] T9.5.5 `ImportVideosJob`: enqueue `VideoVoyageIndexJob` for each created/changed video (explicit; digest-gate no-ops the unchanged). complexity: [low]
+- [ ] T9.5.6 `pito:voyage:reindex_videos` backfill rake (one job per video). complexity: [low]
+- [ ] T9.5.7 `Channel::VoyageIndexer` → **pure video centroid**: if ≥1 embedded video → `summary_embedding = mean(video embeddings)` (no Voyage call); else channel-level text embedding via Voyage (digest-gated, existing path). complexity: [high]
+- [ ] T9.5.8 `ChannelEmbeddingRefreshJob(channel_id)` → recompute via `Channel::VoyageIndexer`. complexity: [low]
+- [ ] T9.5.9 `Channel::GameRecommendation.call(channel, limit:)` — games nearest to `channel.summary_embedding` (mirror `Game::ChannelRecommendation`: Result score/distance, threshold, skip unembedded). complexity: [low]
+- [ ] T9.5.10 Specs: EmbedText; VoyageIndexer digest; ImportVideosJob enqueue; channel centroid (mean + 0-video fallback); refresh job; `Channel::GameRecommendation`. complexity: [low]
+- [ ] T9.5.11 `bundle exec rspec` + `bin/rubocop` + `bin/rails zeitwerk:check` green. complexity: [manual]
+- [ ] T9.5.12 Commit(s), atomic per slice. complexity: [manual]
+
 ## P10 — Chat verbs `list/show/delete games` + grammar + title ghost + list follow-up + picker
 
 - [ ] T10.1 Grammar: noun vocab (`game`/`games`/`videos`) + `:game_title` slot (source `:game_titles`) on `show`; `list`(ls)/`show`/`delete`(rm) specs/aliases; adjust FILLERS. complexity: [high]
-- [ ] T10.2 `Chat::Handlers::List` (rewrite): real query → list System message; stamp `make_followupable!(target:"game_list")`. complexity: [low]
-- [ ] T10.3 `Chat::Handlers::Show`: parse title; `Game.find_by ILIKE` → detail message; not-found witty error. complexity: [high]
-- [ ] T10.4 `Chat::Handlers::Delete`: parse title → confirmation event (`reply_target:"game_delete"`). complexity: [low]
+- [ ] T10.2 `Chat::Handlers::List` (rewrite): real query → list System message **showing each game's ID**; stamp `make_followupable!(target:"game_list")`; follow-up affordances key off **ID**. complexity: [low]
+- [ ] T10.3 `Chat::Handlers::Show`: accept **ID** (or title) → `Game.find` / `find_by ILIKE` → detail message; not-found witty error. complexity: [high]
+- [ ] T10.4 `Chat::Handlers::Delete`: accept **ID** (or title) → confirmation event (`reply_target:"game_delete"`). complexity: [low]
 - [ ] T10.5 `Pito::Suggestions`: wire `:game_title` ghost (server resolves dynamic; add to JS `_chatEnumSlots()`) → `show game li` ghosts `es of P`. complexity: [high]
 - [ ] T10.6 `FollowUp::Handlers::GameList` (`:append`): `#<h> show <title>` → detail message. complexity: [low]
 - [ ] T10.7 `FollowUp::Handlers::GameDelete` (confirmation): destroy + outcome. complexity: [low]
@@ -207,8 +239,11 @@ No production data exists → destructive migrations are free.
 - [ ] T10.9 Extend `chat_form_controller` with a public set-value+submit action. complexity: [low]
 - [ ] T10.10 `ChatController`: fast-path to open the games picker on no-title `show game`/`rm game`. complexity: [low]
 - [ ] T10.11 i18n via `Pito::Copy`; handler/request/component/JS specs. complexity: [low]
+- [ ] T10.14 `update` verb: `update game ownership <id> <platforms>` → tolerant list parse (split on `,` `.` `*` + whitespace) → synonyms→`ps`/`switch`/`steam` → set `GamePlatformOwnership`; echo updated detail. complexity: [high]
+- [ ] T10.15 `link`/`unlink` verbs: `link game <id> to video <id|title>` / `link video <id|title> to game <id>` (+ `unlink`) → create/destroy `video_game_links` (HABTM); witty confirm; not-found errors. complexity: [high]
+- [ ] T10.16 Grammar + `Pito::Suggestions` + i18n (`Pito::Copy`) for `update`/`link`/`unlink`; specs. complexity: [low]
 - [ ] T10.12 `bundle exec rspec` + `npm test` + `bin/rubocop` + `node --check` green. complexity: [manual]
-- [ ] T10.13 Commit: `Chat verbs list/show/delete games + title ghost + picker + follow-ups`. complexity: [manual]
+- [ ] T10.13 Commit: `Chat verbs list/show/delete/update/link games + ids + ghost + picker + follow-ups`. complexity: [manual]
 
 ## P11 — `/games import` sidebar (search → 5-step progress → 2 messages)
 
@@ -226,7 +261,8 @@ No production data exists → destructive migrations are free.
 ## P12 — Follow-ups on the game messages
 
 - [ ] T12.1 `FollowUp::Handlers::GameDetail`: `rm`/`delete` → confirmation; `resync` → confirmation. complexity: [low]
-- [ ] T12.2 `owned <platform>`: extend `PLATFORMS` (GOG/Epic→steam) + display→token bridge; toggle `GamePlatformOwnership`; mutate the message. complexity: [high]
+- [ ] T12.2 `update ownership <platforms>` (was `owned`): tolerant list parse (`,` `.` `*` + ws) + display→token bridge (PlayStation/Switch/Steam → `ps`/`switch`/`steam`); set `GamePlatformOwnership`; mutate the message. complexity: [high]
+- [ ] T12.2b `#<h> link to video <id|title>` follow-up → create `video_game_links`; mutate/confirm. complexity: [low]
 - [ ] T12.3 Confirmation executors: resync→`GameIgdbSync`; reindex→re-embed (digest-aware); rm→destroy. complexity: [low]
 - [ ] T12.4 `FollowUp::Handlers::GameEnhanced`: `reindex`→confirmation; `similar [filters]` + `channel` → `:mutate` (chainable). complexity: [high]
 - [ ] T12.5 Parse `similar` filters (genre/year/developer/publisher/complexity/ttb/score/platform). complexity: [high]
@@ -235,23 +271,29 @@ No production data exists → destructive migrations are free.
 - [ ] T12.8 `bundle exec rspec` + `bin/rubocop` green. complexity: [manual]
 - [ ] T12.9 Commit: `Game message follow-ups (rm/resync/owned · reindex/similar/channel)`. complexity: [manual]
 
-## P13 — `Pito::Recommendations` (similar / channel)
+## P13 — `Pito::Recommendations` (3-way: game↔game, game→channel, channel→game)
 
 - [ ] T13.1 `Pito::Recommendations.similar_games(game, filters:)` via `SimilarGames` + `Recommendation::{TopK,HmsScorer,WeightedBlend}`. complexity: [high]
-- [ ] T13.2 `Pito::Recommendations.channels_for(game)` via `ChannelRecommendation`. complexity: [low]
+- [ ] T13.2 `Pito::Recommendations.channels_for(game)` via `Game::ChannelRecommendation` (game→channel). complexity: [low]
+- [ ] T13.2b `Pito::Recommendations.games_for(channel)` via `Channel::GameRecommendation` (channel→game, from P9.5). complexity: [low]
 - [ ] T13.3 Keep import step-5 dummy distinct. complexity: [low]
 - [ ] T13.4 Wire P12 `#similar`/`#channel`; output via `ScoreBarComponent`. complexity: [low]
-- [ ] T13.5 Specs (seeded embeddings). complexity: [low]
-- [ ] T13.6 Commit: `Pito::Recommendations (similar games + channel suggest)`. complexity: [manual]
+- [ ] T13.5 Specs (seeded embeddings), all 3 directions. complexity: [low]
+- [ ] T13.6 Commit: `Pito::Recommendations (3-way: similar / game→channel / channel→game)`. complexity: [manual]
 
-## P14 — Daily future-games sync (1:00)
+## P14 — Nightly 1:00 UTC sync orchestration (channel + video + game + reindex)
 
-- [ ] T14.1 `GameIgdbNightlyRefresh`: scope to unreleased; re-sync + rescore; stop once released. complexity: [low]
-- [ ] T14.2 Diff-gated reindex on nightly. complexity: [low]
-- [ ] T14.3 `config/recurring.yml`: `0 1 * * *`. complexity: [low]
-- [ ] T14.4 Trigger `GameStatsRefreshJob` after nightly. complexity: [low]
-- [ ] T14.5 Job spec; `bundle exec rspec` + `bin/rubocop` green. complexity: [low]
-- [ ] T14.6 Commit: `Daily 1:00 refresh for unreleased games`. complexity: [manual]
+> One orchestrator runs the steps in dependency order. Channel centroid recompute
+> is LAST because it depends on fresh video embeddings. Reindex is bulk +
+> digest-gated (cheap). Analytics is NOT here — it's a separate future nightly job.
+
+- [ ] T14.1 `NightlySyncJob` orchestrator (queue `:default`) runs: (1) channel-info sync, (2) video sync (per channel `ImportVideosJob`), (3) game sync (`GameIgdbNightlyRefresh`: unreleased → re-sync + rescore, stop once released). complexity: [high]
+- [ ] T14.2 After sync: bulk **digest-gated** reindex — games + videos via `BulkVoyageIndexJob` (batched ≤128/Voyage call). complexity: [low]
+- [ ] T14.3 LAST: recompute channel centroids (`ChannelEmbeddingRefreshJob` per channel) — depends on the video reindex above. complexity: [low]
+- [ ] T14.4 Trigger `GameStatsRefreshJob` for affected games after the video sync. complexity: [low]
+- [ ] T14.5 `config/recurring.yml`: `NightlySyncJob` at `0 1 * * *` (UTC). complexity: [low]
+- [ ] T14.6 Job specs (order, digest-gate no-op, centroid-after-video); `bundle exec rspec` + `bin/rubocop` green. complexity: [low]
+- [ ] T14.7 Commit: `Nightly 1:00 UTC sync orchestration (channel + video + game + reindex)`. complexity: [manual]
 
 ## P15 — Extract, document, finalize
 

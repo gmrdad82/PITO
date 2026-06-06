@@ -160,6 +160,11 @@ the phantom video/analytics dead-code removal. In progress on PR #62.
 
 ## E. Still to cover (not yet designed)
 
+- **Operator-triggered `reindex` / `resync`** (manual): on-demand re-embed (Voyage)
+  and re-sync (IGDB/YouTube) for a single game/video/channel — distinct from the
+  automatic on-demand enqueue (import path) and the nightly 1:00 UTC orchestration
+  (`docs/games.md` P14). Likely surfaces: `#<handle> reindex`/`resync` follow-ups
+  and/or `reindex`/`resync` chat verbs. Deferred during the games build.
 - Further UI enhancements beyond those listed.
 - `Pito::Stats` design (daily snapshot tables/jobs for channel + video totals) — pairs with P60.
 - `Pito::Analytics` (wire TAB channel + Shift+TAB period into real queries).
