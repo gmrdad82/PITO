@@ -1,11 +1,10 @@
 # PR #62 — validation queue (every commit on `themes`)
 
-> Branch `themes` (PR #62, **do not merge until validated**). This is the
-> COMPLETE, ordered commit history of the branch (oldest → newest) so each
-> change can be reviewed individually. Tick a box once you've validated that
-> commit. Inspect any commit with `git show <sha>`.
+> Branch `themes` (PR #62, **do not merge until validated**). COMPLETE ordered
+> commit history (oldest → newest) so each change can be reviewed individually.
+> Tick a box once validated. Inspect any commit with `git show <sha>`.
 
-Total commits: **127**
+Total commits: **134**
 
 ## Commits
 
@@ -136,24 +135,27 @@ Total commits: **127**
 125. [ ] `86925fcd` (2026-06-07) — Pito::Recommendations (3-way: similar / game→channel / channel→game)
 126. [ ] `0b305198` (2026-06-07) — Game message follow-ups (rm/resync/update-ownership/link · reindex/similar/channel)
 127. [ ] `2b7ef67a` (2026-06-07) — Nightly two-stage sync (1:00) + reindex (2:00) orchestration
+128. [ ] `da65ec8b` (2026-06-07) — validations.md: full ordered commit checklist (127) + open validation feedback
+129. [ ] `bb61a125` (2026-06-07) — Plan: P16 validation-fix tasks (import sidebar / message rendering / score+ttb)
+130. [ ] `a274adc7` (2026-06-07) — Fix game-message rendering: timestamp, KV table, platform chips (P16 Group B)
+131. [ ] `0df48976` (2026-06-07) — Revive ScoreBarComponent + TimeToBeatComponent multi-stop gradient colors (T16.13)
+132. [ ] `3d2cdc10` (2026-06-07) — Fix /games import flow: sidebar UX + steps in sidebar + version_parent filter (P16 Group A)
+133. [ ] `0028840c` (2026-06-07) — Extract ShimmerTextComponent + strengthen ScoreBar/TTB specs
+134. [ ] `4346d6c7` (2026-06-07) — Document games domain (AGENTS.md + follow-up.md + games.md P15)
 
-## Open validation feedback (2026-06-07 session)
+## Validation feedback (2026-06-07 session) — all SHIPPED in P16
 
-Tracked for fix in `docs/games.md` → **P16 — validation fixes**:
-
-- [ ] `/games import` sidebar: auto-focus the search field on spawn
-- [ ] `/games import` search input styled like the conversation-rename input
-- [ ] No thinking/dots indicator on sidebar spawn (nothing sent to backend yet)
-- [ ] Search result rows show a small square cover-art thumbnail
-- [ ] Shimmer loading indicator (`.` across input width, `.pito-shimmer`) while talking to IGDB
-- [ ] Witty `Pito::Copy` for the "no results" message
-- [ ] Witty `Pito::Copy` for the "searching…" message
-- [ ] IGDB search: MAIN game only — exclude edition variants (`version_parent = null`)
-- [ ] Import: the 5 steps run IN THE SIDEBAR (shimmer + random offset), sidebar NOT dismissed
-- [ ] Import: Standard message after steps 1–3 (info+cover+score)
-- [ ] Import: Enhanced message after steps 4–5 (indexing+recommendations)
-- [ ] Import: sidebar stays open with 5 steps marked done (Esc to close)
-- [ ] Game detail/enhanced messages render with the standard TIMESTAMP chrome (like every message)
-- [ ] Detail card: properly aligned KV table (columns)
-- [ ] Detail card: Platforms shown ONLY as your tokens — PlayStation / Switch / Steam — as chips
-- [ ] Revive ScoreBarComponent + TimeToBeatComponent exact pane-layout multi-stop gradients (from git history)
+- [x] `/games import`: auto-focus search field on spawn
+- [x] search input styled like the conversation-rename input
+- [x] no thinking/dots indicator on sidebar spawn
+- [x] result rows show a small square cover-art thumbnail
+- [x] shimmer loading indicator (ShimmerTextComponent / `.pito-shimmer`) while talking to IGDB
+- [x] witty `Pito::Copy` for no-results + searching states
+- [x] IGDB search MAIN game only (`version_parent = null`) — editions excluded
+- [x] 5 steps run IN the sidebar (shimmer + random offset), sidebar not dismissed, stays open (Esc)
+- [x] Standard message after steps 1–3; Enhanced message after steps 4–5
+- [x] game detail/enhanced messages render with the standard timestamp chrome
+- [x] detail card uses the current kv-table (`Pito::Table::KeyValueRowComponent`)
+- [x] detail card Platforms = PlayStation/Switch/Steam chips (token-mapped)
+- [x] ScoreBar + TTB revived with exact pane-layout multi-stop gradients (+ specs)
+- [x] shimmering text extracted to `Pito::Shell::ShimmerTextComponent` (+ spec)
