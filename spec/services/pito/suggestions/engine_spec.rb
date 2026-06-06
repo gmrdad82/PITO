@@ -540,7 +540,7 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
 
     it "slash arg-stage ghost is empty (ghost is server-side in arg stage)" do
       # Engine does not compute ghost locally for slash arg-stage; the debounced
-      # /autocomplete fetch fills this after the response arrives.
+      # /suggestions fetch fills this after the response arrives.
       result = call(input: "/config goo", cursor: 11, authenticated: true)
       expect(result[:ghost][:complete_current]).to eq("")
     end
@@ -640,9 +640,9 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
     end
   end
 
-  # ── P5.5 — Autocomplete stop when all non-repeatable slots are filled ─────────
+  # ── P5.5 — Suggestions stop when all non-repeatable slots are filled ─────────
 
-  describe "P5.5 — autocomplete stop after single-slot commands are satisfied" do
+  describe "P5.5 — suggestions stop after single-slot commands are satisfied" do
     before { Pito::Grammar::Registry.reset!; Pito::Grammar::Registry.register_all! }
     after  { Pito::Grammar::Registry.reset! }
 

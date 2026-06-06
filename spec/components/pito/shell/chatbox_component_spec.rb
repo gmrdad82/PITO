@@ -271,7 +271,7 @@ RSpec.describe Pito::Shell::ChatboxComponent do
       end
     end
 
-    context "autosuggest integration" do
+    context "suggestions integration" do
       it "renders #pito-chatbox with the pito--suggestions Stimulus controller" do
         node = render_inline(described_class.new)
         wrapper = node.css("div#pito-chatbox").first
@@ -322,13 +322,13 @@ RSpec.describe Pito::Shell::ChatboxComponent do
         expect(palette["class"]).to include("hidden")
       end
 
-      it "renders the textarea with the autosuggest field target" do
+      it "renders the textarea with the suggestions field target" do
         node = render_inline(described_class.new)
         textarea = node.css("textarea[data-pito--suggestions-target='field']").first
         expect(textarea).not_to be_nil
       end
 
-      it "renders the textarea data-action with autosuggest keydown first" do
+      it "renders the textarea data-action with suggestions keydown first" do
         node = render_inline(described_class.new)
         textarea = node.css("textarea").first
         action = textarea["data-action"]

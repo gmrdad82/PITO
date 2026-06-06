@@ -12,7 +12,7 @@ require "rails_helper"
 #
 #  1. Direct route hit — GET /404 reaches start_screens#not_found directly
 #     (this route always exists regardless of exceptions_app routing). This is
-#     the canonical assertion that the action renders the autocomplete chatbox
+#     the canonical assertion that the action renders the suggestions chatbox
 #     with status 404.
 #
 #  2. Catch-all route — GET /some-unknown-path is matched by the wildcard

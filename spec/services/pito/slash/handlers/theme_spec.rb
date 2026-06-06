@@ -535,19 +535,19 @@ RSpec.describe Pito::Slash::Handlers::Theme, type: :service do
     end
   end
 
-  # ── P6: Autocomplete — ls hidden, list offered via theme_names ───────────────
+  # ── P6: Suggestions — ls hidden, list offered via theme_names ───────────────
   #
   # The handler's grammar slot is sourced from :theme_names (slugs + "default"),
-  # not :theme_subcommands.  Autocomplete for `/themes <partial>` suggests theme
+  # not :theme_subcommands.  Suggestions for `/themes <partial>` suggests theme
   # slugs and "default", never the subcommand keywords.  `ls` does not appear.
   # This is intentional: subcommands are handler-internal dispatch tokens,
-  # not vocabulary members surfaced to the user via autocomplete.
+  # not vocabulary members surfaced to the user via suggestions.
 
-  describe "autocomplete — /themes arg stage" do
+  describe "suggestions — /themes arg stage" do
     before { Pito::Grammar::Registry.reset!; Pito::Grammar::Registry.register_all! }
     after  { Pito::Grammar::Registry.reset! }
 
-    def autocomplete(input)
+    def suggestions(input)
       Pito::Suggestions::Engine.call(
         input:         input,
         cursor:        input.length,
@@ -556,19 +556,19 @@ RSpec.describe Pito::Slash::Handlers::Theme, type: :service do
     end
 
     it "suggests theme slugs (not ls) when typing after /themes " do
-      result = autocomplete("/themes ")
+      result = suggestions("/themes ")
       labels = result[:menu_items].map { |i| i[:label] }
       expect(labels).to include("dracula", "tokyo-night")
     end
 
-    it "does not suggest ls as an autocomplete item" do
-      result = autocomplete("/themes l")
+    it "does not suggest ls as a suggestions item" do
+      result = suggestions("/themes l")
       labels = result[:menu_items].map { |i| i[:label] }
       expect(labels).not_to include("ls")
     end
 
-    it "does not suggest list as an autocomplete item (not a theme slug)" do
-      result = autocomplete("/themes l")
+    it "does not suggest list as a suggestions item (not a theme slug)" do
+      result = suggestions("/themes l")
       labels = result[:menu_items].map { |i| i[:label] }
       expect(labels).not_to include("list")
     end

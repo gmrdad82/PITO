@@ -89,7 +89,7 @@ export default class extends Controller {
     this._dynamicRequestId   = 0      // monotonic counter to ignore stale responses
     this._dynamicAbort       = null   // AbortController for in-flight fetch
 
-    // ae arg-stage fetch state (slash/hashtag arg completion via /autocomplete)
+    // ae arg-stage fetch state (slash/hashtag arg completion via /suggestions)
     this._argTimer           = null
     this._argRequestId       = 0
     this._argAbort           = null
@@ -391,7 +391,7 @@ export default class extends Controller {
     return before.length > 1 && before.slice(1).includes(" ")
   }
 
-  // ── ae: arg-stage ghost fetch (debounced POST /autocomplete) ─────────────
+  // ── ae: arg-stage ghost fetch (debounced POST /suggestions) ─────────────
 
   _scheduleArgFetch(value, cursor) {
     // Cancel previous pending timer or in-flight request
