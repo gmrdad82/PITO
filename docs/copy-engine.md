@@ -18,17 +18,18 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 
 ## Locked decisions
 
-| Topic             | Decision                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Engine API        | `Pito::Copy.render(key, vars = {}, variant: nil)` → String. Single entry point for slash, hashtag/reply, chat.     |
-| Dictionary = data | An i18n key resolving to a **String** (one line) or an **Array** (variants). Engine treats both the same.          |
-| Always wire       | Callers always go through `Pito::Copy`. "Migrate to/from a dictionary" = edit i18n only (1 entry ⇄ many).          |
-| Voice             | Witty, dry pito voice. Content lives in i18n; voice is enforced by the audit, not by code.                         |
-| Centralized home  | Migrated copy lives under the `pito.copy.*` namespace (`config/locales/pito/copy/*.yml`).                          |
-| Placeholders      | i18n `%{name}` interpolation, filled from `vars`.                                                                  |
-| Random + testable | Random variant in prod; a swappable sampler (deterministic in specs) + a `variant:` index override for exactness.  |
-| Audit             | `rake pito:copy:audit` lists every `pito.copy.*` key (variant count + placeholders) and flags legacy dictionaries. |
-| Migration         | Move existing dictionaries (theme quips, thinking words, …) onto the engine; then wire fixed replies as 1-entry.   |
+| Topic             | Decision                                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Engine API        | `Pito::Copy.render(key, vars = {}, variant: nil)` → String. Single entry point for slash, hashtag/reply, chat.             |
+| Dictionary = data | An i18n key resolving to a **String** (one line) or an **Array** (variants). Engine treats both the same.                  |
+| Always wire       | Callers always go through `Pito::Copy`. "Migrate to/from a dictionary" = edit i18n only (1 entry ⇄ many).                  |
+| Voice             | Witty, dry pito voice. Content lives in i18n; voice is enforced by the audit, not by code.                                 |
+| Centralized home  | Migrated copy lives under the `pito.copy.*` namespace (`config/locales/pito/copy/*.yml`).                                  |
+| Placeholders      | i18n `%{name}` interpolation, filled from `vars`.                                                                          |
+| Random + testable | Random variant in prod; a swappable sampler (deterministic in specs) + a `variant:` index override for exactness.          |
+| Audit             | `rake pito:copy:audit` lists every `pito.copy.*` key (variant count + placeholders) and flags legacy dictionaries.         |
+| Migration         | Move existing dictionaries (theme quips, thinking words, …) onto the engine; then wire fixed replies as 1-entry.           |
+| Dictionary size   | **50 variants is the standard** for every dictionary; the audit flags pools below 50. Single-entry copy is enriched to 50. |
 
 ## Complexity hints
 
@@ -42,6 +43,7 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 - P2 — `pito.copy` namespace + `pito:copy:audit` rake
 - P3 — Migrate existing dictionaries onto the engine
 - P4 — Always-wire fixed replies (audit + migrate by surface)
+- P5 — Standardize every dictionary to 50 variants
 
 ---
 
@@ -91,6 +93,25 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 - [x] T4.4 Wire free-form chat fixed copy through the engine. complexity: [low]
 - [x] T4.5 Specs across the migrated surfaces. complexity: [low]
 - [x] T4.6 Commit: `Wire command/reply/chat copy through the engine (single-entry dictionaries)`. complexity: [manual]
+
+## P5 — Standardize every dictionary to 50 variants
+
+> Decision: **50 is the standard size** for every dictionary. Relocate the 13
+> single-entry wired keys under `pito.copy.*` and enrich each to 50; top up the
+> existing sub-50 pools to 50. Voice: mirror the existing 50-entry pools (dry,
+> witty pito). Placeholders preserved exactly. Deterministic-first test sampler
+> keeps specs stable. (`youtube.ascii_art` is multi-line art — keep additions
+> small, consistent-width, tasteful; quality over filler.)
+
+- [ ] T5.1 Relocate the 13 single-entry wired keys to `pito.copy.*` (new keys + update each `Pito::Copy.render` call site + move/remove old YAML), still 1-entry; suite green. complexity: [low]
+- [ ] T5.2 Enrich auth/confirmation/connect copy to 50 each (`not_enrolled`, `confirmation.confirmed/cancelled/execution_failed`, `connect.not_configured`). complexity: [low]
+- [ ] T5.3 Enrich disconnect copy to 50 each (`confirmation.body` %{handle_html}, `confirmation.cancelled` %{handle}, `errors.already_gone/missing_target/not_found` %{target}). complexity: [low]
+- [ ] T5.4 Enrich help/theme copy to 50 each (`help.body`, `theme.list.intro`, `theme.sidebar.placeholder`). complexity: [low]
+- [ ] T5.5 Top up `pito.copy.theme.applied` 25 → 50 (%{theme}). complexity: [low]
+- [ ] T5.6 Top up `pito.copy.thinking.confirmation.doing` + `.done` 10 → 50 as INDEX-ALIGNED pairs. complexity: [low]
+- [ ] T5.7 Top up `pito.copy.youtube.ascii_art` 20 → 50 (small, consistent-width arts). complexity: [low]
+- [ ] T5.8 Extend `pito:copy:audit` to flag any `pito.copy.*` pool below 50 ("below standard") + spec it; full suite green. complexity: [low]
+- [ ] T5.9 Commit (per cohesive group): relocate, enrich, top-ups, audit. complexity: [manual]
 
 ## How to use this plan
 
