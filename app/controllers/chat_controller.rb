@@ -67,6 +67,12 @@ class ChatController < ApplicationController
         # update). Auth gating: requires an active session. No echo, no job dispatch.
         return handle_resume(conversation)
       end
+
+      if bare_theme_command?(input)
+        # Bare /theme (no args) opens the theme picker sidebar (Turbo Stream update).
+        # Auth gating: requires an active session. No echo, no Turn, no async job.
+        return handle_theme_sidebar(conversation)
+      end
     end
 
     if confirmation_response?(input)
@@ -306,6 +312,12 @@ class ChatController < ApplicationController
     input.strip.match?(%r{\A/resume(\s|\z)}i)
   end
 
+  # True only for bare `/theme` with no arguments (the sidebar path).
+  # `/theme apply <name>` and other subcommands go through the async pipeline.
+  def bare_theme_command?(input)
+    input.strip.match?(%r{\A/theme\z}i)
+  end
+
   # Renders a Turbo Stream that populates #pito-sidebar with the conversation list.
   # Auth gating: unauthenticated → mandatory-auth error event broadcast + 204.
   # No echo, no Turn, no async job.
@@ -330,6 +342,32 @@ class ChatController < ApplicationController
            locals:  {
              groups:       Conversation.recency_groups,
              current_uuid: current_uuid
+           }
+  end
+
+  # Renders a Turbo Stream that populates #pito-sidebar with the theme picker.
+  # Auth gating: unauthenticated → mandatory-auth error event broadcast + 204.
+  # No echo, no Turn, no async job.
+  def handle_theme_sidebar(conversation)
+    unless Current.session.present?
+      broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+      broadcaster.emit(
+        turn:    conversation.turns.create!(
+          position:   Turn.next_position_for(conversation),
+          input_kind: :slash,
+          input_text: "/theme"
+        ),
+        kind:    "error",
+        payload: { text: I18n.t("pito.auth.mandatories").sample }
+      )
+      return respond_to_client(conversation)
+    end
+
+    render partial: "chat/theme_sidebar",
+           formats: [ :turbo_stream ],
+           locals:  {
+             groups:        Pito::Themes::Registry.grouped,
+             current_theme: AppSetting.theme
            }
   end
 

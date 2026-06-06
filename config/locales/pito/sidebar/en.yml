@@ -15,6 +15,11 @@ en:
         rename_hint: "rename a conversation"
       game:
         subtitle: "Game · imported %{date}"
+      themes:
+        title: "Themes"
+        hint: "↑/↓ preview · Enter apply · Esc close"
+        dark: "Dark"
+        light: "Light"
       section:
         overview: "Overview"
         channels: "Channels covering this game"

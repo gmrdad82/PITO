@@ -195,13 +195,13 @@ the unaltered default.
 > Bare `/theme` opens the right-side sidebar (mirror `/resume`), themes grouped
 > Dark/Light, current theme marked with a cursor, witty subtitle hint.
 
-- [ ] T8.1 `Pito::Sidebar::Themes::Component` (`groups`, `current_theme`) — reuse `Sidebar::Component` + `Section::SectionHeaderComponent`. complexity: [low]
-- [ ] T8.2 `themes/_row.html.erb` — `.pito-theme-row[data-theme-name]`, label, current marker/cursor (`is-current`). complexity: [low]
-- [ ] T8.3 `chat/_theme_sidebar.turbo_stream.erb` (or themes view) — `turbo_stream.update "pito-sidebar"` wrapping the component + the witty subtitle hint ("↑/↓ preview · Enter apply"). complexity: [low]
-- [ ] T8.4 Bare `/theme` path renders the sidebar turbo_stream (mirror `chat#handle_resume`). complexity: [low]
-- [ ] T8.5 i18n: sidebar title + hint. complexity: [low]
-- [ ] T8.6 Specs: component (grouping + current marker) + request (`/theme` returns the sidebar turbo_stream targeting `pito-sidebar`). complexity: [low]
-- [ ] T8.7 Commit: `P8: /theme preview sidebar (grouped, current marker, hint)`. complexity: [manual]
+- [x] T8.1 `Pito::Sidebar::Themes::Component` (`groups`, `current_theme`) — reuse `Sidebar::Component` + `Section::SectionHeaderComponent`. complexity: [low]
+- [x] T8.2 `themes/_row.html.erb` — `.pito-theme-row[data-theme-name]`, label, current marker/cursor (`is-current`). complexity: [low]
+- [x] T8.3 `chat/_theme_sidebar.turbo_stream.erb` (or themes view) — `turbo_stream.update "pito-sidebar"` wrapping the component + the witty subtitle hint ("↑/↓ preview · Enter apply"). complexity: [low]
+- [x] T8.4 Bare `/theme` path renders the sidebar turbo_stream (mirror `chat#handle_resume`). complexity: [low]
+- [x] T8.5 i18n: sidebar title + hint. complexity: [low]
+- [x] T8.6 Specs: component (grouping + current marker) + request (`/theme` returns the sidebar turbo_stream targeting `pito-sidebar`). complexity: [low]
+- [x] T8.7 Commit: `P8: /theme preview sidebar (grouped, current marker, hint)`. complexity: [manual]
 
 ## P9 — Preview/apply JS (`theme_nav_controller`) + Vitest
 
