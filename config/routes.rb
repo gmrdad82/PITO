@@ -18,6 +18,13 @@ Rails.application.routes.draw do
   patch "/notifications/:id", to: "notifications#update", as: :notification
   post "/chat", to: "chat#create", as: :chat
   post "/suggestions", to: "suggestions#create", as: :suggestions
+  # IGDB game search + import endpoints (used by the /games import sidebar).
+  # POST /games/search — query IGDB; returns JSON { hits:, error: }
+  # POST /games/import — enqueue GameImportJob; returns 204
+  scope "/games", module: "games" do
+    post "search", to: "search#create", as: :games_search
+    post "import", to: "import#create", as: :games_import
+  end
   get "/resume", to: "conversations#resume", as: :resume
   get "/chat/:uuid", to: "conversations#show", as: :conversation
   patch "/chat/:uuid", to: "conversations#update"

@@ -11,6 +11,7 @@ en:
         resume: "Browse and switch to a previous conversation"
         disconnect: "Disconnect a YouTube channel"
         theme: "Switch the UI theme (apply / preview / reset)"
+        games: "Import a game from IGDB into your library"
       chat:
         list: "List games in your library"
         show: "Show a game's details (by id or title)"

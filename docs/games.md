@@ -249,16 +249,16 @@ No production data exists → destructive migrations are free.
 
 ## P11 — `/games import` sidebar (search → 5-step progress → 2 messages)
 
-- [ ] T11.1 `Slash::Handlers::Games` (verb `:games`, subcommand `import`) + grammar/help/palette/i18n; opens sidebar (prefill). complexity: [high]
-- [ ] T11.2 `Sidebar::GamesImport::Component` + `pito--games-search`: debounced search → IGDB module endpoint; keyboard nav. complexity: [high]
-- [ ] T11.3 Results: main-only, cover thumb, "in Library" marker (→ resync). complexity: [low]
-- [ ] T11.4 Select → `GameImportJob` streaming 5 steps: main info, cover art, score, Voyage, recommendations (dummy). complexity: [high]
-- [ ] T11.5 After step 3: stream the standard detail chat message. complexity: [low]
-- [ ] T11.6 After step 5: stream an enhanced (lorem) message; stamp `make_followupable!(target:"game_enhanced")`. complexity: [low]
-- [ ] T11.7 Search endpoint route/controller (or chat fast-path). complexity: [low]
-- [ ] T11.8 Specs: handler, endpoint (WebMock), import chain (steps + messages + resync). complexity: [low]
-- [ ] T11.9 `bundle exec rspec` + `npm test` + `bin/rubocop` + `node --check` green. complexity: [manual]
-- [ ] T11.10 Commit: `/games import sidebar: IGDB search → 5-step progress → detail + enhancement`. complexity: [manual]
+- [x] T11.1 `Slash::Handlers::Games` (verb `:games`, subcommand `import`) + grammar/help/palette/i18n; opens sidebar (prefill). complexity: [high]
+- [x] T11.2 `Sidebar::GamesImport::Component` + `pito--games-search`: debounced search → IGDB module endpoint; keyboard nav. complexity: [high]
+- [x] T11.3 Results: main-only, cover thumb, "in Library" marker (→ resync). complexity: [low]
+- [x] T11.4 Select → `GameImportJob` streaming 5 steps: main info, cover art, score, Voyage, recommendations (dummy). complexity: [high]
+- [x] T11.5 After step 3: stream the standard detail chat message. complexity: [low]
+- [x] T11.6 After step 5: stream an enhanced (lorem) message; stamp `make_followupable!(target:"game_enhanced")`. complexity: [low]
+- [x] T11.7 Search endpoint route/controller (or chat fast-path). complexity: [low]
+- [x] T11.8 Specs: handler, endpoint (WebMock), import chain (steps + messages + resync). complexity: [low]
+- [x] T11.9 `bundle exec rspec` + `npm test` + `bin/rubocop` + `node --check` green. complexity: [manual]
+- [-] T11.10 Commit: `/games import sidebar: IGDB search → 5-step progress → detail + enhancement`. complexity: [manual]
 
 ## P12 — Follow-ups on the game messages
 

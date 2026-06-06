@@ -1,0 +1,30 @@
+<%# GamesImport sidebar body.
+    The outer div mounts pito--games-search, which drives:
+      - Debounced IGDB search via POST /games/search
+      - ↑/↓/Enter keyboard navigation through .pito-igdb-row elements
+      - Enter on a row → POST /games/import → 5-step progress broadcast
+    The conversation UUID is carried as a data attribute so the controller
+    can tell the backend which conversation to stream progress to. %>
+<div class="flex flex-col gap-3"
+     data-controller="pito--games-search"
+     data-pito--games-search-conversation-uuid-value="<%= conversation_uuid %>"
+     data-pito--games-search-prefill-value="<%= prefill %>">
+
+  <%# Search input %>
+  <input type="text"
+         class="w-full bg-bg border border-line-default rounded px-3 py-2 text-fg text-sm
+                placeholder:text-fg-faded focus:outline-none focus:border-accent"
+         placeholder="<%= t('pito.sidebar.games_import.search_placeholder') %>"
+         autocomplete="off"
+         data-pito--games-search-target="input"
+         value="<%= prefill %>">
+
+  <%# Status line (shows "Searching…" / error / empty message) %>
+  <p class="text-fg-dim text-xs hidden"
+     data-pito--games-search-target="status"></p>
+
+  <%# Results list — populated by the controller %>
+  <div class="flex flex-col"
+       data-pito--games-search-target="results">
+  </div>
+</div>

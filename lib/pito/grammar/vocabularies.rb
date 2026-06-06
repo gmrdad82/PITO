@@ -146,6 +146,12 @@ module Pito
         }
       ).freeze
 
+      # Subcommand keywords for `/games`.
+      GAMES_SUBCOMMANDS = Vocabulary.define(
+        name:      :games_subcommands,
+        canonical: %w[import]
+      ).freeze
+
       # All registered theme slugs plus the special alias "default" (→ tokyo-night).
       # Backed by the theme Registry so adding a new definition file automatically
       # extends the vocabulary on next boot — no manual wiring needed.
@@ -211,7 +217,8 @@ module Pito
           CONVERSATIONS,
           GAME_TITLES,
           THEME_SUBCOMMANDS,
-          THEME_NAMES
+          THEME_NAMES,
+          GAMES_SUBCOMMANDS
         ]
       end
 

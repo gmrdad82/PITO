@@ -93,6 +93,14 @@ en:
           unknown_provider: "'%{provider}'? Never heard of it. I answer to: google, voyage, igdb, webhook, sound, fx."
           unknown_keys: "Unknown keys for %{provider}: %{keys}"
           invalid_toggle_value: "Invalid value '%{value}'. Use on or off."
+      games:
+        descriptions:
+          games: "Import a game from IGDB (/games import [title])"
+        help:
+          usage: "/games import [<title>]"
+          description: "Search IGDB for a game and import it into your library. Optionally prefill the search box with a title."
+        import:
+          opening: "Opening the IGDB import sidebar…"
       import:
         imported:
           one: "Imported 1 video from %{channel}."

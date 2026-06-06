@@ -1962,6 +1962,108 @@ en:
           - “Not yet — /games import to add a game.”
           - “No games on display. /games import.”
           - “Library empty — /games import to begin.”
+        import_usage:
+          - “Try /games import [title] to search IGDB and add a game.”
+          - “/games import [title] — search IGDB and drop a game in your library.”
+          - “Looking to add a game? /games import [title] searches IGDB.”
+          - “Use /games import [title] to pull a game from IGDB.”
+          - “The import door is /games import [title]. Knock away.”
+          - “/games import [title] — your IGDB search shortcut.”
+          - “To add a game: /games import [title]. That's the move.”
+          - “Hint: /games import [title] opens the IGDB picker.”
+          - “/games import [title] fetches from IGDB. Go ahead.”
+          - “The only subcommand here is import. /games import [title].”
+          - “Try /games import — it opens an IGDB search sidebar.”
+          - “/games import [title] is the one. I'll wait.”
+          - “Not sure what you meant. /games import [title] searches IGDB.”
+          - “To bring in a game: /games import [title].”
+          - “Your move: /games import [title] — searches IGDB live.”
+          - “/games import [title]. That's the command you're after.”
+          - “The import sidebar awaits: /games import [title].”
+          - “One subcommand, one job: /games import [title].”
+          - “Import games via IGDB with /games import [title].”
+          - “Ready when you are: /games import [title].”
+          - “/games import [title] — opens the IGDB search sidebar.”
+          - “Bring in a game: /games import [title] does it.”
+          - “/games import [title] is how you stock the library.”
+          - “The path to a new game: /games import [title].”
+          - “IGDB search is at /games import [title].”
+          - “Add to your library with /games import [title].”
+          - “/games import [title] — no fuss, just IGDB.”
+          - “To search and import: /games import [title].”
+          - “Usage: /games import [title]. Short and sweet.”
+          - “/games import [title] finds the game and imports it.”
+          - “One command: /games import [title]. That's all.”
+          - “The importer is ready at /games import [title].”
+          - “Go ahead: /games import [title] to search IGDB.”
+          - “/games import — the only subcommand that matters right now.”
+          - “To add a game to your library: /games import [title].”
+          - “/games import [title] pops the IGDB search sidebar.”
+          - “Library too quiet? /games import [title].”
+          - “Typed something I didn't catch. Try /games import [title].”
+          - “/games import [title] — the game import door.”
+          - “Unknown subcommand. The right one: /games import [title].”
+          - “Import a game from IGDB: /games import [title].”
+          - “/games import [title] — search first, import after.”
+          - “Not quite. /games import [title] is what you need.”
+          - “The import sidebar opens with /games import [title].”
+          - “Add games via IGDB: /games import [title].”
+          - “/games import [title] — IGDB search, right in chat.”
+          - “That command isn't one I know. Try /games import [title].”
+          - “/games import [title]: searches IGDB, imports the pick.”
+          - “Closest I've got: /games import [title]. Give it a go.”
+          - “Command not recognised. /games import [title] is the one.”
+        enhanced_intro:
+          - “Here's the full picture on this one.”
+          - “This game has more to it than the card shows.”
+          - “A bit more context on what you just imported.”
+          - “Let's dig into the details.”
+          - “Here's everything worth knowing.”
+          - “More on this title, since you asked.”
+          - “A closer look at the game you just added.”
+          - “Full read on the import — here you go.”
+          - “Let's unpack this one properly.”
+          - “The extended take on your new library entry.”
+          - “Since it's now in your library, here's the deeper cut.”
+          - “A little more background on this one.”
+          - “Full context, now that it's in the collection.”
+          - “Here's the broader picture for your new import.”
+          - “The quick version was the card — here's the rest.”
+          - “More signal, less noise — here's the full import breakdown.”
+          - “Good import. Here's the rest of what you should know.”
+          - “Now that it's in pito, here's the extended view.”
+          - “The card's the summary — this is the detail layer.”
+          - “Here's what sits beneath the cover art.”
+          - “A fuller read on the title you just brought in.”
+          - “More on this one, now that it's yours.”
+          - “The import went fine — here's the full context.”
+          - “Imported and indexed. Here's the breakdown.”
+          - “The game's in — here's what that actually means.”
+          - “Let's talk about what you just imported.”
+          - “Context on your new library entry follows.”
+          - “The card is the short version — here's the long one.”
+          - “Game locked in. Here's the extended picture.”
+          - “Here's a fuller read, since it's now in your collection.”
+          - “The game is yours. Here's the extra layer.”
+          - “Good call on the import. Here's what I know about it.”
+          - “Now in your library — let's look at it properly.”
+          - “The import's done. Here's the narrative.”
+          - “A broader view on the game you just added.”
+          - “Here's more colour on your latest import.”
+          - “Extended breakdown of the game you brought in.”
+          - “The big picture, now that the import's done.”
+          - “Freshly imported — here's everything else.”
+          - “Good addition. Here's the supplementary read.”
+          - “The card shows the surface. Here's below it.”
+          - “Imported. Let's get into it.”
+          - “Here's what the card didn't have room for.”
+          - “More detail on your latest library addition.”
+          - “Now that it's imported, here's the full story.”
+          - “The game's in the vault. Here's the context.”
+          - “A richer read on your newest entry.”
+          - “Here's the additional layer on this one.”
+          - “Full import done — here's what you should know.”
+          - “Context and colour for your newest library game.”
         deleted:
           - “Deleted “%{title}”.”
           - "“%{title}” is gone."

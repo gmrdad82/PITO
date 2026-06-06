@@ -80,6 +80,12 @@ class ChatController < ApplicationController
         # Auth gating: requires an active session.  No echo, no Turn, no async job.
         return handle_game_picker_sidebar(conversation, mode: picker_mode)
       end
+
+      if (import_title = games_import_command?(input))
+        # `/games import [title]` — opens the IGDB import sidebar (Turbo Stream update).
+        # Auth gating: requires an active session. No echo, no Turn, no async job.
+        return handle_games_import_sidebar(conversation, prefill: import_title)
+      end
     end
 
     # Follow-up engine (P13/P14) — handles `#<handle> <rest>` replies for any
@@ -349,6 +355,44 @@ class ChatController < ApplicationController
     when "delete" then :delete
     when "rm"    then :delete
     end
+  end
+
+  # Detects `/games import [title]` and returns the title string (may be "").
+  # Returns nil if the input doesn't match.
+  # The fast-path covers all `/games import` variants (with or without a title).
+  # Other `/games` subcommands / unknown args go through the async pipeline so
+  # the handler can return the witty usage hint.
+  def games_import_command?(input)
+    m = input.to_s.strip.match(%r{\A/games\s+import(?:\s+(.*))?\z}i)
+    return nil unless m
+    m[1].to_s.strip
+  end
+
+  # Renders a Turbo Stream that populates #pito-sidebar with the IGDB import sidebar.
+  # prefill: optional title string to pre-fill the search box with.
+  # Auth gating: unauthenticated → mandatory-auth error event broadcast + 204.
+  # No echo, no Turn, no async job.
+  def handle_games_import_sidebar(conversation, prefill:)
+    unless Current.session.present?
+      broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+      broadcaster.emit(
+        turn:    conversation.turns.create!(
+          position:   Turn.next_position_for(conversation),
+          input_kind: :slash,
+          input_text: "/games import"
+        ),
+        kind:    "error",
+        payload: { text: Pito::Copy.render("pito.copy.auth.mandatories") }
+      )
+      return respond_to_client(conversation)
+    end
+
+    render partial: "chat/games_import_sidebar",
+           formats: [ :turbo_stream ],
+           locals:  {
+             prefill:          prefill.to_s,
+             conversation_uuid: conversation.uuid
+           }
   end
 
   # Renders a Turbo Stream that populates #pito-sidebar with the conversation list.

@@ -26,6 +26,22 @@ module Pito
       def self.all
         [
           # Handler-less slash command specs (login/logout/connect have no handler class)
+          # `/games import [title]` — slash spec for the IGDB import sidebar.
+          # The `:games_subcommands` vocab has a single canonical entry "import"
+          # so the palette shows "/games import" with a description.  The title
+          # arg is free-form (any string); it is parsed directly in the handler.
+          Spec.new(
+            namespace:       :slash,
+            name:            :games,
+            slots:           [
+              Slot.new(name: :subcommand, kind: :enum, source: :games_subcommands, optional: true),
+              Slot.new(name: :title, kind: :free, optional: true)
+            ],
+            auth:            :authenticated_only,
+            description_key: "pito.grammar.slash.games"
+          ),
+
+          # Handler-less slash command specs (login/logout/connect have no handler class)
           Spec.new(
             namespace:       :slash,
             name:            :login,
