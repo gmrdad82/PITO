@@ -31,7 +31,7 @@ module Pito
           when "disconnect"
             confirm_disconnect(payload)
           else
-            I18n.t("pito.confirmation.confirmed.default")
+            Pito::Copy.render("pito.confirmation.confirmed.default")
           end
         end
 
@@ -46,10 +46,10 @@ module Pito
             payload = payload.with_indifferent_access
             channel = Channel.find_by(id: payload[:channel_id])
             handle  = channel&.handle&.presence || channel&.title.to_s
-            I18n.t("pito.slash.disconnect.confirmation.cancelled",
-                   handle: handle.presence || "the channel")
+            Pito::Copy.render("pito.slash.disconnect.confirmation.cancelled",
+                              { handle: handle.presence || "the channel" })
           else
-            I18n.t("pito.confirmation.cancelled.default")
+            Pito::Copy.render("pito.confirmation.cancelled.default")
           end
         end
 
@@ -58,7 +58,7 @@ module Pito
         def confirm_disconnect(payload)
           payload       = payload.with_indifferent_access
           channel       = Channel.find_by(id: payload[:channel_id])
-          return I18n.t("pito.slash.disconnect.errors.already_gone") if channel.nil?
+          return Pito::Copy.render("pito.slash.disconnect.errors.already_gone") if channel.nil?
 
           handle        = channel.handle.presence || channel.title.to_s
           video_count   = channel.videos.count

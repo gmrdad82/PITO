@@ -59,7 +59,7 @@ module Pito
           {
             kind:    "system",
             payload: {
-              text: I18n.t(msg_key, name: definition.label, slug: definition.slug)
+              text: Pito::Copy.render(msg_key, { name: definition.label, slug: definition.slug })
             }
           }
         ]
@@ -82,12 +82,14 @@ module Pito
           {
             kind:    "system",
             payload: {
-              text: I18n.t(
+              text: Pito::Copy.render(
                 i18n_key,
-                name:  definition.label,
-                slug:  definition.slug,
-                apply: "/theme apply #{definition.slug}",
-                reset: "/theme reset"
+                {
+                  name:  definition.label,
+                  slug:  definition.slug,
+                  apply: "/theme apply #{definition.slug}",
+                  reset: "/theme reset"
+                }
               )
             }
           }

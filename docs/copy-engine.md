@@ -85,8 +85,8 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 > engine as one-entry dictionaries, so any of them can grow variants later with no
 > code change. Large but mostly mechanical.
 
-- [ ] T4.1 Audit slash-command fixed replies (confirmations / errors / usages) and list engine-wiring candidates. complexity: [low]
-- [ ] T4.2 Wire slash replies through `Pito::Copy.render` (single-entry dictionaries). complexity: [low]
+- [x] T4.1 Audit slash-command fixed replies (confirmations / errors / usages) and list engine-wiring candidates. complexity: [low]
+- [x] T4.2 Wire slash replies through `Pito::Copy.render` (single-entry dictionaries). complexity: [low]
 - [ ] T4.3 Wire hashtag / follow-up replies + errors through the engine. complexity: [low]
 - [ ] T4.4 Wire free-form chat fixed copy through the engine. complexity: [low]
 - [ ] T4.5 Specs across the migrated surfaces. complexity: [low]
