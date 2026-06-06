@@ -129,6 +129,12 @@ class AppSetting < ApplicationRecord
     singleton_row.voyage_api_key
   end
 
+  # True when a Voyage API key is configured — gates every Voyage embedding call
+  # (Game/Channel VoyageIndexer, Voyage::Stats).
+  def self.voyage_configured?
+    voyage_api_key.present?
+  end
+
   # ── Sound / FX toggles ────────────────────────────────────────────────
   #
   # Stored as plain key/value rows ("sound_enabled", "fx_enabled").
