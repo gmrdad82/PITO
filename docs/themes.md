@@ -58,6 +58,7 @@ the unaltered default.
 - P9 — Preview/apply JS (`theme_nav_controller`) + Vitest
 - P10 — Light-theme hardcoded-color audit + fix
 - P11 — Finalize (full suite green, PR ready)
+- P12 — `#preview`/`#apply` transform the list message in place (reusable diff-reveal engine)
 
 ---
 
@@ -227,6 +228,58 @@ the unaltered default.
 - [ ] T11.4 PR #62 CI green; **await user validation — do not merge**. complexity: [manual]
 - [x] T11.5 Fix Zeitwerk eager-load (CI red): theme `definitions/*.rb` define no constant (they call `Registry.register`), so eager-load raises `Zeitwerk::NameError`. Make Zeitwerk ignore the definitions dir (Registry requires them explicitly); verify `bin/rails zeitwerk:check`. complexity: [high]
 - [x] T11.6 Commit: `Fix Zeitwerk eager-load: ignore theme definitions dir`. complexity: [manual]
+
+## P12 — `#preview`/`#apply` transform the list message in place (reusable diff-reveal engine)
+
+> Post-validation enhancement. `/theme list` / `ls` stay as-is (each is a
+> distinct, fully-animated System message). What changes is the **follow-ups**:
+> `#preview <name>` and `#apply <name>` no longer append a new message — they
+> **transform the most-recent theme-list message in place** and animate only the
+> diff.
+>
+> Engine-first: the animation is a **general, reusable diff-reveal engine**
+> (`pito/diff.js` + a theme-agnostic `pito--diff-reveal` controller). It plays a
+> real two-phase diff — **(1) delete all subtractions, then (2) type all
+> additions** — at a chosen granularity. `#preview` animating "just the marker"
+> is _emergent_ (that genuinely is the only diff), never special-cased; `#apply`
+> animating the whole message likewise just falls out of the same algorithm.
+>
+> Behaviour:
+>
+> - `#preview <name>` → live-preview (set-theme broadcast) **and** re-render the
+>   list with the previewed row marked (border + surface background + an added
+>   marker). Repeatable: `#preview a` then `#preview b` re-marks in place.
+> - `#apply <name>` → persist **and** morph the list into a witty confirmation
+>   ("Your eyes are now glazed by _Theme_", drawn from a ~25-entry dictionary):
+>   reverse-type the old list, then forward-type the confirmation.
+> - Two granularities (per-line / per-char) gated by the target theme's mode —
+>   **dark → char, light → line** — so both can be compared side by side. **No
+>   animation specs until the user picks the keeper** (T12.14); the stable
+>   backend (find/replace/fallback/quip) IS spec'd now.
+> - Mechanism: replacement = `update!` the same Event (stable DOM id
+>   `event_<id>`) + `turbo_stream.replace`. The list is found via the most-recent
+>   event carrying `payload.theme_list`. No prior list → fall back to today's
+>   append behaviour.
+
+### P12a — backend + rendering (correct & reload-safe; no animation yet)
+
+- [ ] T12.1 Tag + anchor the list message: `Theme#list_themes` payload gains `theme_list: true`; `Pito::Event::SystemComponent` emits `id="event_<id>"` on its root Segment when the payload is anchorable (`theme_list`/`theme_diff`). complexity: [low]
+- [ ] T12.2 New event kind `theme_diff`: add to `Event::KINDS` + map it in `Pito::Stream::EventRenderer` → `Pito::Event::ThemeDiffComponent`. complexity: [low]
+- [ ] T12.3 `Pito::Themes::Switch`: split side-effect from event-building — add `apply_only(def)` / `preview_only(def)` (persist/set-theme broadcast, no events); existing `apply`/`preview` delegate to them. complexity: [low]
+- [ ] T12.4 Witty quip dictionary: i18n `pito.hashtag.theme.apply.quips` (~25 entries, `%{theme}`) + a deterministic-in-test sampler. (Centralized-dictionary cleanup tracked in `docs/follow-up.md`.) complexity: [low]
+- [ ] T12.5 `Pito::Event::ThemeDiffComponent` (`.rb` + `.html.erb`): roots a Segment with `id="event_<id>"`; renders the **final** content (reload-correct, works with no JS) and emits the `pito--diff-reveal` wiring (controller + per-cell `data-from`/granularity/phase) which simply no-ops until P12b registers the controller. Preview phase: list sections always-visible, previewed row styled (border + surface bg via semantic tokens — no inline `style=`) with the marker as a diff cell. Apply phase: confirmation line as one diff cell whose `data-from` is the old list's plain text. complexity: [high]
+- [ ] T12.6 Rewrite `Pito::Hashtag::Handlers::Theme#call`: do the switch side-effect (`apply_only`/`preview_only`); find the most-recent `theme_list` event (`conversation.events.where("payload->>'theme_list' = 'true'").last`); if found → build the replacement payload (preview = marked list, keeps `theme_list`; apply = confirmation quip, drops `theme_list`), set granularity from `definition.mode` + `from_text`, `update!` the event (kind `theme_diff`) + `Broadcaster#replace_event`, return `Ok(events: [])`; else → fallback append (build the confirmation/preview event, today's behaviour). complexity: [high]
+- [ ] T12.7 Backend specs (NO animation): list payload tagged `theme_list`; SystemComponent emits the id; finder picks the most-recent list; `#preview` updates the same event (marked, kind `theme_diff`, `theme_list` retained) + broadcasts replace; preview is repeatable; `#apply` replaces with a quip + drops `theme_list` + persists; no-prior-list → append fallback. complexity: [low]
+- [ ] T12.8 Commit: `P12a: #preview/#apply transform the theme list in place (backend)`. complexity: [manual]
+
+### P12b — reusable diff-reveal engine (the animation)
+
+- [ ] T12.9 Reusable diff engine — `app/javascript/pito/diff.js`: pure functions computing a two-phase diff between `from` and `to` (common prefix/suffix; the differing middle = subtraction + addition) at `line` or `char` granularity. Theme-agnostic, unit-friendly. complexity: [high]
+- [ ] T12.10 Reusable `pito--diff-reveal` controller (`app/javascript/controllers/pito/diff_reveal_controller.js`): for each `[data-pito--diff-reveal-target="cell"]` (with `data-from` = old text, textContent = new text), play a **global** two-phase reveal — phase 1 delete every cell's subtraction, phase 2 type every cell's addition — using `pito/diff` + `pito/typing` (TICK_MS/CHARS_TICK) + the reveal queue; granularity + reduced-motion/`__pitoReady`/`fxEnabled` skip → show final instantly. Generic, no theme knowledge. `node --check`. complexity: [high]
+- [ ] T12.11 Verify: `bundle exec rspec` + `npm test` (existing) + `bin/rubocop` + `node --check` green; `prettier --write docs/themes.md`. complexity: [manual]
+- [ ] T12.12 Commit: `P12b: reusable diff-reveal engine (dual granularity)`. complexity: [manual]
+- [ ] T12.13 Smoke (operator): `/theme list`; `#preview dracula` (row marks, marker types in, page recolors); `#preview nord` (dracula unmarks, nord marks); `#apply nord` (list reverse-types, confirmation types in, persists, survives reload). Compare dark (char) vs light (line) granularity; **pick the keeper**. complexity: [manual]
+- [ ] T12.14 (DEFERRED — after T12.13) Clean up the losing granularity branch; add diff-engine + reveal-controller specs (Vitest) for the kept approach; commit `P12c: settle diff-reveal granularity (<approach>) + specs`. complexity: [manual]
 
 ## Per-phase Definition of Done
 
