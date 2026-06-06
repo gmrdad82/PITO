@@ -318,7 +318,7 @@ class Game
         uri = URI("#{BASE_URL}/#{endpoint}")
         creds = Igdb.credentials!
         headers = {
-          "Client-ID"     => creds.client_id,
+          "Client-ID"     => creds[:client_id],
           "Authorization" => "Bearer #{@token_cache.token}",
           "Content-Type"  => "text/plain",
           "Accept"        => "application/json"
