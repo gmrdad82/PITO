@@ -239,7 +239,7 @@ No production data exists → destructive migrations are free.
 - [x] T10.7 `FollowUp::Handlers::GameDelete` (confirmation): destroy + outcome. complexity: [low]
 - [x] T10.8 `Sidebar::Games::Component` + `pito--games-nav`; no-arg picker → populate chatbox + submit. complexity: [high]
 - [x] T10.9 Extend `chat_form_controller` with a public set-value+submit action. complexity: [low]
-- [ ] T10.10 `ChatController`: fast-path to open the games picker on no-title `show game`/`rm game`. complexity: [low]
+- [x] T10.10 `ChatController`: fast-path to open the games picker on no-title `show game`/`rm game`. complexity: [low]
 - [ ] T10.11 i18n via `Pito::Copy`; handler/request/component/JS specs. complexity: [low]
 - [x] T10.14 `update` verb: `update game ownership <id> <platforms>` → tolerant list parse (split on `,` `.` `*` + whitespace) → synonyms→`ps`/`switch`/`steam` → set `GamePlatformOwnership`; echo updated detail. complexity: [high]
 - [x] T10.15 `link`/`unlink` verbs: `link game <id> to video <id|title>` / `link video <id|title> to game <id>` (+ `unlink`) → create/destroy `video_game_links` (HABTM); witty confirm; not-found errors. complexity: [high]

@@ -73,6 +73,13 @@ class ChatController < ApplicationController
         # Auth gating: requires an active session. No echo, no Turn, no async job.
         return handle_theme_sidebar(conversation)
       end
+
+      if (picker_mode = bare_game_picker_command?(input))
+        # `show game` / `rm game` / `delete game` with no title/id → open the
+        # games picker sidebar (Turbo Stream update).
+        # Auth gating: requires an active session.  No echo, no Turn, no async job.
+        return handle_game_picker_sidebar(conversation, mode: picker_mode)
+      end
     end
 
     # Follow-up engine (P13/P14) — handles `#<handle> <rest>` replies for any
@@ -321,6 +328,29 @@ class ChatController < ApplicationController
     input.strip.match?(%r{\A/themes\z}i)
   end
 
+  # Detects `show game(s)?` / `delete game(s)?` / `rm game(s)?` with NO
+  # trailing title or ID — i.e. the user wants the picker, not a lookup.
+  # Returns the picker mode Symbol (:show or :delete) or nil.
+  # The noun words `game`/`games` are optional (user may type just `show`).
+  GAME_NOUN_PATTERN = /\A(?:game|games)\z/i.freeze
+
+  def bare_game_picker_command?(input)
+    words = input.to_s.strip.downcase.split
+    return nil if words.empty?
+
+    verb = words.first
+    # After the verb, any remaining words must be only noun tokens.
+    rest_words = words.drop(1)
+    rest_only_nouns = rest_words.all? { |w| GAME_NOUN_PATTERN.match?(w) }
+    return nil unless rest_only_nouns
+
+    case verb
+    when "show"  then :show
+    when "delete" then :delete
+    when "rm"    then :delete
+    end
+  end
+
   # Renders a Turbo Stream that populates #pito-sidebar with the conversation list.
   # Auth gating: unauthenticated → mandatory-auth error event broadcast + 204.
   # No echo, no Turn, no async job.
@@ -371,6 +401,33 @@ class ChatController < ApplicationController
            locals:  {
              groups:        Pito::Themes::Registry.grouped,
              current_theme: AppSetting.theme
+           }
+  end
+
+  # Renders a Turbo Stream that populates #pito-sidebar with the games picker.
+  # mode: :show or :delete — controls the command built on selection.
+  # Auth gating: unauthenticated → mandatory-auth error event broadcast + 204.
+  # No echo, no Turn, no async job.
+  def handle_game_picker_sidebar(conversation, mode:)
+    unless Current.session.present?
+      broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+      broadcaster.emit(
+        turn:    conversation.turns.create!(
+          position:   Turn.next_position_for(conversation),
+          input_kind: :chat,
+          input_text: mode == :delete ? "delete game" : "show game"
+        ),
+        kind:    "error",
+        payload: { text: Pito::Copy.render("pito.copy.auth.mandatories") }
+      )
+      return respond_to_client(conversation)
+    end
+
+    render partial: "chat/game_picker_sidebar",
+           formats: [ :turbo_stream ],
+           locals:  {
+             games: Game.order(:title).all,
+             mode:  mode
            }
   end
 
