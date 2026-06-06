@@ -80,7 +80,12 @@ module Pito
 
           @loaded = true
           glob = File.join(__dir__, "definitions", "*.rb")
-          Dir.glob(glob).sort.each { |f| require f }
+          # `load` (not `require`) so the definitions re-register after a dev
+          # code reload: Zeitwerk reloads this Registry (clearing @definitions),
+          # but the definitions/ dir is Zeitwerk-ignored, so a `require` would
+          # be a no-op (already in $LOADED_FEATURES) and leave the registry
+          # empty. `load` re-executes each file, re-running Registry.register.
+          Dir.glob(glob).sort.each { |f| load f }
         end
       end
     end
