@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_06_181616) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_06_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -74,13 +74,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_06_181616) do
     t.datetime "created_at", null: false
     t.text "description"
     t.string "handle"
+    t.text "keywords"
     t.datetime "last_synced_at"
+    t.vector "summary_embedding", limit: 1024
+    t.text "tags", default: [], null: false, array: true
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "video_count"
     t.string "youtube_channel_id", null: false
     t.bigint "youtube_connection_id"
     t.index ["last_synced_at"], name: "index_channels_on_last_synced_at"
+    t.index ["summary_embedding"], name: "index_channels_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
     t.index ["youtube_channel_id"], name: "index_channels_on_youtube_channel_id", unique: true
     t.index ["youtube_connection_id"], name: "index_channels_on_youtube_connection_id"
   end
