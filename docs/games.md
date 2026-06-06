@@ -85,7 +85,7 @@ No production data exists → destructive migrations are free.
 - [x] T1.2 Update Ruby refs: `AutocompleteController`, `chatbox_component.rb`, `Pito::Palette::Autocomplete::Component` → `Pito::Palette::Suggestions::Component` (+ dir). complexity: [low]
 - [x] T1.3 Route `/autocomplete` → `/suggestions`; rename controller; update the catalog `endpoint:` string. complexity: [low]
 - [x] T1.4 JS: `autosuggest_controller.js` → `suggestions_controller.js` (`pito--suggestions`); update all data-attrs in `chatbox_component.html.erb` + comments; POST `/suggestions`. complexity: [high]
-- [ ] T1.5 CSS: `.pito-autosuggest-*` → `.pito-suggestions-*` (CSS + ERB + `history_controller.js` selector + specs); rebuild Tailwind. complexity: [low]
+- [x] T1.5 CSS: `.pito-autosuggest-*` → `.pito-suggestions-*` (CSS + ERB + `history_controller.js` selector + specs); rebuild Tailwind. complexity: [low]
 - [ ] T1.6 i18n: rename `pito.shell.autocomplete_*` keys. complexity: [low]
 - [ ] T1.7 Rename specs (services/request/JS/palette) + all refs. complexity: [low]
 - [ ] T1.8 `bundle exec rspec` + `npm test` + `bin/rubocop` + `node --check` + `zeitwerk:check` green. complexity: [manual]

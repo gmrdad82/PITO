@@ -14,12 +14,12 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
   describe "row rendering" do
     subject(:node) { render_inline(described_class.new(mode: :slash, items: items)) }
 
-    it "renders one .pito-autosuggest-row per item" do
-      expect(node.css(".pito-autosuggest-row").length).to eq(3)
+    it "renders one .pito-suggestions-row per item" do
+      expect(node.css(".pito-suggestions-row").length).to eq(3)
     end
 
     it "shows each item's label" do
-      labels = node.css(".pito-autosuggest-row").map(&:text)
+      labels = node.css(".pito-suggestions-row").map(&:text)
       expect(labels.any? { |t| t.include?("/config") }).to be true
       expect(labels.any? { |t| t.include?("/help") }).to be true
     end
@@ -31,7 +31,7 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
     end
 
     it "attaches data-index to each row" do
-      rows = node.css(".pito-autosuggest-row")
+      rows = node.css(".pito-suggestions-row")
       expect(rows[0]["data-index"]).to eq("0")
       expect(rows[1]["data-index"]).to eq("1")
       expect(rows[2]["data-index"]).to eq("2")
@@ -41,7 +41,7 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
   describe "selected_index" do
     it "marks the correct row with is-selected" do
       node = render_inline(described_class.new(mode: :slash, items: items, selected_index: 1))
-      rows = node.css(".pito-autosuggest-row")
+      rows = node.css(".pito-suggestions-row")
       expect(rows[0]["class"]).not_to include("is-selected")
       expect(rows[1]["class"]).to include("is-selected")
       expect(rows[2]["class"]).not_to include("is-selected")
@@ -49,7 +49,7 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
 
     it "defaults to selecting the first row" do
       node = render_inline(described_class.new(mode: :slash, items: items))
-      rows = node.css(".pito-autosuggest-row")
+      rows = node.css(".pito-suggestions-row")
       expect(rows[0]["class"]).to include("is-selected")
       expect(rows[1]["class"]).not_to include("is-selected")
     end
@@ -85,13 +85,13 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
     subject(:node) { render_inline(described_class.new(mode: :slash, items: items)) }
 
     it "renders a masked affordance for masked: true items" do
-      masked_row = node.css(".pito-autosuggest-row")[2]
+      masked_row = node.css(".pito-suggestions-row")[2]
       expect(masked_row.css(".text-fg-faded").first).to be_present
       expect(masked_row.css(".text-fg-faded").first.text).to include("hidden")
     end
 
     it "does not render the masked affordance for masked: false items" do
-      unmasked_row = node.css(".pito-autosuggest-row")[0]
+      unmasked_row = node.css(".pito-suggestions-row")[0]
       expect(unmasked_row.css(".text-fg-faded").first).to be_nil
     end
   end
@@ -100,11 +100,11 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
     subject(:node) { render_inline(described_class.new(mode: :slash, items: [])) }
 
     it "renders no rows" do
-      expect(node.css(".pito-autosuggest-row").length).to eq(0)
+      expect(node.css(".pito-suggestions-row").length).to eq(0)
     end
 
     it "does not crash and renders the palette shell" do
-      expect(node.css(".pito-autosuggest-palette").first).to be_present
+      expect(node.css(".pito-suggestions-palette").first).to be_present
     end
   end
 
@@ -118,8 +118,8 @@ RSpec.describe Pito::Palette::Suggestions::Component, type: :component do
   describe "stable hook classes and attributes" do
     subject(:node) { render_inline(described_class.new(mode: :slash, items: items)) }
 
-    it "gives the root element the pito-autosuggest-palette class" do
-      expect(node.css(".pito-autosuggest-palette").first).to be_present
+    it "gives the root element the pito-suggestions-palette class" do
+      expect(node.css(".pito-suggestions-palette").first).to be_present
     end
   end
 end

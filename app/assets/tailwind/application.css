@@ -512,7 +512,7 @@ html {
    gap showing the page bg, then the surface), flush against the chatbox top,
    with a hairline at the bottom to separate the two. Drawn with inset shadows
    so no DOM/JS change is needed. Sits BELOW the sidebar (see z-index there). */
-.pito-autosuggest-palette {
+.pito-suggestions-palette {
   position: absolute;
   bottom: 100%;
   left: 0;
@@ -529,7 +529,7 @@ html {
 
 /* Hairline divider vs the chatbox — only under the surface (starts after the
    bar+gap), never crossing the purple bar. */
-.pito-autosuggest-palette::after {
+.pito-suggestions-palette::after {
   content: "";
   position: absolute;
   left: 10px;
@@ -539,7 +539,7 @@ html {
   background: var(--border-default);
 }
 
-.pito-autosuggest-row {
+.pito-suggestions-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -551,17 +551,17 @@ html {
 }
 
 /* Command name (left) + muted right-aligned description */
-.pito-autosuggest-cmd {
+.pito-suggestions-cmd {
   white-space: nowrap;
 }
 
-.pito-autosuggest-desc {
+.pito-suggestions-desc {
   color: var(--fg-faded);
   white-space: nowrap;
 }
 
-/* Selected row in the autosuggest palette */
-.pito-autosuggest-palette .is-selected {
+/* Selected row in the suggestions palette */
+.pito-suggestions-palette .is-selected {
   background: var(--border-default);
 }
 
@@ -579,7 +579,7 @@ html {
 }
 
 /* Hide when JS toggles via class (hidden attribute is handled natively) */
-.pito-autosuggest-palette.hidden {
+.pito-suggestions-palette.hidden {
   display: none;
 }
 
