@@ -1,0 +1,7 @@
+en:
+  pito:
+    follow_up:
+      game_list:
+        usage: "show <id>"
+        errors:
+          invalid_action: "Unknown action '%{action}'. Try: #<handle> show <id>."
