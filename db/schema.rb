@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_06_160322) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_06_165421) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -362,6 +362,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_06_160322) do
     t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
     t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
+  end
+
+  create_table "stats", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.string "entity_type", null: false
+    t.string "kind", null: false
+    t.datetime "synced_at"
+    t.datetime "updated_at", null: false
+    t.bigint "value"
+    t.index ["entity_type", "entity_id", "kind"], name: "index_stats_on_entity_and_kind", unique: true
   end
 
   create_table "turns", force: :cascade do |t|

@@ -120,10 +120,10 @@ No production data exists → destructive migrations are free.
 
 ## P4 — Polymorphic `Stat` model + `Pito::Stats`
 
-- [ ] T4.1 Migration: `stats`(`entity_type`,`entity_id`,`kind`,`value:bigint`,`synced_at`); unique `(entity_type,entity_id,kind)`. complexity: [low]
-- [ ] T4.2 `Stat` model: polymorphic `entity`; `KINDS=%w[subscribers views]`; validations. complexity: [low]
-- [ ] T4.3 `Channel`/`Video`/`Game`: `has_many :stats, as: :entity` + readers. complexity: [low]
-- [ ] T4.4 `Pito::Stats` facade: `get`/`set`(upsert+synced_at)/`for`. complexity: [high]
+- [x] T4.1 Migration: `stats`(`entity_type`,`entity_id`,`kind`,`value:bigint`,`synced_at`); unique `(entity_type,entity_id,kind)`. complexity: [low]
+- [x] T4.2 `Stat` model: polymorphic `entity`; `KINDS=%w[subscribers views]`; validations. complexity: [low]
+- [x] T4.3 `Channel`/`Video`/`Game`: `has_many :stats, as: :entity` + readers. complexity: [low]
+- [x] T4.4 `Pito::Stats` facade: `get`/`set`(upsert+synced_at)/`for`. complexity: [high]
 - [ ] T4.5 Migration: drop `channels.{subscriber_count,view_count,watched_hours}`, `videos.view_count`. complexity: [low]
 - [ ] T4.6 `StatsFetcher`: drop watched_hours Analytics call; subs+views only. Channel sync jobs write via `Pito::Stats.set`. complexity: [high]
 - [ ] T4.7 `ImportVideosJob`: write video `views` via `Pito::Stats.set`. complexity: [low]

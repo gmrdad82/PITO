@@ -9,8 +9,15 @@ class Video < ApplicationRecord
 
   has_many :video_game_links, dependent: :destroy
   has_many :linked_games, through: :video_game_links, source: :game
+  has_many :stats, as: :entity, dependent: :destroy
 
   has_neighbors :summary_embedding
+
+  # Stat reader — sourced from the polymorphic `stats` table via the
+  # `Pito::Stats` facade (P4). Returns nil when no stat row exists.
+  def view_count
+    Pito::Stats.get(self, :views)
+  end
 
   attribute :privacy_status, :integer
   enum :privacy_status,
