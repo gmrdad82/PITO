@@ -50,6 +50,13 @@ class Game
           attrs[:alternative_names] = extract_alternative_names(json["alternative_names"])
         end
 
+        # IGDB `platforms` is an array of {id, name, slug}; we persist the
+        # display names into the local `platforms` text[] column (shown as
+        # "platforms available" in the game detail message).
+        if json.key?("platforms")
+          attrs[:platforms] = extract_platform_names(json["platforms"])
+        end
+
         attrs.merge!(map_time_to_beat(ttb_json))
         attrs
       end
@@ -60,6 +67,17 @@ class Game
       # is nil / not an array / empty — never nil, so the `null: false`
       # constraint on the column always holds.
       def extract_alternative_names(payload)
+        Array(payload)
+          .select { |row| row.is_a?(Hash) }
+          .map { |row| row["name"].to_s.strip }
+          .reject(&:empty?)
+          .uniq
+      end
+
+      # Pulls non-blank, deduplicated platform `name` strings out of the IGDB
+      # `platforms` payload. Returns `[]` (never nil) so the `null: false`
+      # column constraint always holds.
+      def extract_platform_names(payload)
         Array(payload)
           .select { |row| row.is_a?(Hash) }
           .map { |row| row["name"].to_s.strip }
