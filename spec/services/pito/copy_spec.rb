@@ -75,6 +75,22 @@ RSpec.describe Pito::Copy, type: :service do
         expect(result).to eq("From Bob to Carol.")
       end
 
+      it "fills placeholders passed as trailing keyword args (no explicit braces)" do
+        expect(described_class.render("copy_spec.with_name", name: "Alice"))
+          .to eq("Hey, Alice!")
+      end
+
+      it "accepts kwargs placeholders alongside variant:" do
+        expect(described_class.render("copy_spec.with_name", variant: 0, name: "Zed"))
+          .to eq("Hey, Zed!")
+      end
+
+      it "treats the hash form and kwargs form identically" do
+        hash_form   = described_class.render("copy_spec.two_vars", { sender: "Bob", receiver: "Carol" })
+        kwargs_form = described_class.render("copy_spec.two_vars", sender: "Bob", receiver: "Carol")
+        expect(kwargs_form).to eq(hash_form)
+      end
+
       it "raises MissingPlaceholder when a %{token} has no matching key in vars" do
         expect { described_class.render("copy_spec.with_name") }
           .to raise_error(Pito::Copy::MissingPlaceholder, /name/)

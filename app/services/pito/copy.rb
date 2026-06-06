@@ -5,7 +5,10 @@ module Pito
   #
   # == Contract
   #
-  # Pito::Copy.render(key, vars = {}, variant: nil) → String
+  # Pito::Copy.render(key, vars = {}, variant: nil, **kwargs) → String
+  #
+  # Placeholder values may be passed as an explicit Hash (+vars+) or as trailing
+  # keyword arguments — both are equivalent.
   #
   # * +key+     — an I18n key (Symbol or String).  The key MUST resolve to a
   #               String (one line) or an Array of Strings (variants).  If it
@@ -76,11 +79,25 @@ module Pito
 
     # Renders the copy string for +key+.
     #
+    # Placeholder values may be passed either as an explicit Hash or as trailing
+    # keyword arguments — both work:
+    #
+    #   Pito::Copy.render("pito.copy.greet", name: "Alice")   # kwargs form
+    #   Pito::Copy.render("pito.copy.greet", { name: "Alice" }) # hash form
+    #
+    # +variant+ is a reserved keyword (the forced index). To use a placeholder
+    # literally named +variant+, pass it via the explicit Hash form.
+    #
     # @param key     [Symbol, String] I18n key
     # @param vars    [Hash]           placeholder values (symbol keys)
     # @param variant [Integer, nil]   forced variant index; nil = sampler
+    # @param extra   [Hash]           placeholder values given as keyword args
     # @return        [String]
-    def render(key, vars = {}, variant: nil)
+    def render(key, vars = {}, variant: nil, **extra)
+      # 0. Merge keyword-form placeholders into vars, so `render(key, a: 1)` and
+      #    `render(key, { a: 1 })` are equivalent (no explicit-braces footgun).
+      vars = vars.merge(extra) unless extra.empty?
+
       # 1. Resolve — do NOT pass vars to I18n; we interpolate ourselves so that
       #    array entries work (I18n only interpolates string leaves).
       raw = I18n.t(key, raise: true)
