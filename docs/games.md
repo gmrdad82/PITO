@@ -115,8 +115,8 @@ No production data exists → destructive migrations are free.
 - [x] T3.6 Remove `Video::ThumbnailPreview`. complexity: [low]
 - [x] T3.7 Strip phantom-column writes (`videos.last_sync_error`/`made_for_kids_effective`; `video_stats` refs). complexity: [high]
 - [x] T3.8 Remove the phantom `YoutubeApiCall`-based tracker/quota reads (superseded by P5) or guard; clean `config/recurring.yml`. complexity: [high]
-- [ ] T3.9 `zeitwerk:check` + boot clean; remove dead specs; `bundle exec rspec` + `bin/rubocop` green. complexity: [manual]
-- [ ] T3.10 Commit: `Remove phantom video/analytics dead code (keep Video model)`. complexity: [manual]
+- [x] T3.9 `zeitwerk:check` + boot clean; remove dead specs; `bundle exec rspec` + `bin/rubocop` green. complexity: [manual]
+- [x] T3.10 Commit: `Remove phantom video/analytics dead code (keep Video model)`. complexity: [manual]
 
 ## P4 — Polymorphic `Stat` model + `Pito::Stats`
 
