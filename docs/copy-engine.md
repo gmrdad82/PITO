@@ -89,8 +89,8 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 - [x] T4.2 Wire slash replies through `Pito::Copy.render` (single-entry dictionaries). complexity: [low]
 - [x] T4.3 Wire hashtag / follow-up replies + errors through the engine. complexity: [low]
 - [x] T4.4 Wire free-form chat fixed copy through the engine. complexity: [low]
-- [ ] T4.5 Specs across the migrated surfaces. complexity: [low]
-- [ ] T4.6 Commit: `Wire command/reply/chat copy through the engine (single-entry dictionaries)`. complexity: [manual]
+- [x] T4.5 Specs across the migrated surfaces. complexity: [low]
+- [x] T4.6 Commit: `Wire command/reply/chat copy through the engine (single-entry dictionaries)`. complexity: [manual]
 
 ## How to use this plan
 
