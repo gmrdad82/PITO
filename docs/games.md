@@ -226,7 +226,7 @@ No production data exists → destructive migrations are free.
 - [x] T9.5.9 `Channel::GameRecommendation` (channel→game) → top-M videos by views probe `Game.nearest_neighbors`; merge best per game; threshold; ranked. complexity: [low]
 - [x] T9.5.10 Specs: EmbedText; Video::VoyageIndexer digest; ImportVideosJob enqueue; VideoVoyageIndexJob; both recommendation directions (grouping, threshold, skip unembedded). complexity: [low]
 - [x] T9.5.11 `bundle exec rspec` + `bin/rubocop` + `bin/rails zeitwerk:check` green. complexity: [manual]
-- [ ] T9.5.12 Commit(s), atomic per slice. complexity: [manual]
+- [x] T9.5.12 Commit(s), atomic per slice. complexity: [manual]
 
 ## P10 — Chat verbs `list/show/delete games` + grammar + title ghost + list follow-up + picker
 
