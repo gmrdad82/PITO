@@ -205,11 +205,11 @@ the unaltered default.
 
 ## P9 — Preview/apply JS (`theme_nav_controller`) + Vitest
 
-- [ ] T9.1 `theme_nav_controller.js` (mirror `resume_controller`/`notifications_nav`): ↑/↓ move highlight + `document.documentElement.dataset.theme = slug` (live preview); current-theme marker. complexity: [high]
-- [ ] T9.2 Enter → apply: PATCH `/settings/theme {theme:slug}` (CSRF), keep the preview, update the current marker. complexity: [low]
-- [ ] T9.3 Esc / `disconnect` without apply → revert `data-theme` to the persisted theme (`currentTheme()`); clear the sidebar. complexity: [high]
-- [ ] T9.4 `node --check`; Vitest spec: arrow sets `data-theme`; Enter PATCHes; disconnect reverts; highlight/current marker. complexity: [low]
-- [ ] T9.5 Commit: `P9: theme preview/apply JS (theme_nav_controller) + Vitest`. complexity: [manual]
+- [x] T9.1 `theme_nav_controller.js` (mirror `resume_controller`/`notifications_nav`): ↑/↓ move highlight + `document.documentElement.dataset.theme = slug` (live preview); current-theme marker. complexity: [high]
+- [x] T9.2 Enter → apply: PATCH `/settings/theme {theme:slug}` (CSRF), keep the preview, update the current marker. complexity: [low]
+- [x] T9.3 Esc / `disconnect` without apply → revert `data-theme` to the persisted theme (`currentTheme()`); clear the sidebar. complexity: [high]
+- [x] T9.4 `node --check`; Vitest spec: arrow sets `data-theme`; Enter PATCHes; disconnect reverts; highlight/current marker. complexity: [low]
+- [x] T9.5 Commit: `P9: theme preview/apply JS (theme_nav_controller) + Vitest`. complexity: [manual]
 
 ## P10 — Light-theme hardcoded-color audit + fix
 
