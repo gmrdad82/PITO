@@ -41,7 +41,7 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 - P1 — Copy engine core (`Pito::Copy.render`)
 - P2 — `pito.copy` namespace + `pito:copy:audit` rake
 - P3 — Migrate existing dictionaries onto the engine
-- P4 — Always-wire fixed replies (audit + migrate by surface) — **pause for review**
+- P4 — Always-wire fixed replies (audit + migrate by surface)
 
 ---
 
@@ -81,9 +81,9 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 
 ## P4 — Always-wire fixed replies (audit + migrate by surface)
 
-> The big sweep: route fixed single-line replies through the engine as one-entry
-> dictionaries, so any of them can grow variants later with no code change. Large
-> and partly a voice exercise — **pause for user review before executing.**
+> The big sweep (user-approved): route fixed single-line replies through the
+> engine as one-entry dictionaries, so any of them can grow variants later with no
+> code change. Large but mostly mechanical.
 
 - [ ] T4.1 Audit slash-command fixed replies (confirmations / errors / usages) and list engine-wiring candidates. complexity: [low]
 - [ ] T4.2 Wire slash replies through `Pito::Copy.render` (single-entry dictionaries). complexity: [low]
@@ -94,5 +94,5 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 
 ## How to use this plan
 
-Execute P1 → P3 sequentially (each green + committed). **Stop before P4** and
-confirm scope/voice with the user — it touches most user-facing strings.
+Execute P1 → P4 sequentially (each green + committed). Decisions: engine is
+`Pito::Copy`; copy lives under `pito.copy.*`; sampling is uniform random.
