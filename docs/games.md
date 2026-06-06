@@ -258,7 +258,7 @@ No production data exists → destructive migrations are free.
 - [x] T11.7 Search endpoint route/controller (or chat fast-path). complexity: [low]
 - [x] T11.8 Specs: handler, endpoint (WebMock), import chain (steps + messages + resync). complexity: [low]
 - [x] T11.9 `bundle exec rspec` + `npm test` + `bin/rubocop` + `node --check` green. complexity: [manual]
-- [-] T11.10 Commit: `/games import sidebar: IGDB search → 5-step progress → detail + enhancement`. complexity: [manual]
+- [x] T11.10 Commit: `/games import sidebar: IGDB search → 5-step progress → detail + enhancement`. complexity: [manual]
 
 ## P12 — Follow-ups on the game messages
 
