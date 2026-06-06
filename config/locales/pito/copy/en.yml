@@ -2114,7 +2114,313 @@ en:
           - "Took “%{title}” off the shelf."
           - "“%{title}” cleared from pito."
           - "“%{title}” deleted. Onward."
-          - "”%{title}” removed from the collection."
+          - “”%{title}” removed from the collection.”
+        resync_confirm:
+          - “Resync “%{title}” from IGDB?”
+          - “Pull fresh IGDB data for “%{title}”?”
+          - “Re-fetch “%{title}” from IGDB?”
+          - “Resync “%{title}” — sure?”
+          - “Refresh “%{title}” from IGDB?”
+          - “Re-pull “%{title}” from IGDB?”
+          - “Update “%{title}” from IGDB?”
+          - “Resync “%{title}”?”
+          - “Fetch latest IGDB data for “%{title}”?”
+          - “Queue a resync for “%{title}”?”
+          - “Trigger IGDB resync for “%{title}”?”
+          - “Pull fresh data for “%{title}” from IGDB?”
+          - “Resync “%{title}” with IGDB?”
+          - “Re-import “%{title}” from IGDB?”
+          - “Refresh “%{title}” data from IGDB?”
+          - “Get updated IGDB info for “%{title}”?”
+          - “Pull the latest on “%{title}” from IGDB?”
+          - “Resync “%{title}” with fresh IGDB data?”
+          - “Fetch updated metadata for “%{title}”?”
+          - “Trigger a fresh IGDB pull for “%{title}”?”
+          - “Re-run IGDB sync for “%{title}”?”
+          - “Re-fetch “%{title}” details from IGDB?”
+          - “Get fresh IGDB metadata for “%{title}”?”
+          - “Pull latest IGDB data for “%{title}”?”
+          - “Trigger resync of “%{title}” from IGDB?”
+          - “Queue IGDB resync for “%{title}”?”
+          - “Refresh IGDB data for “%{title}”?”
+          - “Re-pull IGDB metadata for “%{title}”?”
+          - “Fetch fresh “%{title}” data from IGDB?”
+          - “Resync “%{title}” — last chance to reconsider?”
+          - “Trigger IGDB data refresh for “%{title}”?”
+          - “Re-fetch IGDB info for “%{title}”?”
+          - “Pull IGDB update for “%{title}”?”
+          - “Queue a fresh pull for “%{title}” from IGDB?”
+          - “Resync “%{title}” with current IGDB data?”
+          - “Re-import fresh IGDB data for “%{title}”?”
+          - “Refresh the IGDB record for “%{title}”?”
+          - “Pull the latest IGDB metadata for “%{title}”?”
+          - “Run an IGDB resync for “%{title}”?”
+          - “Trigger IGDB metadata update for “%{title}”?”
+          - “Get fresh data from IGDB for “%{title}”?”
+          - “Resync the IGDB record for “%{title}”?”
+          - “Queue an IGDB refresh for “%{title}”?”
+          - “Fetch latest metadata for “%{title}” from IGDB?”
+          - “Pull “%{title}” details from IGDB again?”
+          - “Re-run IGDB metadata sync for “%{title}”?”
+          - “Resync “%{title}” data with IGDB?”
+          - “Pull new IGDB data for “%{title}”?”
+          - “Trigger a fresh IGDB sync for “%{title}”?”
+          - “Re-fetch the IGDB record for “%{title}”?”
+        resync_queued:
+          - “Resync queued for “%{title}”.”
+          - “”%{title}” queued for IGDB resync.”
+          - “IGDB resync queued. “%{title}” will update shortly.”
+          - “”%{title}”: resync is on the way.”
+          - “Queued a fresh pull for “%{title}” from IGDB.”
+          - “”%{title}” resync enqueued.”
+          - “IGDB sync queued for “%{title}”.”
+          - “”%{title}” is heading to IGDB for a refresh.”
+          - “Fresh IGDB data for “%{title}” is on the way.”
+          - “”%{title}” resync scheduled.”
+          - “The IGDB refresh for “%{title}” is in the queue.”
+          - “”%{title}” is queued for a resync.”
+          - “Resync enqueued for “%{title}”. Standby.”
+          - “”%{title}” will refresh from IGDB soon.”
+          - “IGDB resync for “%{title}” is queued.”
+          - “”%{title}” heading into IGDB sync.”
+          - “Resync queued. “%{title}” gets fresh IGDB data soon.”
+          - “”%{title}”: IGDB resync is in flight.”
+          - “Queued. “%{title}” will get fresh IGDB data.”
+          - “”%{title}” resync is scheduled and queued.”
+          - “IGDB re-pull queued for “%{title}”.”
+          - “”%{title}” queued. IGDB sync incoming.”
+          - “”%{title}” is in the resync queue.”
+          - “Queued a resync for “%{title}”. On its way.”
+          - “”%{title}” IGDB resync: queued and running.”
+          - “Resync job dispatched for “%{title}”.”
+          - “”%{title}” will resync from IGDB. Check back soon.”
+          - “IGDB sync dispatched for “%{title}”.”
+          - “”%{title}” refresh: queued.”
+          - “Resync started for “%{title}”. IGDB is on it.”
+          - “”%{title}” IGDB resync queued. Won't be long.”
+          - “The queue has “%{title}”. IGDB refresh on the way.”
+          - “”%{title}” resync is in progress.”
+          - “Queued an IGDB refresh for “%{title}”.”
+          - “”%{title}” data refresh: queued and dispatched.”
+          - “IGDB resync for “%{title}”: queued.”
+          - “”%{title}” heading to IGDB. Resync queued.”
+          - “Queued. “%{title}” will get updated IGDB data.”
+          - “”%{title}” fresh from IGDB — soon.”
+          - “Resync dispatched for “%{title}”. IGDB has it.”
+          - “”%{title}” queued for a fresh IGDB sync.”
+          - “IGDB refresh queued for “%{title}”. Incoming.”
+          - “”%{title}” resync: in the queue.”
+          - “Resync queued. “%{title}” will update from IGDB.”
+          - “”%{title}” is resync-bound. IGDB is ready.”
+          - “IGDB re-fetch queued for “%{title}”.”
+          - “”%{title}” resync is live in the queue.”
+          - “Queued “%{title}” for IGDB metadata refresh.”
+          - “”%{title}” resync queued and dispatched.”
+          - “IGDB sync for “%{title}”: queued and good to go.”
+        reindex_confirm:
+          - “Reindex “%{title}” in Voyage?”
+          - “Re-embed “%{title}” for recommendations?”
+          - “Trigger a reindex for “%{title}”?”
+          - “Reindex “%{title}” — sure?”
+          - “Force re-embed “%{title}”?”
+          - “Queue a reindex for “%{title}”?”
+          - “Trigger Voyage reindex for “%{title}”?”
+          - “Reindex “%{title}”?”
+          - “Re-embed “%{title}” with fresh vectors?”
+          - “Reindex “%{title}” in the embeddings store?”
+          - “Force embedding refresh for “%{title}”?”
+          - “Queue a Voyage re-embed for “%{title}”?”
+          - “Reindex “%{title}” — update recommendation vectors?”
+          - “Trigger fresh Voyage embed for “%{title}”?”
+          - “Re-embed “%{title}” to refresh recommendations?”
+          - “Update recommendation index for “%{title}”?”
+          - “Force reindex of “%{title}” in Voyage?”
+          - “Queue a fresh embedding for “%{title}”?”
+          - “Reindex “%{title}” with updated vectors?”
+          - “Trigger recommendation reindex for “%{title}”?”
+          - “Re-embed “%{title}” — update the index?”
+          - “Queue Voyage reindex for “%{title}”?”
+          - “Force “%{title}” through Voyage again?”
+          - “Reindex “%{title}” in the Voyage store?”
+          - “Queue a Voyage embed refresh for “%{title}”?”
+          - “Trigger “%{title}” reindex — confirm?”
+          - “Reindex “%{title}” — update its embedding?”
+          - “Queue a fresh Voyage embed for “%{title}”?”
+          - “Force-reindex “%{title}” in Voyage?”
+          - “Reindex “%{title}” — refresh recommendation vectors?”
+          - “Re-embed “%{title}” in Voyage?”
+          - “Queue a recommendation reindex for “%{title}”?”
+          - “Trigger Voyage re-embedding for “%{title}”?”
+          - “Reindex “%{title}” to update its place in recommendations?”
+          - “Queue Voyage embedding refresh for “%{title}”?”
+          - “Force-reindex the “%{title}” embedding?”
+          - “Re-embed “%{title}” for better recommendations?”
+          - “Trigger reindex: update “%{title}”'s Voyage embedding?”
+          - “Queue a fresh Voyage reindex for “%{title}”?”
+          - “Force a Voyage re-embed for “%{title}”?”
+          - “Reindex “%{title}” and refresh its recommendation vector?”
+          - “Trigger “%{title}” Voyage reindex — confirm?”
+          - “Queue Voyage re-embedding for “%{title}”?”
+          - “Force fresh Voyage vectors for “%{title}”?”
+          - “Reindex “%{title}” — queue the Voyage embed?”
+          - “Trigger a fresh embed for “%{title}” in Voyage?”
+          - “Queue a fresh Voyage reindex for “%{title}”?”
+          - “Re-embed “%{title}” for Voyage recommendations?”
+          - “Reindex “%{title}” — trigger Voyage embed?”
+          - “Force Voyage reindex for “%{title}”?”
+        reindexed:
+          - “Reindex queued for “%{title}”.”
+          - “”%{title}” queued for Voyage reindex.”
+          - “Voyage reindex queued. “%{title}” will get fresh vectors.”
+          - “”%{title}”: reindex is on the way.”
+          - “Queued a Voyage reindex for “%{title}”.”
+          - “”%{title}” reindex enqueued.”
+          - “Voyage embed queued for “%{title}”.”
+          - “”%{title}” is heading into Voyage for a fresh embed.”
+          - “Fresh Voyage vectors for “%{title}” are on the way.”
+          - “”%{title}” reindex scheduled.”
+          - “The Voyage reindex for “%{title}” is in the queue.”
+          - “”%{title}” is queued for a reindex.”
+          - “Reindex enqueued for “%{title}”. Standby.”
+          - “”%{title}” will get fresh Voyage vectors soon.”
+          - “Voyage reindex for “%{title}” is queued.”
+          - “”%{title}” heading into Voyage reindex.”
+          - “Reindex queued. “%{title}” gets fresh vectors soon.”
+          - “”%{title}”: Voyage reindex is in flight.”
+          - “Queued. “%{title}” will get fresh Voyage vectors.”
+          - “”%{title}” reindex is scheduled and queued.”
+          - “Voyage re-embed queued for “%{title}”.”
+          - “”%{title}” queued. Voyage reindex incoming.”
+          - “”%{title}” is in the reindex queue.”
+          - “Queued a reindex for “%{title}”. On its way.”
+          - “”%{title}” Voyage reindex: queued and running.”
+          - “Reindex job dispatched for “%{title}”.”
+          - “”%{title}” will get fresh Voyage vectors. Check back soon.”
+          - “Voyage embed dispatched for “%{title}”.”
+          - “”%{title}” reindex: queued.”
+          - “Reindex started for “%{title}”. Voyage is on it.”
+          - “”%{title}” Voyage reindex queued. Won't be long.”
+          - “The queue has “%{title}”. Voyage reindex on the way.”
+          - “”%{title}” reindex is in progress.”
+          - “Queued a Voyage reindex for “%{title}”.”
+          - “”%{title}” vector refresh: queued and dispatched.”
+          - “Voyage reindex for “%{title}”: queued.”
+          - “”%{title}” heading to Voyage. Reindex queued.”
+          - “Queued. “%{title}” will get updated Voyage vectors.”
+          - “”%{title}” fresh Voyage vectors — soon.”
+          - “Reindex dispatched for “%{title}”. Voyage has it.”
+          - “”%{title}” queued for a fresh Voyage reindex.”
+          - “Voyage reindex queued for “%{title}”. Incoming.”
+          - “”%{title}” reindex: in the queue.”
+          - “Reindex queued. “%{title}” will get fresh Voyage vectors.”
+          - “”%{title}” is reindex-bound. Voyage is ready.”
+          - “Voyage re-embed queued for “%{title}”.”
+          - “”%{title}” reindex is live in the queue.”
+          - “Queued “%{title}” for Voyage embedding refresh.”
+          - “”%{title}” reindex queued and dispatched.”
+          - “Voyage reindex for “%{title}”: queued and good to go.”
+        similar_empty:
+          - “No similar games found — %{title} is in a league of its own.”
+          - “Nothing quite like %{title} in the index.”
+          - “%{title} appears to be one of a kind. No matches.”
+          - “Searched for games similar to %{title}. Came up empty.”
+          - “The recommendations are speechless about %{title}.”
+          - “%{title} has no obvious neighbors. Unique game.”
+          - “No similar games turned up. %{title} stands alone.”
+          - “The index found nothing similar to %{title}.”
+          - “Zero similar games. %{title} is sui generis.”
+          - “Nothing similar emerged. %{title} defies categorisation.”
+          - “No matches for %{title}. Truly one of a kind.”
+          - “%{title} — no similar games. Try removing filters.”
+          - “Recommendation engine shrugged. Nothing like %{title}.”
+          - “No similar games found. %{title} is a category of one.”
+          - “The vectors are silent on this one. No games like %{title}.”
+          - “%{title} has no peers in the index.”
+          - “Nothing surfaced. %{title} is genre-agnostic in the best way.”
+          - “No similar games — either a unique title or filters are too tight.”
+          - “Empty result. %{title} is apparently unclonable.”
+          - “%{title}: unmatched. Nothing similar in the library.”
+          - “No games emerged as similar to %{title}. Try fewer filters.”
+          - “The index came back empty on %{title}. Unique entry.”
+          - “Nothing like %{title} exists in the recommendation set.”
+          - “No similar games surfaced. %{title} is in its own lane.”
+          - “Came up empty. %{title} has no indexed twins.”
+          - “Similar games: none. %{title} walks alone.”
+          - “No matches. Maybe %{title} is ahead of its time.”
+          - “The recommendation system has no comps for %{title}.”
+          - “Nothing similar. %{title} is a hard act to follow — or find.”
+          - “No similar games. Either filters are tight or %{title} is unique.”
+          - “Empty. %{title} apparently owns its niche.”
+          - “No games are close enough to %{title}. Outstanding.”
+          - “The index drew a blank on %{title}. Truly original.”
+          - “Searched hard. No games like %{title} found.”
+          - “Nothing comparable. %{title} is in a class of one.”
+          - “No similar results. %{title} is either niche or extraordinary.”
+          - “Zero matches. %{title} resists categorisation.”
+          - “The recommendation engine returned nothing for %{title}.”
+          - “No similar games found. %{title} may need broader search params.”
+          - “Nothing emerged from the index. %{title} is genuinely unusual.”
+          - “Empty. %{title} has no recommendation peers.”
+          - “No similar games. The index is stumped by %{title}.”
+          - “Came up empty on %{title}. Loosen those filters.”
+          - “No games like %{title} surfaced. One of a kind.”
+          - “The similar-games pool is empty for %{title}.”
+          - “Nada. %{title} is without peers in the index.”
+          - “No similar games. %{title} is a singular entry.”
+          - “Searched for %{title} peers. Found none.”
+          - “Nothing similar. %{title} — uncategorisable, apparently.”
+          - “Empty recommendation set. %{title} is alone at the top.”
+        channel_empty:
+          - “No channels found for %{title}.”
+          - “%{title} has no matching channels yet.”
+          - “No channel recommendations for %{title}.”
+          - “The index found no channels for %{title}.”
+          - “No channels cover %{title}.”
+          - “Nothing surfaced. No channels linked to %{title}.”
+          - “No channel matches for %{title}.”
+          - “%{title} has no YouTube coverage in the index.”
+          - “Channel search came up empty for %{title}.”
+          - “No channels emerged for %{title}.”
+          - “Couldn't find a channel for %{title}.”
+          - “%{title} — no channels in the recommendation set.”
+          - “No channel recommendations. %{title} is uncovered.”
+          - “The index returned no channels for %{title}.”
+          - “No channels matched %{title}.”
+          - “%{title} has no channel coverage in the library.”
+          - “Nothing. No channels for %{title}.”
+          - “Channel recommendations: empty for %{title}.”
+          - “No channels found. %{title} may not be covered yet.”
+          - “Empty channel results for %{title}.”
+          - “No channels surfaced for %{title}.”
+          - “%{title}: no channel recommendations in the index.”
+          - “No matching channels. %{title} is uncovered.”
+          - “The channel search drew a blank for %{title}.”
+          - “No channel results for %{title}.”
+          - “%{title} has no indexed channels.”
+          - “Searched for channels covering %{title}. Found none.”
+          - “No channels cover %{title} yet.”
+          - “Nothing came back. No channels for %{title}.”
+          - “Empty. %{title} has no channel matches.”
+          - “No channels returned for %{title}.”
+          - “%{title} — no channel coverage detected.”
+          - “Zero channel results. %{title} is uncovered.”
+          - “No channels found for %{title} in the index.”
+          - “Channel result: empty. No coverage for %{title}.”
+          - “The channel recommendation is empty for %{title}.”
+          - “No matching channels for %{title}.”
+          - “%{title} has no channel recommendations.”
+          - “Couldn't surface any channels for %{title}.”
+          - “Channel recommendations came up empty for %{title}.”
+          - “No channels matched %{title} in the library.”
+          - “%{title}: zero channel matches.”
+          - “No channels emerged. %{title} may need more video links.”
+          - “Empty channel set for %{title}.”
+          - “No channel results. %{title} is without coverage.”
+          - “%{title} — no channels in the index.”
+          - “Channel search: empty for %{title}.”
+          - “No channels surfaced. %{title} is uncovered for now.”
+          - “Zero matches. %{title} has no channel peers.”
+          - “No channels. %{title} is waiting to be covered.”
 
       videos:
         not_found:

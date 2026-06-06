@@ -101,8 +101,9 @@ class GameImportJob < ApplicationJob
 
     # After Step 5 — stream the enhanced chat message stamped as game_enhanced
     enhanced_payload = {
-      "body" => enhanced_body(game),
-      "html" => true
+      "body"    => enhanced_body(game),
+      "html"    => true,
+      "game_id" => game.id
     }
     Pito::FollowUp.make_followupable!(enhanced_payload, target: "game_enhanced", conversation:)
 

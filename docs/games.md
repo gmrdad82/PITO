@@ -262,16 +262,16 @@ No production data exists → destructive migrations are free.
 
 ## P12 — Follow-ups on the game messages
 
-- [ ] T12.1 `FollowUp::Handlers::GameDetail`: `rm`/`delete` → confirmation; `resync` → confirmation. complexity: [low]
-- [ ] T12.2 `update ownership <platforms>` (was `owned`): tolerant list parse (`,` `.` `*` + ws) + display→token bridge (PlayStation/Switch/Steam → `ps`/`switch`/`steam`); set `GamePlatformOwnership`; mutate the message. complexity: [high]
-- [ ] T12.2b `#<h> link to video <id|title>` follow-up → create `video_game_links`; mutate/confirm. complexity: [low]
-- [ ] T12.3 Confirmation executors: resync→`GameIgdbSync`; reindex→re-embed (digest-aware); rm→destroy. complexity: [low]
-- [ ] T12.4 `FollowUp::Handlers::GameEnhanced`: `reindex`→confirmation; `similar [filters]` + `channel` → `:mutate` (chainable). complexity: [high]
-- [ ] T12.5 Parse `similar` filters (genre/year/developer/publisher/complexity/ttb/score/platform). complexity: [high]
-- [ ] T12.6 Render recommendation segments via `ScoreBarComponent` + `AffordanceComponent`. complexity: [low]
-- [ ] T12.7 i18n via `Pito::Copy`; handler specs. complexity: [low]
-- [ ] T12.8 `bundle exec rspec` + `bin/rubocop` green. complexity: [manual]
-- [ ] T12.9 Commit: `Game message follow-ups (rm/resync/owned · reindex/similar/channel)`. complexity: [manual]
+- [x] T12.1 `FollowUp::Handlers::GameDetail`: `rm`/`delete` → confirmation; `resync` → confirmation. complexity: [low]
+- [x] T12.2 `update ownership <platforms>` (was `owned`): tolerant list parse (`,` `.` `*` + ws) + display→token bridge (PlayStation/Switch/Steam → `ps`/`switch`/`steam`); set `GamePlatformOwnership`; mutate the message. complexity: [high]
+- [x] T12.2b `#<h> link to video <id|title>` follow-up → create `video_game_links`; mutate/confirm. complexity: [low]
+- [x] T12.3 Confirmation executors: resync→`GameIgdbSync`; reindex→re-embed (digest-aware); rm→destroy. complexity: [low]
+- [x] T12.4 `FollowUp::Handlers::GameEnhanced`: `reindex`→confirmation; `similar [filters]` + `channel` → `:mutate` (chainable). complexity: [high]
+- [x] T12.5 Parse `similar` filters (genre/year/developer/publisher/complexity/ttb/score/platform). complexity: [high]
+- [x] T12.6 Render recommendation segments via `ScoreBarComponent` + `AffordanceComponent`. complexity: [low]
+- [x] T12.7 i18n via `Pito::Copy`; handler specs. complexity: [low]
+- [x] T12.8 `bundle exec rspec` + `bin/rubocop` green. complexity: [manual]
+- [x] T12.9 Commit: `Game message follow-ups (rm/resync/owned · reindex/similar/channel)`. complexity: [manual]
 
 ## P13 — `Pito::Recommendations` (3-way: game↔game, game→channel, channel→game)
 

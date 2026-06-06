@@ -45,5 +45,9 @@ RSpec.describe Pito::Game::DetailMessage do
     it "has a reply_handle in the payload" do
       expect(payload["reply_handle"]).to be_present
     end
+
+    it "stamps game_id in the payload" do
+      expect(payload["game_id"]).to eq(game.id)
+    end
   end
 end

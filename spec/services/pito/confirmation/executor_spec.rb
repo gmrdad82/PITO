@@ -101,4 +101,40 @@ RSpec.describe Pito::Confirmation::Executor, type: :service do
       expect(text).to include("Gone")
     end
   end
+
+  # ── confirm / game_resync ─────────────────────────────────────────────────
+
+  describe ".confirm — game_resync" do
+    let!(:game) { create(:game, title: "Sekiro") }
+
+    it "enqueues GameIgdbSync and returns outcome text mentioning the title" do
+      allow(GameIgdbSync).to receive(:perform_later)
+      text = described_class.confirm("game_resync", { "game_id" => game.id, "game_title" => "Sekiro" })
+      expect(GameIgdbSync).to have_received(:perform_later).with(game.id)
+      expect(text).to include("Sekiro")
+    end
+
+    it "returns a not-found text when the game does not exist" do
+      text = described_class.confirm("game_resync", { "game_id" => 0, "game_title" => "Ghost" })
+      expect(text).to be_present
+    end
+  end
+
+  # ── confirm / game_reindex ────────────────────────────────────────────────
+
+  describe ".confirm — game_reindex" do
+    let!(:game) { create(:game, title: "Bloodborne") }
+
+    it "calls Game::VoyageIndexer with force: true and returns outcome text" do
+      allow(::Game::VoyageIndexer).to receive(:call)
+      text = described_class.confirm("game_reindex", { "game_id" => game.id, "game_title" => "Bloodborne" })
+      expect(::Game::VoyageIndexer).to have_received(:call).with(game, force: true)
+      expect(text).to include("Bloodborne")
+    end
+
+    it "returns a not-found text when the game does not exist" do
+      text = described_class.confirm("game_reindex", { "game_id" => 0, "game_title" => "Vanished" })
+      expect(text).to be_present
+    end
+  end
 end

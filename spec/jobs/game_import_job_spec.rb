@@ -82,6 +82,12 @@ RSpec.describe GameImportJob, type: :job do
     expect(enhanced).to be_present
   end
 
+  it "stamps game_id in the enhanced message payload" do
+    perform
+    enhanced = conversation.events.find { |e| e.payload["reply_target"] == "game_enhanced" }
+    expect(enhanced.payload["game_id"]).to be_present
+  end
+
   it "calls Game::Igdb::Importer with the correct igdb_id and title" do
     expect(Game::Igdb::Importer).to receive(:call).with(igdb_id: igdb_id, title: title)
     perform

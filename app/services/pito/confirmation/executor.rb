@@ -32,6 +32,10 @@ module Pito
             confirm_disconnect(payload)
           when "game_delete"
             confirm_game_delete(payload)
+          when "game_resync"
+            confirm_game_resync(payload)
+          when "game_reindex"
+            confirm_game_reindex(payload)
           else
             Pito::Copy.render("pito.copy.confirmation.confirmed")
           end
@@ -62,6 +66,32 @@ module Pito
           title   = payload[:game_title].to_s
           ::Game.find_by(id: payload[:game_id])&.destroy!
           Pito::Copy.render("pito.copy.games.deleted", { title: title })
+        end
+
+        # Enqueue a full IGDB resync for the game.
+        def confirm_game_resync(payload)
+          payload = payload.with_indifferent_access
+          title   = payload[:game_title].to_s
+          game    = ::Game.find_by(id: payload[:game_id])
+          return Pito::Copy.render("pito.copy.games.not_found", { ref: title }) if game.nil?
+
+          GameIgdbSync.perform_later(game.id)
+          Pito::Copy.render("pito.copy.games.resync_queued", { title: title })
+        end
+
+        # Force a synchronous Voyage reindex for the game (digest-bypassed).
+        # We call the indexer inline rather than enqueuing so the confirmation
+        # outcome text is accurate: "reindexed" means it's done, not "queued".
+        # The executor runs inside FollowUpDispatchJob (already on a worker), so
+        # a brief Voyage HTTP call here is acceptable.
+        def confirm_game_reindex(payload)
+          payload = payload.with_indifferent_access
+          title   = payload[:game_title].to_s
+          game    = ::Game.find_by(id: payload[:game_id])
+          return Pito::Copy.render("pito.copy.games.not_found", { ref: title }) if game.nil?
+
+          ::Game::VoyageIndexer.call(game, force: true)
+          Pito::Copy.render("pito.copy.games.reindexed", { title: title })
         end
 
         def confirm_disconnect(payload)

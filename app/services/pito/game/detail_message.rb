@@ -28,8 +28,9 @@ module Pito
         intro_html = %(<p class="text-fg mb-2">#{ERB::Util.html_escape(intro)}</p>)
 
         payload = {
-          "body" => %(<div class="pito-game-detail-message">#{intro_html}#{card_html}</div>),
-          "html" => true
+          "body"    => %(<div class="pito-game-detail-message">#{intro_html}#{card_html}</div>),
+          "html"    => true,
+          "game_id" => game.id
         }
 
         Pito::FollowUp.make_followupable!(payload, target: "game_detail", conversation: conversation)
