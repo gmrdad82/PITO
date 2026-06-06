@@ -213,9 +213,9 @@ No production data exists → destructive migrations are free.
 > path hits Voyage. On-demand: `ImportVideosJob` enqueues the video reindex, which
 > enqueues the channel-centroid refresh.
 
-- [ ] T9.5.1 `Video::EmbedText.call(video)` = title — description — tags(space-joined) — category_name (categoryId→name via a static `YOUTUBE_CATEGORIES` map); blank-skipped, em-dash-joined. complexity: [low]
-- [ ] T9.5.2 Migration: `videos.embedded_digest:string`. complexity: [low]
-- [ ] T9.5.3 `Video::VoyageIndexer.call(video, force: false)` — digest-gated; `AppSetting.voyage_configured?` gate; persist `summary_embedding` + `embedded_digest` via `update_column`; nil-raise contract (mirror Game/Channel). complexity: [low]
+- [x] T9.5.1 `Video::EmbedText.call(video)` = title — description — tags(space-joined) — category_name (categoryId→name via a static `YOUTUBE_CATEGORIES` map); blank-skipped, em-dash-joined. complexity: [low]
+- [x] T9.5.2 Migration: `videos.embedded_digest:string`. complexity: [low]
+- [x] T9.5.3 `Video::VoyageIndexer.call(video, force: false)` — digest-gated; `AppSetting.voyage_configured?` gate; persist `summary_embedding` + `embedded_digest` via `update_column`; nil-raise contract (mirror Game/Channel). complexity: [low]
 - [ ] T9.5.4 `VideoVoyageIndexJob(video_id)` (queue `:search`); on a successful (re)embed, enqueue `ChannelEmbeddingRefreshJob(channel_id)`. complexity: [low]
 - [ ] T9.5.5 `ImportVideosJob`: enqueue `VideoVoyageIndexJob` for each created/changed video (explicit; digest-gate no-ops the unchanged). complexity: [low]
 - [ ] T9.5.6 `pito:voyage:reindex_videos` backfill rake (one job per video). complexity: [low]
