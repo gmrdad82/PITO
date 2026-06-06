@@ -128,7 +128,7 @@ No production data exists → destructive migrations are free.
 - [x] T4.6 `StatsFetcher`: drop watched_hours Analytics call; subs+views only. Channel sync jobs write via `Pito::Stats.set`. complexity: [high]
 - [x] T4.7 `ImportVideosJob`: write video `views` via `Pito::Stats.set`. complexity: [low]
 - [x] T4.8 Update readers of dropped columns → `Pito::Stats`. complexity: [high]
-- [ ] T4.9 `Game::StatsRefresh` + `GameStatsRefreshJob`: game `views` = sum(`linked_videos` views); enqueue on import/sync/link-change. complexity: [high]
+- [x] T4.9 `Game::StatsRefresh` + `GameStatsRefreshJob`: game `views` = sum(`linked_videos` views); enqueue on import/sync/link-change. complexity: [high]
 - [ ] T4.10 Specs: model, facade, writes, game aggregate; `bundle exec rspec` + `bin/rubocop` green. complexity: [low]
 - [ ] T4.11 Commit: `Polymorphic Stat model + Pito::Stats (subscribers/views); drop watched_hours`. complexity: [manual]
 

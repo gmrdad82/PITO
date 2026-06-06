@@ -35,6 +35,10 @@ class ImportVideosJob < ApplicationJob
       total_imported += imported
     end
 
+    # P4 — linked videos' view counts may have changed; refresh the
+    # materialized `views` stat on every affected game.
+    enqueue_game_stats_refreshes(channels)
+
     # Emit enhanced #2 with video breakdown
     broadcaster.emit(
       turn:,
@@ -72,6 +76,16 @@ class ImportVideosJob < ApplicationJob
     )
     broadcaster.resolve_thinking(turn:)
     broadcaster.complete_turn(turn:)
+  end
+
+  def enqueue_game_stats_refreshes(channels)
+    game_ids = VideoGameLink
+      .joins(:video)
+      .where(videos: { channel_id: channels.pluck(:id) })
+      .distinct
+      .pluck(:game_id)
+
+    game_ids.each { |id| GameStatsRefreshJob.perform_later(id) }
   end
 
   def import_channel_videos(channel)
