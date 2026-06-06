@@ -308,6 +308,7 @@ class Game
 
       def post(endpoint, body, retry_on_401: true)
         @rate_limiter.acquire do
+          Pito::Stack.track("igdb", endpoint: endpoint)
           response = perform_request(endpoint, body)
           handle_response(response, endpoint, body, retry_on_401: retry_on_401)
         end
