@@ -315,15 +315,15 @@ the unaltered default.
 
 ### P13 — Follow-up engine core
 
-- [ ] T13.1 Generalize `Pito::HandleGenerator`: uniqueness across ANY event carrying a `reply_handle` (query `payload->>'reply_handle'`, incl. consumed); keep the `<greek>-<4d>` format; doc-block. complexity: [low]
-- [ ] T13.2 Payload contract + a stamping helper (e.g. `Pito::FollowUp.make_followupable!(payload, target:, conversation:)`) that injects `reply_handle` + `reply_target`; doc-block. complexity: [low]
-- [ ] T13.3 `Pito::FollowUp::Router` — parse `#<handle> <rest>`, find the non-consumed event by `reply_handle`, return `{event:, rest:}` / `:not_found` / `:not_a_follow_up`. (Replaces `Pito::ConfirmationRouter`.) complexity: [high]
-- [ ] T13.4 `Pito::FollowUp::Registry` (`reply_target` → handler) + `Pito::FollowUp::Handler` base (`actions`, `#call(event:, rest:, conversation:)` → result) + `Pito::FollowUp::Result` value types: `Mutation(kind:, payload:)`, `Append(events:)`, `Error(message_key:, message_args:)`. complexity: [high]
-- [ ] T13.5 `Pito::FollowUp::AffordanceComponent` — renders `#<handle> <usage>`; hidden when `reply_consumed`. complexity: [low]
-- [ ] T13.6 Controller wiring: replace `confirmation_response?`/`handle_confirmation` with generic follow-up detection (`Router.classify`); if a target is found, branch by kind — mutate path (no echo/turn) vs append path (echo + turn). Unresolved `#…` → existing hashtag fallback. complexity: [high]
-- [ ] T13.7 `FollowUpDispatchJob` — run the domain handler: `Mutation` → `event.update!` + `replace_event`; `Append` → persist `*_follow_up` events + broadcast; consume the source per its kind. complexity: [high]
-- [ ] T13.8 Specs: generator uniqueness incl. consumed; router resolve/not-found/consumed; registry + handler base; affordance hidden-when-consumed; controller echo-vs-no-echo branch by target kind. complexity: [low]
-- [ ] T13.9 Commit: `P13: reusable follow-up engine (generator/router/registry/dispatch)`. complexity: [manual]
+- [x] T13.1 Generalize `Pito::HandleGenerator`: uniqueness across ANY event carrying a `reply_handle` (query `payload->>'reply_handle'`, incl. consumed); keep the `<greek>-<4d>` format; doc-block. complexity: [low]
+- [x] T13.2 Payload contract + a stamping helper (e.g. `Pito::FollowUp.make_followupable!(payload, target:, conversation:)`) that injects `reply_handle` + `reply_target`; doc-block. complexity: [low]
+- [x] T13.3 `Pito::FollowUp::Router` — parse `#<handle> <rest>`, find the non-consumed event by `reply_handle`, return `{event:, rest:}` / `:not_found` / `:not_a_follow_up`. (Replaces `Pito::ConfirmationRouter`.) complexity: [high]
+- [x] T13.4 `Pito::FollowUp::Registry` (`reply_target` → handler) + `Pito::FollowUp::Handler` base (`actions`, `#call(event:, rest:, conversation:)` → result) + `Pito::FollowUp::Result` value types: `Mutation(kind:, payload:)`, `Append(events:)`, `Error(message_key:, message_args:)`. complexity: [high]
+- [x] T13.5 `Pito::FollowUp::AffordanceComponent` — renders `#<handle> <usage>`; hidden when `reply_consumed`. complexity: [low]
+- [x] T13.6 Controller wiring: replace `confirmation_response?`/`handle_confirmation` with generic follow-up detection (`Router.classify`); if a target is found, branch by kind — mutate path (no echo/turn) vs append path (echo + turn). Unresolved `#…` → existing hashtag fallback. complexity: [high]
+- [x] T13.7 `FollowUpDispatchJob` — run the domain handler: `Mutation` → `event.update!` + `replace_event`; `Append` → persist `*_follow_up` events + broadcast; consume the source per its kind. complexity: [high]
+- [x] T13.8 Specs: generator uniqueness incl. consumed; router resolve/not-found/consumed; registry + handler base; affordance hidden-when-consumed; controller echo-vs-no-echo branch by target kind. complexity: [low]
+- [x] T13.9 Commit: `P13: reusable follow-up engine (generator/router/registry/dispatch)`. complexity: [manual]
 
 ### P14 — Confirmations on the engine (echo + append; consume original)
 

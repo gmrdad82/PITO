@@ -75,6 +75,17 @@ class ChatController < ApplicationController
       end
     end
 
+    # Follow-up engine (P13) — BEFORE the legacy confirmation branch.
+    # Resolves `#<handle> <rest>` against events stamped with `reply_handle`.
+    # Only fires when a live (non-consumed) event carries the matched handle.
+    # Confirmation events use `confirmation_handle` (not `reply_handle`), so
+    # they always fall through to :not_found here and the old path handles them.
+    ff = Pito::FollowUp::Router.call(input:, conversation:)
+    if ff[:status] == :ok
+      handle_follow_up(input, conversation, ff)
+      return respond_to_client(conversation)
+    end
+
     if confirmation_response?(input)
       # #handle confirm|cancel — no echo; updates the existing confirmation
       # segment to processing state, then enqueues ConfirmationDispatchJob.
@@ -391,6 +402,50 @@ class ChatController < ApplicationController
 
     new_conversation = Conversation.create!
     conversation_path(new_conversation)
+  end
+
+  # ── Follow-up engine dispatch (P13) ──────────────────────────────────────────
+
+  # Dispatch a matched follow-up reply to the appropriate path by mode.
+  #
+  # :mutate — no echo, no turn.  Enqueue FollowUpDispatchJob without a turn_id.
+  # :append — echo + turn (like confirmations).  Requires an active session;
+  #           silently falls through if unauthenticated.
+  #           NOTE: no thinking indicator is emitted in the append path for now.
+  def handle_follow_up(input, conversation, ff)
+    event  = ff[:event]
+    target = event.payload["reply_target"].to_s
+    mode   = Pito::FollowUp::Registry.mode_for(target)
+
+    case mode
+    when :mutate
+      FollowUpDispatchJob.perform_later(event.id, rest: ff[:rest])
+
+    when :append
+      return unless Current.session.present?
+
+      turn = conversation.turns.create!(
+        position:   Turn.next_position_for(conversation),
+        input_kind: :hashtag,
+        input_text: input
+      )
+
+      broadcaster = Pito::Stream::Broadcaster.new(conversation:)
+      echo_event  = Event.create_with_position!(
+        conversation:, turn:, kind: :echo,
+        payload: { text: input, authenticated: false }
+      )
+      broadcaster.broadcast_event(echo_event)
+
+      # No thinking indicator for append follow-ups (to be added if needed).
+      FollowUpDispatchJob.perform_later(event.id, rest: ff[:rest], turn_id: turn.id)
+
+    else
+      # Unknown mode (handler not registered, or handler has no mode).
+      # Silently return — fall-through to next branches already prevented by
+      # the caller's `return respond_to_client`.
+      Rails.logger.warn("[FollowUp] Unknown mode #{mode.inspect} for target #{target.inspect}")
+    end
   end
 
   def confirmation_response?(input)
