@@ -275,13 +275,13 @@ No production data exists → destructive migrations are free.
 
 ## P13 — `Pito::Recommendations` (3-way: game↔game, game→channel, channel→game)
 
-- [ ] T13.1 `Pito::Recommendations.similar_games(game, filters:)` via `SimilarGames` + `Recommendation::{TopK,HmsScorer,WeightedBlend}`. complexity: [high]
-- [ ] T13.2 `Pito::Recommendations.channels_for(game)` via `Game::ChannelRecommendation` (game→channel). complexity: [low]
-- [ ] T13.2b `Pito::Recommendations.games_for(channel)` via `Channel::GameRecommendation` (channel→game, from P9.5). complexity: [low]
-- [ ] T13.3 Keep import step-5 dummy distinct. complexity: [low]
-- [ ] T13.4 Wire P12 `#similar`/`#channel`; output via `ScoreBarComponent`. complexity: [low]
-- [ ] T13.5 Specs (seeded embeddings), all 3 directions. complexity: [low]
-- [ ] T13.6 Commit: `Pito::Recommendations (3-way: similar / game→channel / channel→game)`. complexity: [manual]
+- [x] T13.1 `Pito::Recommendations.similar_games(game, filters:)` via `SimilarGames` + `Recommendation::{TopK,HmsScorer,WeightedBlend}`. complexity: [high]
+- [x] T13.2 `Pito::Recommendations.channels_for(game)` via `Game::ChannelRecommendation` (game→channel). complexity: [low]
+- [x] T13.2b `Pito::Recommendations.games_for(channel)` via `Channel::GameRecommendation` (channel→game, from P9.5). complexity: [low]
+- [x] T13.3 Keep import step-5 dummy distinct. complexity: [low]
+- [x] T13.4 Wire P12 `#similar`/`#channel`; output via `ScoreBarComponent`. complexity: [low]
+- [x] T13.5 Specs (seeded embeddings), all 3 directions. complexity: [low]
+- [x] T13.6 Commit: `Pito::Recommendations (3-way: similar / game→channel / channel→game)`. complexity: [manual]
 
 ## P14 — Nightly sync (1:00 UTC) + reindex (2:00 UTC) — two stages, ≥1h gap
 
