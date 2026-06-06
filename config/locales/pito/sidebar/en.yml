@@ -17,7 +17,7 @@ en:
         subtitle: "Game · imported %{date}"
       themes:
         title: "Themes"
-        hint: "↑/↓ preview · Enter apply · Esc close"
+        hint: "↑/↓ preview · Enter apply"
         dark: "Dark"
         light: "Light"
       section:
