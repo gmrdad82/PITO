@@ -113,6 +113,19 @@ change, so copy can be grown, shrunk, audited, and kept on-voice in one place.
 - [x] T5.8 Extend `pito:copy:audit` to flag any `pito.copy.*` pool below 50 ("below standard") + spec it; full suite green. complexity: [low]
 - [x] T5.9 Commit (per cohesive group): relocate, enrich, top-ups, audit. complexity: [manual]
 
+## P6 — Strict `pito.copy.*` consistency (help affordance hints)
+
+> The expand/collapse affordance LINKS (`more_hint`/`fewer_hint`) were added under
+> `pito.slash.help.*` during the games/themes bug pass — functional i18n, but not
+> the witty-pool convention. Relocate them to `pito.copy.help.*` (50 each) and
+> render via `Pito::Copy` so every randomized affordance/copy string lives in one
+> namespace. (`expand_label`/`collapse_label` = "to expand"/"to collapse" stay in
+> `pito.slash.help.*`: they are keybinding-row DESCRIPTIONS — "ctrl+| to expand" —
+> not standalone copy pools, and `help_spec` pins them.)
+
+- [x] T6.1 Add `pito.copy.help.more_hint` + `fewer_hint` (50 variants each); render via `Pito::Copy` in `Event::SystemComponent` defaults + `Event::EnhancedComponent`; drop the two `pito.slash.help.*` keys. complexity: [low]
+- [x] T6.2 Affected specs + `pito:copy:audit` (≥50) green; commit. complexity: [manual]
+
 ## How to use this plan
 
 Execute P1 → P4 sequentially (each green + committed). Decisions: engine is

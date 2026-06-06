@@ -65,11 +65,11 @@ module Pito
       end
 
       def expand_label
-        @payload[:expand_label].presence || I18n.t("pito.slash.help.more_hint", count: expand_more_count)
+        @payload[:expand_label].presence || Pito::Copy.render("pito.copy.help.more_hint")
       end
 
       def collapse_label
-        @payload[:collapse_label].presence || I18n.t("pito.slash.help.fewer_hint")
+        @payload[:collapse_label].presence || Pito::Copy.render("pito.copy.help.fewer_hint")
       end
 
       def render_info_line(line)

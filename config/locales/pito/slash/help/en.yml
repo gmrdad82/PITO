@@ -5,8 +5,6 @@ en:
         unauthenticated: "Login first — /authenticate <6-digit TOTP code>."
         expand_label: "to expand"
         collapse_label: "to collapse"
-        more_hint: "more…"
-        fewer_hint: "fewer"
         descriptions:
           help: "Show this command reference"
         help:
