@@ -42,6 +42,22 @@
       `pito.copy.theme.applied`, `pito.copy.thinking.confirmation.*`,
       `pito.copy.youtube.ascii_art`. Tool: `bin/rails pito:copy:audit`.
 
+## Bugs found during your validation
+
+- [x] **FIXED — theme Registry emptied after a dev reload** → `/themes <name>` &
+      `default` said "not found in registry" and the sidebar rendered no rows.
+      Root cause: `require`-once vs Zeitwerk reload. Fixed `7349a381` (`load`).
+- [x] **FIXED — missing `slash.help.more_hint`/`fewer_hint` i18n** (the
+      `ctrl+|` "translation missing") + **stripped "· Esc close"** from the
+      themes sidebar hint. `05124807`.
+- [x] **FIXED — catppuccin-latte low-contrast** chatbox/timestamp text
+      (`fg-dim`/`fg-faded` pinned to canonical subtext/overlay). `d4456d22`.
+- [ ] **RE-TEST — `/themes` sidebar preview/Esc.** The "preview applied / Esc
+      keeps it" symptom was almost certainly the registry-empty bug above
+      (apply 422'd against the empty registry while the visual preview lingered
+      until reload). Re-test now that the registry is fixed; if preview still
+      sticks after Esc, tell me and I'll dig into `theme_nav_controller`.
+
 ## Merge
 
 - [ ] **PR #62** — do NOT merge until the above are cleared; then squash-merge.
