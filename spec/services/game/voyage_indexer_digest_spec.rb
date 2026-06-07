@@ -35,4 +35,9 @@ RSpec.describe Game::VoyageIndexer, type: :service do
     expect(client).to receive(:embed).and_return([ Array.new(1024, 0.3) ])
     described_class.call(game.reload, force: true)
   end
+
+  it "raises Pito::Error::VoyageEmbeddingNil when embed returns [nil]" do
+    allow(client).to receive(:embed).and_return([ nil ])
+    expect { described_class.call(game) }.to raise_error(Pito::Error::VoyageEmbeddingNil)
+  end
 end

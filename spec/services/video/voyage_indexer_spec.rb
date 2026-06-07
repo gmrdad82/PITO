@@ -43,4 +43,9 @@ RSpec.describe Video::VoyageIndexer, type: :service do
     expect(client).not_to receive(:embed)
     described_class.call(video)
   end
+
+  it "raises Pito::Error::VoyageEmbeddingNil when embed returns [nil]" do
+    allow(client).to receive(:embed).and_return([ nil ])
+    expect { described_class.call(video) }.to raise_error(Pito::Error::VoyageEmbeddingNil)
+  end
 end

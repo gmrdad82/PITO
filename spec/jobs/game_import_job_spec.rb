@@ -134,6 +134,35 @@ RSpec.describe GameImportJob, type: :job do
     expect(turn.completed_at).to be_present
   end
 
+  # ── emit_error branch (SyncGame raises ValidationError) ──────────────────────
+
+  context "when Game::Igdb::SyncGame raises a ValidationError" do
+    before do
+      allow(sync_game_double).to receive(:call)
+        .and_raise(Game::Igdb::Client::ValidationError, "IGDB rejected the payload")
+    end
+
+    it "emits an error event into the conversation" do
+      perform
+      error_events = conversation.events.select { |e| e.kind == "error" }
+      expect(error_events).not_to be_empty
+    end
+
+    it "does NOT stream the detail or enhanced messages" do
+      perform
+      detail   = conversation.events.find { |e| e.payload["reply_target"] == "game_detail" }
+      enhanced = conversation.events.find { |e| e.payload["reply_target"] == "game_enhanced" }
+      expect(detail).to be_nil
+      expect(enhanced).to be_nil
+    end
+
+    it "completes the turn even on error" do
+      perform
+      turn = conversation.turns.last
+      expect(turn.completed_at).to be_present
+    end
+  end
+
   # ── Resync path (already-in-library) ─────────────────────────────────────────
 
   context "when game already exists in library (resync)" do
