@@ -5,7 +5,7 @@
 
 ## Sign-off
 - [x] Drafted
-- [ ] Audited
+- [x] Audited — approved by the user for execution; every builder + refactor ships with specs.
 
 ## North star
 
