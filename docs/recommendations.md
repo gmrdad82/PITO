@@ -141,6 +141,12 @@ game→game queries follow the same CTE shape.
 - LR4 — `Result` gains a `breakdown:` hash (`{e:, k:, g:, d:, p:, s:}`) so specs
   and the UI can assert/show *why* something ranked where it did.
 - LR5 — Weights centralised in `Pito::Recommendation::Weights`.
+- LR6 — **Operating assumption: every video is linked to its game(s)** (the user
+  always links them). So the link graph is the **primary** signal: the facet
+  overlaps (G/D/P/S) are computed via reliably-present `video → linked game`
+  edges and do the real discrimination, while embedding (E) is the **fallback /
+  cold-start** signal for not-yet-linked content. Specs must cover the
+  fully-linked path as the common case, not the exception.
 
 ## Phase index
 
