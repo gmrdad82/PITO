@@ -75,6 +75,8 @@ feed that engine.
 - Phase 7 — `list videos published|unlisted` scoped by shift+tab channel (task 10)
 - Phase 8 — Nightly: Video stats sync + Game upcoming-only refresh (tasks 7, 8)
 - Phase 9 — Intraday Video stats cadence (task 11) [decision D2]
+- Help A — `/help` for commands (keep) [TO DISCUSS]
+- Help B — `#help` + `help` for hashtags & free messages [TO DISCUSS]
 
 ---
 
@@ -201,3 +203,30 @@ feed that engine.
 - [ ] T9.4 Add specs for the intraday stats job + batching. complexity: [high]
 - [ ] T9.5 Run the new specs; make green. complexity: [low]
 - [ ] T9.6 Commit: "Add 3×/day video stats snapshot (01:00 / 09:00 / 17:00 UTC)". complexity: [manual]
+
+---
+
+## Help A — `/help` for commands (keep) — TO DISCUSS
+
+> Placeholder. Flesh out when we reach this phase.
+
+We keep the existing `/help` as the entry point for the **slash command**
+surface — it should list/explain the available commands (including the new
+Video + Game verbs from Phases 4–7). Scope, format, and per-command detail TBD.
+
+- [ ] (tasks TBD after discussion)
+
+## Help B — `#help` + `help` for hashtags & free messages — TO DISCUSS
+
+> Placeholder. Flesh out when we reach this phase.
+
+Two more help affordances beyond `/help`:
+
+- `#help` — surfaces the **hashtag** possibilities (what `#<handle>` follow-ups
+  and hashtag messages can do).
+- `help` (bare, free message) — guidance for **free-text** messages (what a
+  plain chat message does / how to get started).
+
+Exact triggers, copy, and how these relate to `/help` are TBD.
+
+- [ ] (tasks TBD after discussion)
