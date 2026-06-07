@@ -1,6 +1,7 @@
 <%# Turbo Stream partial — populates #pito-sidebar with the IGDB game-import
     sidebar, wrapped in the standard Sidebar shell (fixed overlay panel).
     locals: prefill (String), conversation_uuid (String) %>
+<%= render partial: "chat/done_signal" %>
 <%= turbo_stream.update "pito-sidebar" do %>
   <%= render(Pito::Sidebar::Component.new(
         title: t("pito.sidebar.games_import.title")

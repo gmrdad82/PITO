@@ -83,6 +83,12 @@ RSpec.describe "POST /chat with bare /themes", type: :request do
       post chat_path, params: { input: "/themes", uuid: conversation.uuid }
       expect(response.body).to include("pito--theme-nav")
     end
+
+    it "emits a pito:done signal so the post-command dots hide (no async job runs)" do
+      post chat_path, params: { input: "/themes", uuid: conversation.uuid }
+      expect(response.body).to include("pito--done-dispatch")
+      expect(response.body).to include("pito:done")
+    end
   end
 
   # ── Unauthenticated path ─────────────────────────────────────────────────────
