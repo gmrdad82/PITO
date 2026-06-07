@@ -56,6 +56,14 @@ These shape several tasks; flagged here so they can be corrected before work beg
 - `VideoVoyageIndexJob` / `GameVoyageIndexJob` retry on transient Voyage nil.
 - `ScoreBarComponent` `show_label:` kwarg; shared `Pito::Channel::ItemComponent`.
 
+## Companion plan
+
+The full multi-signal recommendation engine (game↔channel both ways + game↔game,
+blending embedding / link / genre / developer / publisher / score, one smart SQL
+query per direction, exhaustive specs) is specified separately in
+**[docs/recommendations.md](recommendations.md)**. The link verbs here (Phase 5)
+feed that engine.
+
 ## Phase index
 
 - Phase 1 — Drop Game ownership (task 3)
