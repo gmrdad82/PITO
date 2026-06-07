@@ -824,14 +824,36 @@ html {
   z-index: 2;
 }
 
-/* Top / bottom value rows. */
+/* Top / bottom value rows.
+ *
+ * Each row is a POSITIONED STRIP, not a flex container: every child
+ * (the footage bubble, the pillar hour labels) is `position: absolute`
+ * with an inline `left: N%`, so the row must (a) be the positioning
+ * context (`position: relative`) and (b) RESERVE its own height — an
+ * absolutely-positioned child contributes nothing to layout, so a
+ * zero-height row would let the labels collapse onto the bar / legend.
+ * That collapse was the original jumble; the explicit row height
+ * (recovered from the pre-reboot fuel-gauge CSS, commit 991f86fb) is
+ * what keeps the bubble above the bar and the hour labels on their own
+ * line below it. */
 .pito-ttb__values {
   position: relative;
-  display: flex;
 }
 
+/* Top row holds the footage ▼ bubble, which stacks a number ABOVE an
+   arrow (two lines). Reserve enough height for both so the bubble sits
+   fully above the bar instead of overlapping it; the bubble is pinned
+   to this row's bottom edge (`bottom: 0`) so its arrow kisses the bar. */
 .pito-ttb__values--top {
-  min-height: 1.2em;
+  height: 2.4em;
+}
+
+/* Bottom row holds the three pillar hour labels (one line each).
+   Reserve a single line's height so they render cleanly below the bar
+   and never ride up onto it or down onto the legend. */
+.pito-ttb__values--bottom {
+  height: 1.4em;
+  margin-top: 2px;
 }
 
 /* Footage bubble above the bar. */
@@ -866,7 +888,7 @@ html {
 }
 
 .pito-ttb__value--pillar {
-  bottom: 0;
+  top: 0;
 }
 
 /* Edge-label clamping modifiers. */
