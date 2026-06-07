@@ -23,20 +23,25 @@ RSpec.describe Pito::Event::ConfirmationComponent do
     end
   end
 
-  describe "follow-up affordance" do
-    it "shows the #handle affordance when not consumed" do
+  describe "follow-up handle in the single meta line (no usage/affordance line)" do
+    it "shows the #handle in the meta line when not consumed" do
       node = render_inline(described_class.new(payload: pending_payload))
-      expect(node.text).to include("#alpha-1322")
-      expect(node.text).to include("confirm")
+      expect(node.css(".pito-echo__meta").text).to include("#alpha-1322")
     end
 
-    it "hides the affordance when reply_consumed is true" do
+    it "NEVER renders a usage/affordance line (no confirm · cancel hint)" do
+      node = render_inline(described_class.new(payload: pending_payload))
+      expect(node.text).not_to include("confirm · cancel")
+      expect(node.text).not_to include("cancel")
+    end
+
+    it "drops the #handle when reply_consumed is true" do
       payload = pending_payload.merge(reply_consumed: true)
       node = render_inline(described_class.new(payload:))
       expect(node.text).not_to include("#alpha-1322")
     end
 
-    it "shows no affordance when reply_handle is absent" do
+    it "shows no handle when reply_handle is absent" do
       node = render_inline(described_class.new(payload: { body: body_text }))
       expect(node.text).not_to include("#")
     end
@@ -127,14 +132,14 @@ RSpec.describe Pito::Event::ConfirmationComponent do
     end
   end
 
-  describe "affordance hidden once consumed (resolved path)" do
+  describe "handle hidden once consumed (resolved path)" do
     let(:payload) do
       pending_payload.merge(
         reply_consumed: true
       )
     end
 
-    it "does not render the affordance" do
+    it "does not render the handle" do
       node = render_inline(described_class.new(payload:))
       expect(node.text).not_to include("#alpha-1322")
     end

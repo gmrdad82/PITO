@@ -2,18 +2,15 @@ en:
   pito:
     follow_up:
       game_list:
-        usage: "show <id>"
         errors:
           invalid_action: "Unknown action '%{action}'. Try: #<handle> show <id>."
       game_detail:
-        usage: "rm · resync · update ownership <platforms> · link to video <id|title>"
         errors:
           invalid_action: "Unknown action '%{action}'. Try: rm, resync, update ownership <platforms>, or link to video <id|title>."
           missing_platforms: "No platforms found. Try: update ownership ps switch steam."
           video_not_found: "No video matching \"%{ref}\"."
           missing_video_ref: "Specify a video. Try: link to video <id|title>."
       game_enhanced:
-        usage: "reindex · similar [filters] · channel"
         errors:
           invalid_action: "Unknown action '%{action}'. Try: reindex, similar [filters], or channel."
           game_not_found: "Couldn't find the game for this message."

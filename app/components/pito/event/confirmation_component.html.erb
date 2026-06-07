@@ -17,16 +17,12 @@
           collapse_label: t("pito.confirmation.expand_collapse_hint")
         )) %>
 
-    <%# Follow-up affordance (#<handle> confirm · cancel) — hidden once consumed %>
-    <% if reply_handle.present? && !resolved? %>
-      <%= render(Pito::FollowUp::AffordanceComponent.new(
-            handle:   reply_handle,
-            usage:    affordance_usage,
-            consumed: reply_consumed?
-          )) %>
-    <% end %>
-
-    <%# Meta line: timestamp only (no handle — shown via affordance above) %>
-    <%= render(Pito::Event::MetaLineComponent.new(timestamp: @timestamp)) %>
+    <%# Single meta line — `timestamp · #handle` while still awaiting a reply
+        (#<handle> confirm / cancel). Handle drops once consumed/resolved.
+        There is NO separate usage/affordance line. %>
+    <%= render(Pito::Event::MetaLineComponent.new(
+          timestamp: @timestamp,
+          handle:    (reply_handle.present? && !resolved? && !reply_consumed? ? reply_handle : nil)
+        )) %>
   </div>
 <% end %>

@@ -161,23 +161,28 @@ RSpec.describe Pito::Event::ThemeDiffComponent do
     end
   end
 
-  # ── T15.3: follow-up affordance ──────────────────────────────────────────────
+  # ── T15.3: follow-up handle in the single meta line (no usage/affordance line) ──
 
-  describe "follow-up affordance" do
-    it "renders the affordance in preview phase (reply_handle present, not consumed)" do
+  describe "follow-up handle in the single meta line" do
+    it "shows the #handle in preview phase (reply_handle present, not consumed)" do
       node = render_inline(described_class.new(payload: preview_payload, event: base_event))
-      expect(node.text).to include("beta-1234")
+      expect(node.css(".pito-echo__meta").text).to include("beta-1234")
     end
 
-    it "does NOT render the affordance in apply phase (reply_consumed: true)" do
-      node = render_inline(described_class.new(payload: apply_payload, event: base_event))
+    it "NEVER renders a separate usage/affordance line" do
+      node = render_inline(described_class.new(payload: preview_payload, event: base_event))
       expect(node.css("div.mt-1.text-fg-faded")).to be_empty
     end
 
-    it "does NOT render the affordance when reply_handle is absent" do
+    it "drops the #handle in apply phase (reply_consumed: true)" do
+      node = render_inline(described_class.new(payload: apply_payload, event: base_event))
+      expect(node.css(".pito-echo__meta").text).not_to include("beta-1234")
+    end
+
+    it "shows no handle when reply_handle is absent" do
       payload = preview_payload.except("reply_handle", "reply_target")
       node = render_inline(described_class.new(payload:, event: base_event))
-      expect(node.css("div.mt-1.text-fg-faded")).to be_empty
+      expect(node.css(".pito-echo__meta").text).not_to include("beta-1234")
     end
   end
 

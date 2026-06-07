@@ -66,11 +66,6 @@ module Pito
       def accent     = :surface
       def background = nil
 
-      # Usage string for the follow-up affordance hint.
-      def affordance_usage
-        I18n.t("pito.follow_up.theme_list.usage", default: "")
-      end
-
       private
 
       def segment_id

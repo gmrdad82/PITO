@@ -4,13 +4,13 @@ module Pito
   module Event
     # Confirmation — destructive action awaiting #handle confirm/cancel.
     # Orange border, no background. Transitions through three states:
-    #   pending    — body + ctrl+o expand detail + follow-up affordance
+    #   pending    — body + ctrl+o expand detail
     #   processing — Braille spinner above body (broadcasting replace)
-    #   resolved   — body (affordance consumed/hidden)
+    #   resolved   — body only
     #
-    # The reply affordance is rendered via Pito::FollowUp::AffordanceComponent,
-    # which hides itself when reply_consumed is true (i.e. after the user
-    # has replied with confirm or cancel).
+    # The reply handle (the user types `#<handle> confirm` / `#<handle> cancel`)
+    # rides in the single meta line — `timestamp · #handle` — and drops once the
+    # reply is consumed/resolved. There is no separate usage/affordance line.
     class ConfirmationComponent < ViewComponent::Base
       def initialize(payload: {}, event: nil)
         payload        = payload.with_indifferent_access
@@ -45,10 +45,6 @@ module Pito
       end
 
       def braille_frames_json = Pito::Event::Concerns::BrailleFrames::FRAMES.to_json
-
-      def affordance_usage
-        I18n.t("pito.confirmation.affordance_usage")
-      end
 
       def reply_consumed?
         Pito::FollowUp.consumed?("reply_consumed" => @reply_consumed)
