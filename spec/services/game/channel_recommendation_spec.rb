@@ -61,4 +61,28 @@ RSpec.describe Game::ChannelRecommendation, type: :service do
 
     expect(described_class.call(game).map(&:channel)).to eq([ channel ])
   end
+
+  it "honours the limit: keyword" do
+    3.times do
+      ch = create(:channel)
+      video_for(ch, vec(0))
+    end
+    expect(described_class.call(game, limit: 2).size).to eq(2)
+  end
+
+  it "includes results whose score equals exactly THRESHOLD_SCORE (boundary: in)" do
+    threshold = described_class::THRESHOLD_SCORE
+    exact_distance = 1.0 - threshold / 100.0
+
+    ch = create(:channel, title: "Boundary Channel")
+    v  = create(:video, channel: ch)
+    v.update_column(:summary_embedding, vec(0))
+
+    allow_any_instance_of(described_class).to receive(:nearest_videos) do
+      [ v ].tap { v.define_singleton_method(:neighbor_distance) { exact_distance } }
+    end
+
+    results = described_class.call(game)
+    expect(results.map(&:channel)).to include(ch)
+  end
 end

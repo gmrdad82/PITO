@@ -64,4 +64,46 @@ RSpec.describe Channel::GameRecommendation, type: :service do
 
     expect(described_class.call(channel).map { |r| r.game.title }).to eq([ "Indexed" ])
   end
+
+  it "uses the highest-views video as probe so it drives recommendations" do
+    # High-views video shares direction with target_game; low-views video is orthogonal.
+    high = create(:video, channel: channel)
+    high.update_column(:summary_embedding, vec(0))
+    Pito::Stats.set(high, :views, 10_000)
+
+    low = create(:video, channel: channel)
+    low.update_column(:summary_embedding, vec(1)) # orthogonal — would miss the target
+    Pito::Stats.set(low, :views, 10)
+
+    target_game = create(:game, title: "High-views target")
+    target_game.update_column(:summary_embedding, vec(0))
+
+    results = described_class.call(channel)
+    expect(results.map(&:game)).to include(target_game)
+    expect(results.first.score).to eq(100)
+  end
+
+  it "honours the limit: keyword" do
+    probe_video(vec(0))
+    3.times { |i| create(:game).update_column(:summary_embedding, vec(0, value: 0.5 + i * 0.1)) }
+    expect(described_class.call(channel, limit: 2).size).to eq(2)
+  end
+
+  it "includes results whose score equals exactly THRESHOLD_SCORE (boundary: in)" do
+    threshold = described_class::THRESHOLD_SCORE
+    # distance that maps to exactly the threshold score
+    # score = ((1 - distance) * 100).round => distance = 1 - threshold/100.0
+    exact_distance = 1.0 - threshold / 100.0
+
+    probe_video(vec(0))
+    game = create(:game, title: "On-threshold")
+    game.update_column(:summary_embedding, vec(0))
+
+    allow_any_instance_of(described_class).to receive(:nearest_games) do
+      [ game ].tap { game.define_singleton_method(:neighbor_distance) { exact_distance } }
+    end
+
+    results = described_class.call(channel)
+    expect(results.map(&:game)).to include(game)
+  end
 end
