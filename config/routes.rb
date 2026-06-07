@@ -26,8 +26,9 @@ Rails.application.routes.draw do
     post "import", to: "import#create", as: :games_import
   end
   get "/resume", to: "conversations#resume", as: :resume
-  get "/chat/:uuid", to: "conversations#show", as: :conversation
-  patch "/chat/:uuid", to: "conversations#update"
+  get    "/chat/:uuid", to: "conversations#show",    as: :conversation
+  patch  "/chat/:uuid", to: "conversations#update"
+  delete "/chat/:uuid", to: "conversations#destroy"
 
   # Settings toggle endpoints — require authentication (no allow_anonymous).
   post   "/settings/expand_all", to: "settings#toggle_expand_all", as: :settings_toggle_expand_all
