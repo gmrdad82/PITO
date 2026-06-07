@@ -627,7 +627,11 @@ export default class extends Controller {
     const activeSlot = enumSlots.find(s => !alreadyFilled[s.name] || s.repeatable)
 
     if (endsWithSpace) {
-      // next_hint: show hint for next expected slot
+      // Static enum slot at a fresh position → ghost the first value as a real
+      // TAB-completable completion (not a <bracketed> placeholder). Fall back to
+      // the slot-name hint only for dynamic/valueless slots.
+      const def = this._defaultEnumCompletion(activeSlot)
+      if (def) return { complete_current: def, next_hint: "" }
       const hint = this._nextHintForSlot(activeSlot)
       return { complete_current: "", next_hint: hint }
     } else {
@@ -729,6 +733,18 @@ export default class extends Controller {
   }
 
   // Generate a next_hint string for the active slot.
+  // First canonical value of a static enum slot — the default TAB-completable
+  // ghost shown when the cursor is at a fresh slot. "" for dynamic/valueless.
+  _defaultEnumCompletion(activeSlot) {
+    if (!activeSlot) return ""
+    const vocab = this._getVocab(activeSlot.source)
+    if (vocab && !vocab.dynamic) {
+      const canonical = vocab.canonical || []
+      if (canonical.length > 0) return canonical[0]
+    }
+    return ""
+  }
+
   _nextHintForSlot(activeSlot) {
     if (!activeSlot) return ""
     const vocab = this._getVocab(activeSlot.source)

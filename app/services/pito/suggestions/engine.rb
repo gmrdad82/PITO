@@ -522,14 +522,33 @@ module Pito
           end
 
           if ends_with_space
-            # next_hint: provide a hint for the next expected slot.
-            hint = next_hint_for_slot(active_slot)
-            { complete_current: "", next_hint: hint }
+            # At a fresh slot: for a static enum slot, ghost the FIRST value as a
+            # real (TAB-completable) completion — not a `<bracketed>` placeholder
+            # the user can't accept. Fall back to the slot-name hint only for
+            # dynamic / valueless slots.
+            completion = default_enum_completion(active_slot)
+            if completion.empty?
+              { complete_current: "", next_hint: next_hint_for_slot(active_slot) }
+            else
+              { complete_current: completion, next_hint: "" }
+            end
           else
             # complete_current: if current partial uniquely prefixes one vocab member.
             completion = compute_current_completion(active_slot, current_partial, authenticated:)
             { complete_current: completion, next_hint: "" }
           end
+        end
+
+        # First canonical value of a static enum slot — used as the default
+        # TAB-completable ghost when the cursor sits at a fresh slot. Returns ""
+        # for dynamic slots (fetched separately) or non-enum/valueless slots.
+        def default_enum_completion(slot)
+          return "" unless slot&.source.is_a?(Symbol)
+
+          vocab = Pito::Grammar::Registry.vocabulary(slot.source)
+          return "" unless vocab && !vocab.dynamic? && vocab.canonical.any?
+
+          vocab.canonical.first.to_s
         end
 
         def compute_current_completion(slot, partial, authenticated:)

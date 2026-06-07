@@ -255,10 +255,12 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
       end
     end
 
-    describe "next_hint" do
-      it "provides a non-empty next_hint when cursor is at a trailing space" do
+    describe "next_hint / default completion at a fresh slot" do
+      it "ghosts the first enum value (TAB-completable) at a trailing space, no <brackets>" do
         result = call(input: "list ", cursor: 5, authenticated: true)
-        expect(result[:ghost][:next_hint]).not_to be_empty
+        expect(result[:ghost][:complete_current]).to eq("channels")
+        expect(result[:ghost][:next_hint]).to eq("")
+        expect(result[:ghost][:next_hint]).not_to include("<")
       end
 
       it "next_hint is a string" do
@@ -267,7 +269,8 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
       end
 
       it "next_hint is empty when complete_current is active" do
-        result = call(input: "list upc", cursor: 8, authenticated: true)
+        result = call(input: "list cha", cursor: 8, authenticated: true)
+        expect(result[:ghost][:complete_current]).to eq("nnels")
         expect(result[:ghost][:next_hint]).to eq("")
       end
 
@@ -305,12 +308,12 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
       expect(result[:ghost][:complete_current]).to eq("oming")
     end
 
-    # Case 4: trailing space — next_hint present
-    it "returns a non-empty next_hint String when input is 'list '" do
+    # Case 4: trailing space — first enum value ghosted (TAB-completable)
+    it "ghosts the first noun (TAB-completable) when input is 'list '" do
       input = "list "
       result = call(input: input, cursor: input.length, authenticated: true)
-      expect(result[:ghost][:next_hint]).to be_a(String)
-      expect(result[:ghost][:next_hint]).not_to be_empty
+      expect(result[:ghost][:complete_current]).to eq("channels")
+      expect(result[:ghost][:next_hint]).to eq("")
     end
 
     # Case 5: unmatched verb — empty ghost
@@ -532,10 +535,10 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
     end
 
     context "no partial word typed (cursor at trailing space)" do
-      it "returns empty complete_current and non-empty next_hint" do
+      it "ghosts the first enum value as a TAB-completable completion" do
         result = call(input: "list ", cursor: 5, authenticated: true)
-        expect(result[:ghost][:complete_current]).to eq("")
-        expect(result[:ghost][:next_hint]).not_to be_empty
+        expect(result[:ghost][:complete_current]).to eq("channels")
+        expect(result[:ghost][:next_hint]).to eq("")
       end
     end
 
