@@ -7,7 +7,7 @@ Pito::Themes::Registry.register(
   mode:  :dark,
   base: {
     bg:     "#1f2430",
-    fg:     "#cccac2",
+    fg:     "#e6e3d6",
     purple: "#d4bfff",
     blue:   "#73d0ff",
     cyan:   "#95e6cb",
