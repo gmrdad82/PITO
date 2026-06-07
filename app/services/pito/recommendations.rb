@@ -69,9 +69,10 @@ module Pito
     # Channels whose videos overlap with `game` (game→channel direction).
     #
     # @param game  [::Game]
-    # @param limit [Integer] maximum results (default from service)
+    # @param limit [Integer, nil] maximum results; nil (default) returns ALL
+    #   matched channels, ranked best-first.
     # @return [Array<Game::ChannelRecommendation::Result>]
-    def channels_for(game, limit: ::Game::ChannelRecommendation::DEFAULT_LIMIT)
+    def channels_for(game, limit: nil)
       ::Game::ChannelRecommendation.call(game, limit: limit)
     end
 

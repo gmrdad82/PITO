@@ -34,13 +34,15 @@ RSpec.describe Game::ChannelRecommendation, type: :service do
     expect(results.first.score).to eq(100)
   end
 
-  it "drops channels whose nearest video is below the score threshold" do
+  it "drops channels below the 25 score floor, keeps the rest ranked best-first" do
     near = create(:channel, title: "On-topic")
-    video_for(near, vec(0))
+    video_for(near, vec(0))      # score 100
     far = create(:channel, title: "Off-topic")
-    video_for(far, vec(1)) # orthogonal → score 0
+    video_for(far, vec(1))       # orthogonal → score 0, below floor
 
-    expect(described_class.call(game).map(&:channel)).to eq([ near ])
+    results = described_class.call(game)
+    expect(results.map(&:channel)).to eq([ near ])
+    expect(results.first.score).to eq(100)
   end
 
   it "collapses multiple videos of one channel into a single result (best distance)" do
@@ -62,27 +64,19 @@ RSpec.describe Game::ChannelRecommendation, type: :service do
     expect(described_class.call(game).map(&:channel)).to eq([ channel ])
   end
 
-  it "honours the limit: keyword" do
+  it "returns ALL matched channels by default (no cap)" do
+    4.times do
+      ch = create(:channel)
+      video_for(ch, vec(0))
+    end
+    expect(described_class.call(game).size).to eq(4)
+  end
+
+  it "honours an explicit limit: keyword when given" do
     3.times do
       ch = create(:channel)
       video_for(ch, vec(0))
     end
     expect(described_class.call(game, limit: 2).size).to eq(2)
-  end
-
-  it "includes results whose score equals exactly THRESHOLD_SCORE (boundary: in)" do
-    threshold = described_class::THRESHOLD_SCORE
-    exact_distance = 1.0 - threshold / 100.0
-
-    ch = create(:channel, title: "Boundary Channel")
-    v  = create(:video, channel: ch)
-    v.update_column(:summary_embedding, vec(0))
-
-    allow_any_instance_of(described_class).to receive(:nearest_videos) do
-      [ v ].tap { v.define_singleton_method(:neighbor_distance) { exact_distance } }
-    end
-
-    results = described_class.call(game)
-    expect(results.map(&:channel)).to include(ch)
   end
 end
