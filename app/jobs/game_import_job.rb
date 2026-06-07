@@ -117,7 +117,8 @@ class GameImportJob < ApplicationJob
     enhanced_payload = {
       "body"    => enhanced_body(game),
       "html"    => true,
-      "game_id" => game.id
+      "game_id" => game.id,
+      "accent"  => "pito"   # pito brand-blue border — distinguishes it from the Standard detail message
     }
 
     enhanced_event = Event.create_with_position!(
