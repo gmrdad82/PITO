@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_07_182924) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_08_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -180,6 +180,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_07_182924) do
     t.datetime "igdb_synced_at"
     t.text "last_sync_error"
     t.text "platforms", default: [], null: false, array: true
+    t.text "player_perspectives", default: [], null: false, array: true
     t.date "release_date"
     t.integer "release_day"
     t.integer "release_month"
@@ -190,6 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_07_182924) do
     t.virtual "search_vector", type: :tsvector, as: "to_tsvector('english'::regconfig, (((COALESCE(title, ''::character varying))::text || ' '::text) || COALESCE(summary, ''::text)))", stored: true
     t.text "summary"
     t.vector "summary_embedding", limit: 1024
+    t.text "themes", default: [], null: false, array: true
     t.string "title", default: "Untitled game", null: false
     t.decimal "total_rating", precision: 5, scale: 2
     t.integer "total_rating_count"
@@ -201,11 +203,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_07_182924) do
     t.index ["igdb_id"], name: "index_games_on_igdb_id", unique: true, where: "(igdb_id IS NOT NULL)"
     t.index ["igdb_slug"], name: "index_games_on_igdb_slug", unique: true, where: "(igdb_slug IS NOT NULL)"
     t.index ["igdb_synced_at"], name: "index_games_on_igdb_synced_at"
+    t.index ["player_perspectives"], name: "index_games_on_player_perspectives", using: :gin
     t.index ["release_month", "release_day"], name: "index_games_on_release_month_and_release_day"
     t.index ["release_year"], name: "index_games_on_release_year"
     t.index ["score"], name: "index_games_on_score"
     t.index ["search_vector"], name: "index_games_on_search_vector", using: :gin
     t.index ["summary_embedding"], name: "index_games_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
+    t.index ["themes"], name: "index_games_on_themes", using: :gin
     t.index ["title"], name: "index_games_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 

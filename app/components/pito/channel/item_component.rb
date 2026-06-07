@@ -2,36 +2,46 @@
 
 module Pito
   module Channel
-    # Renders a single channel item: handle, title, #id, and optionally a
-    # [view] link (show_visit: true) and/or a ScoreBarComponent below the id.
+    # The ONE channel item, rendered identically everywhere (centered column,
+    # 120px circular avatar, handle / title / #id). Two surfaces share it and
+    # differ ONLY by kwargs: `list channels` shows the [view] link and no score
+    # bar; the recommended-channels grid hides [view] and shows a ScoreBar.
     #
     # kwargs:
-    #   channel:      [Channel]           — the channel record to display.
-    #   show_visit:   [Boolean]           — when true, renders a plain [view]
-    #                                       link to the channel's YouTube page.
-    #                                       Defaults to false. (NOT VisitComponent,
-    #                                       which auto-navigates on render.)
-    #   score:        [Integer, nil]      — when present (non-nil), renders a
-    #                                       Pito::ScoreBarComponent with that score
-    #                                       below the #id.  nil omits the bar.
+    #   channel:      [Channel]      — the channel record to display.
+    #   show_avatar:  [Boolean]      — render the cached avatar variant (default false).
+    #   show_visit:   [Boolean]      — render a plain [view] link (default false).
+    #                                  NOT VisitComponent (that auto-navigates).
+    #   score:        [Integer, nil] — when present, render a ScoreBarComponent
+    #                                  below the #id. nil omits the bar.
     #
-    # Usage examples:
-    #   # In list channels — with visit link, no score bar:
-    #   render(Pito::Channel::ItemComponent.new(channel: channel, show_visit: true))
+    # Usage:
+    #   # list channels — avatar + [view], no score bar:
+    #   render(Pito::Channel::ItemComponent.new(channel:, show_avatar: true, show_visit: true))
     #
-    #   # In enhanced channel grid — no visit link, with score bar:
-    #   render(Pito::Channel::ItemComponent.new(channel: result.channel, score: result.score))
+    #   # recommended channels — avatar + score bar, no [view]:
+    #   render(Pito::Channel::ItemComponent.new(channel:, show_avatar: true, score: result.score))
     class ItemComponent < ViewComponent::Base
-      def initialize(channel:, show_visit: false, score: nil)
-        @channel    = channel
-        @show_visit = show_visit
-        @score      = score
+      def initialize(channel:, show_visit: false, score: nil, show_avatar: false)
+        @channel     = channel
+        @show_visit  = show_visit
+        @score       = score
+        @show_avatar = show_avatar
       end
 
       attr_reader :channel
 
       def show_visit?
         @show_visit
+      end
+
+      def show_avatar?
+        @show_avatar
+      end
+
+      # Our locally-cached avatar variant (never the YouTube CDN). nil → placeholder.
+      def avatar_url
+        channel.avatar_variant_url
       end
 
       def score?

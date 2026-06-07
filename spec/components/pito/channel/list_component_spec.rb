@@ -24,7 +24,7 @@ RSpec.describe Pito::Channel::ListComponent do
       channel = build_channel
       allow(channel).to receive(:avatar_variant_url).and_return(nil)
       html = render_inline(described_class.new(channels: [ channel ])).to_html
-      expect(html).to include("pito-channel-list__avatar--placeholder")
+      expect(html).to include("pito-channel-item__avatar--placeholder")
       expect(html).not_to include("<img")
     end
   end

@@ -35,6 +35,8 @@ module Pito
         breakdown = {
           e: Signals.embedding(cosine_distance(game_a&.summary_embedding, game_b&.summary_embedding)),
           g: Signals.jaccard(facet(game_a, :genres), facet(game_b, :genres)),
+          t: Signals.jaccard(game_a&.themes, game_b&.themes),
+          pp: Signals.jaccard(game_a&.player_perspectives, game_b&.player_perspectives),
           d: Signals.jaccard(facet(game_a, :developer_companies), facet(game_b, :developer_companies)),
           p: Signals.jaccard(facet(game_a, :publisher_companies), facet(game_b, :publisher_companies)),
           s: Signals.score_proximity(game_a&.score, game_b&.score)
@@ -89,11 +91,15 @@ module Pito
         target_genres = facet_ids(@game, :genres)
         target_devs   = facet_ids(@game, :developer_companies)
         target_pubs   = facet_ids(@game, :publisher_companies)
+        target_themes = @game.themes
+        target_persps = @game.player_perspectives
 
         candidates.filter_map { |cand|
           breakdown = {
             e: Signals.embedding(distances[cand.id]),
             g: Signals.jaccard(target_genres, facet_ids(cand, :genres)),
+            t: Signals.jaccard(target_themes, cand.themes),
+            pp: Signals.jaccard(target_persps, cand.player_perspectives),
             d: Signals.jaccard(target_devs,   facet_ids(cand, :developer_companies)),
             p: Signals.jaccard(target_pubs,   facet_ids(cand, :publisher_companies)),
             s: Signals.score_proximity(@game.score, cand.score)

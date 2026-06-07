@@ -48,6 +48,33 @@ RSpec.describe Pito::Channel::ItemComponent do
     end
   end
 
+  # ── show_avatar ──────────────────────────────────────────────────────────────
+
+  describe "show_avatar:" do
+    it "renders the avatar image when show_avatar: true and one is attached" do
+      channel = build_channel
+      allow(channel).to receive(:avatar_variant_url).and_return("/rails/active_storage/blobs/avatar.jpg")
+      node = render_inline(described_class.new(channel: channel, show_avatar: true))
+      img = node.at_css("img.pito-channel-item__avatar")
+      expect(img).to be_present
+      expect(img["src"]).to include("/rails/active_storage/blobs/avatar.jpg")
+    end
+
+    it "renders the placeholder when show_avatar: true and none is attached" do
+      channel = build_channel
+      allow(channel).to receive(:avatar_variant_url).and_return(nil)
+      node = render_inline(described_class.new(channel: channel, show_avatar: true))
+      expect(node.at_css(".pito-channel-item__avatar--placeholder")).to be_present
+      expect(node.css("img")).to be_empty
+    end
+
+    it "renders no avatar by default (show_avatar: false)" do
+      channel = build_channel
+      node = render_inline(described_class.new(channel: channel))
+      expect(node.css(".pito-channel-item__avatar")).to be_empty
+    end
+  end
+
   # ── show_visit: true ─────────────────────────────────────────────────────────
 
   describe "show_visit: true" do

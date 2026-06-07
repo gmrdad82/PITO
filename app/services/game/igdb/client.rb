@@ -106,6 +106,8 @@ class Game
         total_rating total_rating_count
         cover.id cover.image_id
         genres.id genres.name genres.slug
+        themes.id themes.name
+        player_perspectives.id player_perspectives.name
         platforms.id platforms.name platforms.slug
         involved_companies.id
         involved_companies.developer

@@ -1,6 +1,15 @@
 <%# Pito::Channel::ItemComponent — shared channel item: handle / title / id,
     with optional [view] link (show_visit: true) and/or ScoreBarComponent (score: N). %>
 <div class="pito-channel-item">
+  <%# Avatar (our cached variant) — only when show_avatar: true %>
+  <% if show_avatar? %>
+    <% if (avatar = avatar_url) %>
+      <%= image_tag avatar, alt: channel.title.to_s, class: "pito-channel-item__avatar block" %>
+    <% else %>
+      <div class="pito-channel-item__avatar pito-channel-item__avatar--placeholder text-fg-faded">?</div>
+    <% end %>
+  <% end %>
+
   <%# Handle %>
   <div class="pito-channel-item__handle text-cyan">
     <%= channel.at_handle %>

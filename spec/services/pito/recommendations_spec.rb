@@ -51,7 +51,7 @@ RSpec.describe Pito::Recommendations, type: :service do
         results = described_class.similar_games(game, limit: 10)
         expect(results).to all(be_a(Pito::Recommendation::GameSimilarity::Result))
         expect(results.map(&:game)).to eq([ near ])
-        expect(results.first.score).to eq(45) # embedding-only blend (E .45 × 100)
+        expect(results.first.score).to eq(Pito::Recommendation::Weights.blend(e: 100)) # embedding-only blend
         expect(results.first.breakdown[:e]).to eq(100.0)
       end
 

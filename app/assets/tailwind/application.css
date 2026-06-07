@@ -1016,7 +1016,7 @@ html {
    row and the `=` track collapsed to nothing ("[]"). */
 .pito-game-enhanced-message__channel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   /* Generous row gap: each score bar floats its bubble above itself, so wrapped
      rows need clearance or the next row's handle crowds the bubble. */
   gap: 2rem 1rem;
@@ -1150,31 +1150,45 @@ html {
  * Used in ListComponent (show_visit: true, no score) and in the enhanced
  * game message channel grid (show_visit: false, with score bar).
  */
+/* The ONE channel item, identical everywhere (list channels + recommended
+   channels). Centered column, 120px circular avatar — only [view] vs the
+   ScoreBarComponent differ, controlled by ItemComponent kwargs. */
 .pito-channel-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 0.2rem;
   min-width: 0;
 }
 
-/* Handle: allow wrapping on narrow columns (game enhanced grid). */
-.pito-channel-item__handle {
-  word-break: break-all;
+.pito-channel-item__avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
-/* Title: truncate to one line in list context; inherit in grid context. */
+.pito-channel-item__avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-faded);
+  background: var(--bg-elevated);
+}
+
+/* Title: trimmed to a single row (…) so it never wraps. */
 .pito-channel-item__title {
   max-width: 100%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-/* Score bar: keep the standalone bar's top margin (~1.75rem) so the floating
-   score bubble clears the #id above it — a tight 0.25rem made the bubble (the
-   stray "27") collide with the id line. */
+/* Score bar sits below the #id with a little breathing room. */
 .pito-channel-item__score {
   margin-top: 0.5rem;
+  width: 100%;
 }
 
 /* ── Theme system ──────────────────────────────────────────────

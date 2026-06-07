@@ -105,7 +105,7 @@ RSpec.describe Channel::GameRecommendation, type: :service do
 
     result = described_class.call(channel).find { |r| r.game == dead_space }
     expect(result).to be_present
-    expect(result.score).to eq(32) # G=100 + D=100 → blend 32
+    expect(result.score).to eq(Pito::Recommendation::Weights.blend(g: 100, d: 100)) # shared genre + developer
   end
 
   it "includes results whose score equals exactly the FLOOR (boundary: in)" do

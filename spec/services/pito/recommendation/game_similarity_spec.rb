@@ -9,15 +9,19 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
     Array.new(1024, 0.0).tap { |a| a[index] = value }
   end
 
-  def make_game(embedding: nil, genres: [], developers: [], publishers: [], score: nil)
+  def make_game(embedding: nil, genres: [], developers: [], publishers: [], score: nil,
+                themes: [], perspectives: [])
     g = create(:game)
     g.update_column(:summary_embedding, embedding) unless embedding.nil?
     g.update_column(:score, score) unless score.nil?
+    g.update_columns(themes: themes, player_perspectives: perspectives)
     genres.each     { |ge| create(:game_genre,     game: g, genre: ge) }
     developers.each { |c|  create(:game_developer, game: g, company: c) }
     publishers.each { |c|  create(:game_publisher, game: g, company: c) }
     g.reload
   end
+
+  W = Pito::Recommendation::Weights
 
   let(:genre_x) { create(:genre) }
   let(:dev_a)   { create(:company) }
@@ -44,39 +48,52 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
   # ── single-signal weighting (embedding stays identical ⇒ E=100 is stable) ──
 
   it "scores an identical-everything twin at 100 with a full breakdown" do
-    target = make_game(embedding: vec(0), genres: [ genre_x ], developers: [ dev_a ], publishers: [ pub_b ], score: 80)
-    make_game(embedding: vec(0), genres: [ genre_x ], developers: [ dev_a ], publishers: [ pub_b ], score: 80)
+    facets = { genres: [ genre_x ], developers: [ dev_a ], publishers: [ pub_b ],
+               score: 80, themes: [ "Action" ], perspectives: [ "Third person" ] }
+    target = make_game(embedding: vec(0), **facets)
+    make_game(embedding: vec(0), **facets)
 
     result = described_class.call(target).first
     expect(result.score).to eq(100)
-    expect(result.breakdown).to eq(e: 100.0, g: 100.0, d: 100.0, p: 100.0, s: 100.0)
+    expect(result.breakdown).to eq(e: 100.0, g: 100.0, t: 100.0, pp: 100.0, s: 100.0, d: 100.0, p: 100.0)
   end
 
-  it "scores an embedding-only identical match at 45 (E weight)" do
+  it "scores an embedding-only identical match by the E weight alone" do
     target = make_game(embedding: vec(0))
     make_game(embedding: vec(0))
-    expect(described_class.call(target).first.score).to eq(45)
+    expect(described_class.call(target).first.score).to eq(W.blend(e: 100))
   end
 
-  it "adds genre overlap on top of embedding (45 → 65)" do
+  it "adds genre overlap on top of embedding" do
     target  = make_game(embedding: vec(0), genres: [ genre_x ])
     with_g  = make_game(embedding: vec(0), genres: [ genre_x ])
     without = make_game(embedding: vec(0))
 
     by_game = described_class.call(target).index_by(&:game)
-    expect(by_game[with_g].score).to eq(65)
-    expect(by_game[without].score).to eq(45)
+    expect(by_game[with_g].score).to eq(W.blend(e: 100, g: 100))
+    expect(by_game[without].score).to eq(W.blend(e: 100))
   end
 
-  it "weights a shared developer above a shared publisher (57 vs 53)" do
+  it "weights a shared developer above a shared publisher" do
     target = make_game(embedding: vec(0), developers: [ dev_a ], publishers: [ pub_b ])
     dev    = make_game(embedding: vec(0), developers: [ dev_a ])
     pub    = make_game(embedding: vec(0), publishers: [ pub_b ])
 
     by_game = described_class.call(target).index_by(&:game)
-    expect(by_game[dev].score).to eq(57)
-    expect(by_game[pub].score).to eq(53)
+    expect(by_game[dev].score).to eq(W.blend(e: 100, d: 100))
+    expect(by_game[pub].score).to eq(W.blend(e: 100, p: 100))
     expect(by_game[dev].score).to be > by_game[pub].score
+  end
+
+  it "weights a shared perspective as the strongest single facet signal" do
+    target = make_game(embedding: vec(0), perspectives: [ "Third person" ])
+    pp     = make_game(embedding: vec(1), perspectives: [ "Third person" ]) # orthogonal embed, shares PP only
+    none   = make_game(embedding: vec(1), genres: [ genre_x ])              # orthogonal, no shared signal
+
+    results = described_class.call(target).index_by(&:game)
+    expect(results[pp].score).to eq(W.blend(pp: 100))
+    expect(results[pp].score).to be > W.blend(g: 100)
+    expect(results).not_to have_key(none) # nothing shared → below floor
   end
 
   it "ranks a closer score higher than a distant one" do
@@ -90,21 +107,21 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
 
   # ── floor + facets ─────────────────────────────────────────────────────────
 
-  it "drops a candidate below the 25 floor (orthogonal embedding, single genre = 20)" do
+  it "drops a candidate below the floor (orthogonal embedding, nothing shared → 0)" do
     target = make_game(embedding: vec(0), genres: [ genre_x ])
-    weak   = make_game(embedding: vec(1), genres: [ genre_x ]) # E=0, G=100 → blend 20
+    weak   = make_game(embedding: vec(1)) # E=0, no shared facets → blend 0 < floor
 
     expect(described_class.call(target).map(&:game)).not_to include(weak)
   end
 
   it "surfaces a facet-similar game even when the target has no embedding" do
     target = make_game(embedding: nil, genres: [ genre_x ], developers: [ dev_a ])
-    # shares genre + developer → G=100, D=100 → blend 32 (above floor), no embedding
+    # shares genre + developer → G=100, D=100, no embedding
     cand = make_game(embedding: nil, genres: [ genre_x ], developers: [ dev_a ])
 
     result = described_class.call(target).find { |r| r.game == cand }
     expect(result).to be_present
-    expect(result.score).to eq(32)
+    expect(result.score).to eq(W.blend(g: 100, d: 100))
     expect(result.breakdown[:e]).to eq(0.0)
   end
 
@@ -138,12 +155,12 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
   # ── pairwise .between (the composition primitive, no pool / no floor) ───────
 
   describe ".between" do
-    it "blends two specific games and is not floored (genre+developer = 32)" do
+    it "blends two specific games and is not floored (genre + developer)" do
       g1 = make_game(embedding: nil, genres: [ genre_x ], developers: [ dev_a ])
       g2 = make_game(embedding: nil, genres: [ genre_x ], developers: [ dev_a ])
       out = described_class.between(g1, g2)
-      expect(out[:score]).to eq(32)
-      expect(out[:breakdown]).to eq(e: 0.0, g: 100.0, d: 100.0, p: 0.0, s: 0.0)
+      expect(out[:score]).to eq(W.blend(g: 100, d: 100))
+      expect(out[:breakdown]).to eq(e: 0.0, g: 100.0, t: 0.0, pp: 0.0, d: 100.0, p: 0.0, s: 0.0)
     end
 
     it "computes cosine embedding similarity in Ruby (identical = E 100)" do

@@ -78,8 +78,8 @@ RSpec.describe Game::ChannelRecommendation, type: :service do
 
       result = described_class.call(dead_space).find { |r| r.channel == channel }
       expect(result).to be_present
-      # G=100 + D=100 → blend 32, above the 25 floor.
-      expect(result.score).to eq(32)
+      # shares genre + developer → GameSimilarity.between blends G + D, above floor.
+      expect(result.score).to eq(Pito::Recommendation::Weights.blend(g: 100, d: 100))
     end
 
     it "scores a channel 100 when it directly covers the target game (explicit link)" do
