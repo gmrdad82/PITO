@@ -152,7 +152,7 @@ class ChannelInfoJob < ApplicationJob
       else
         subs = format_number(s[:subscribers])
         views = format_number(s[:views])
-        %(#{channel_label(s)}<br><span class="text-fg-dim">Subscribers:</span> <span class="text-cyan">#{subs}</span> · <span class="text-fg-dim">Views:</span> <span class="text-cyan">#{views}</span>)
+        %(#{channel_label(s)}<br><span class="text-fg-dim">#{I18n.t("pito.jobs.channel_info.stats.subscribers")}</span> <span class="text-cyan">#{subs}</span> · <span class="text-fg-dim">#{I18n.t("pito.jobs.channel_info.stats.views")}</span> <span class="text-cyan">#{views}</span>)
       end
     end
 
@@ -160,7 +160,7 @@ class ChannelInfoJob < ApplicationJob
   end
 
   def channel_label(s)
-    title = s[:title].to_s.presence || "Channel"
+    title = s[:title].to_s.presence || I18n.t("pito.jobs.channel_info.channel_fallback")
     handle = s[:handle].to_s.presence
     if handle
       %(#{channel_title_html(title)} — #{channel_handle_html(handle)})
