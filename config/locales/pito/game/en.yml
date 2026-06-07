@@ -2,6 +2,7 @@ en:
   pito:
     game:
       detail:
+        title: "Title"
         developer: "Developer"
         publisher: "Publisher"
         release: "Release"

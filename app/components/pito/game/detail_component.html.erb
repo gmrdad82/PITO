@@ -14,14 +14,18 @@
       <% end %>
     </div>
 
-    <%# Right column: title + KV table %>
+    <%# Right column: KV table (Title row first) %>
     <div class="pito-game-detail__meta flex flex-col gap-2 min-w-0">
 
-      <%# Title %>
-      <div class="text-fg font-bold"><%= @game.title %></div>
-
-      <%# KV table — Developer / Publisher / Release / Platforms / Owned / Description / Genres %>
+      <%# KV table — Title / Developer / Publisher / Release / Platforms / Owned / Description / Genres %>
       <div class="grid grid-cols-[max-content_1fr] gap-x-2 gap-y-1">
+
+    <%= render(Pito::Table::KeyValueRowComponent.new(
+          key_text:   t("pito.game.detail.title"),
+          value_text: @game.title,
+          key_class:  "text-fg-dim whitespace-nowrap",
+          value_class: "text-fg"
+        )) %>
 
     <% if developer_names.present? %>
       <%= render(Pito::Table::KeyValueRowComponent.new(
