@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_07_182142) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_07_182924) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -417,7 +417,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_07_182142) do
     t.virtual "search_vector", type: :tsvector, as: "to_tsvector('english'::regconfig, (((COALESCE(title, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)))", stored: true
     t.vector "summary_embedding", limit: 1024
     t.text "tags", default: [], null: false, array: true
-    t.string "thumbnail_url"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.string "youtube_video_id", null: false

@@ -44,7 +44,6 @@ class Channel
       DISPLAY_ONLY_FIELDS = %w[
         view_count like_count comment_count
         duration_seconds published_at
-        thumbnail_url
       ].freeze
 
       DIFF_RESOLVABLE_FIELDS = (WRITABLE_FIELDS + DISPLAY_ONLY_FIELDS).freeze
@@ -98,7 +97,7 @@ class Channel
 
       def youtube_side(field)
         case field
-        when "title", "description", "tags", "category_id", "thumbnail_url"
+        when "title", "description", "tags", "category_id"
           from_snippet(field)
         when "published_at"
           from_snippet("published_at")
@@ -121,7 +120,6 @@ class Channel
         when "tags"          then Array(read_indifferent(snippet, :tags))
         when "category_id"   then read_indifferent(snippet, :category_id) ||
                                   read_indifferent(snippet, :categoryId)
-        when "thumbnail_url" then extract_thumbnail(snippet)
         when "published_at"  then read_indifferent(snippet, :published_at) ||
                                   read_indifferent(snippet, :publishedAt)
         end
@@ -173,18 +171,6 @@ class Channel
         return nil if iso.blank?
         ActiveSupport::Duration.parse(iso.to_s).to_i
       rescue ArgumentError, TypeError
-        nil
-      end
-
-      def extract_thumbnail(snippet)
-        thumbnails = read_indifferent(snippet, :thumbnails)
-        return nil if thumbnails.blank?
-
-        %i[maxres standard high medium default].each do |tier|
-          tier_hash = read_indifferent(thumbnails, tier)
-          url = read_indifferent(tier_hash, :url) if tier_hash.is_a?(Hash)
-          return url if url.present?
-        end
         nil
       end
 

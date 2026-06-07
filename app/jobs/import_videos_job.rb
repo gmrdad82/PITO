@@ -224,6 +224,9 @@ class ImportVideosJob < ApplicationJob
     # P4 — view_count moved off the videos column onto the polymorphic
     # `stats` table; pull it out of the AR attrs and persist via the facade.
     views = attrs.delete(:view_count)
+    # Thumbnails are cached as OUR ActiveStorage copy (not a column) — pull the
+    # source URL out of the AR attrs and ingest it off the import path.
+    thumb_url = attrs.delete(:thumbnail_url)
 
     video = Video.find_or_initialize_by(youtube_video_id: attrs[:youtube_video_id])
     video.channel = channel
@@ -232,6 +235,7 @@ class ImportVideosJob < ApplicationJob
     video.save!
 
     Pito::Stats.set(video, :views, views)
+    VideoThumbnailJob.perform_later(video.id, thumb_url) if thumb_url.present?
 
     # P9.5 — (re)embed the video when it's new or an embedded field changed.
     # `Video::VoyageIndexer` is digest-gated, and `VideoVoyageIndexJob` only

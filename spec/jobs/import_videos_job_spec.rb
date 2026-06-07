@@ -142,7 +142,6 @@ RSpec.describe ImportVideosJob do
     expect(video.like_count).to eq(50)
     expect(video.comment_count).to eq(10)
     expect(video.privacy_status).to eq("public")
-    expect(video.thumbnail_url).to eq("https://example.com/thumb1.jpg")
     expect(video.tags).to eq([ "gaming", "rpg" ])
     expect(video.category_id).to eq("20")
     expect(video.etag).to eq("etag123")

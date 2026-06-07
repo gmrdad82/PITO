@@ -67,6 +67,8 @@ class NightlyVideoSyncJob < ApplicationJob
     return if attrs[:youtube_video_id].blank?
 
     views = attrs.delete(:view_count)
+    # Thumbnails are cached as OUR ActiveStorage copy (not a column).
+    thumb_url = attrs.delete(:thumbnail_url)
 
     video = ::Video.find_or_initialize_by(youtube_video_id: attrs[:youtube_video_id])
     video.channel = channel
@@ -75,6 +77,7 @@ class NightlyVideoSyncJob < ApplicationJob
     video.save!
 
     ::Pito::Stats.set(video, :views, views)
+    ::VideoThumbnailJob.perform_later(video.id, thumb_url) if thumb_url.present?
 
     if video.previously_new_record? || video.saved_changes.keys.intersect?(EMBED_FIELDS)
       ::VideoVoyageIndexJob.perform_later(video.id)

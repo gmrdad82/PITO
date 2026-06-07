@@ -10,7 +10,20 @@ class Video < ApplicationRecord
   has_many :linked_games, through: :video_game_links, source: :game
   has_many :stats, as: :entity, dependent: :destroy
 
+  # Locally-cached thumbnail (480x270 JPEG). Attached during sync/import via
+  # Video::Thumbnail::Ingest instead of hotlinking i.ytimg.com (which 429s).
+  has_one_attached :thumbnail
+
   has_neighbors :summary_embedding
+
+  # Display variant URL for the thumbnail, or nil when none is attached.
+  def thumbnail_variant_url
+    return nil unless thumbnail.attached?
+
+    thumbnail.variant(resize_to_limit: [ 480, 270 ])
+  rescue StandardError
+    nil
+  end
 
   # Stat reader — sourced from the polymorphic `stats` table via the
   # `Pito::Stats` facade (P4). Returns nil when no stat row exists.
