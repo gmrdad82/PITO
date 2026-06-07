@@ -283,6 +283,10 @@ class ChatController < ApplicationController
       input_kind: :slash,
       input_text: input
     )
+    # The /connect input is consumed into the turn echo here. Clear any
+    # persisted draft (mirrors handle_async) so the chatbox doesn't rehydrate
+    # "/connect" when the OAuth round-trip reloads the conversation page.
+    conversation.update_column(:draft, nil) if conversation.draft.present?
     broadcaster = Pito::Stream::Broadcaster.new(conversation:)
 
     # Auth gating: /connect requires an active session. Check before
