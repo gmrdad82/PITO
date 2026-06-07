@@ -188,10 +188,7 @@ Total commits: **172**
 
 <!-- ── Smoke-test session (2026-06-07): bugs found + fixed while validating ── -->
 <!-- Group A (auth/unauth chat) — VALIDATED & removed: e39f6e55, a9022cbd, 3437a743 -->
-181. [ ] `2aafed3f` (2026-06-07) — list channels/videos no longer returns the games shelf
-182. [ ] `b6f170d7` (2026-06-07) — Add list channels (3-column kv-grid: id, name, handle)
-183. [ ] `12c1429a` (2026-06-07) — Channel handle column in cyan
-184. [x] `0d764eaa` (2026-06-07) — list verb suggests nouns (channels/videos/games), not release-status
+<!-- Group B (lists) — VALIDATED & removed: 2aafed3f, b6f170d7, 12c1429a, 0d764eaa -->
 185. [x] `dd61fae9` (2026-06-07) — Hide post-command dots for sidebar fast-paths (emit pito:done)
 <!-- Group E (themes) — VALIDATED & removed: 1182001c (theme marker '<-' cyan) -->
 
