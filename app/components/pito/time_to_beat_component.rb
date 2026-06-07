@@ -253,17 +253,28 @@ module Pito
       }
     end
 
-    # CSS gradient-stops string for the bar's inline `background-image`.
-    # Projects HEAT_THRESHOLDS hour values onto `max_x` so the visible
-    # color spread reflects each game's actual effort scale. Each
-    # threshold's percentage is clamped to 100% so over-projecting stops
-    # don't break the CSS gradient syntax. A trailing stop at 100% is
-    # appended whenever the last threshold projects below 100% so the bar
-    # extends fully to its right edge. Colors are theme accent var()/
-    # color-mix() expressions (see HEAT_THRESHOLDS) — no literal hex.
+    # Color-ramp axis (0..completionist). The 40 `=` cells span exactly
+    # 0..completionist, and the heat ramp is projected onto the SAME span so
+    # the color under each cell is the heat color for that cell's absolute
+    # hour count (T17.5). Floored at 10h so a tiny game can't divide by zero.
+    def color_axis_max
+      [ hours[:completionist].to_i, 10 ].max
+    end
+
+    # CSS gradient-stops string for the fill's inline `background-image`
+    # (clipped to the `=` glyphs). Projects HEAT_THRESHOLDS hour values onto
+    # `color_axis_max` (= completionist) so the visible color spread reflects
+    # each game's actual effort scale: a short game (comp 30h) stays mostly
+    # green/lime; a marathon (comp 700h) goes mostly pink because the 100h
+    # "insanity" stop lands at ~14% and the pink fills the rest; a balanced
+    # game (comp 80h) reads green→amber. Each percentage is clamped to 100%
+    # so over-projecting stops don't break the CSS gradient syntax; a
+    # trailing 100% stop is appended when the last threshold falls short so
+    # the ramp reaches the right edge. Colors are the T17.1 contrast-safe
+    # accent var()/color-mix() expressions (see HEAT_THRESHOLDS) — no hex.
     def gradient_stops
       stops = HEAT_THRESHOLDS.map do |hours_threshold, color|
-        pct = [ (hours_threshold.to_f / max_x * 100).round(2), 100 ].min
+        pct = [ (hours_threshold.to_f / color_axis_max * 100).round(2), 100 ].min
         "#{color} #{pct}%"
       end
       stops << "#{HEAT_THRESHOLDS.last[1]} 100%" unless stops.last.end_with?("100%")

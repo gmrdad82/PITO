@@ -16,17 +16,19 @@
   </div>
 
   <%# Row 2 — the bar.
-      The bar element carries the per-game adaptive gradient via an inline
-      `background-image` computed by `gradient_stops` (HEAT_THRESHOLDS
-      projected onto `max_x`). The `=` fill glyphs paint via the static
-      `.pito-ttb__fill` CSS (background-clip: text), while the bar's own
-      background carries the adaptive ramp. Recovered from commit 991f86fb. %>
+      The `=` fill glyphs carry the per-game ADAPTIVE heat ramp: the inline
+      `background-image` from `gradient_stops` (HEAT_THRESHOLDS projected onto
+      0..completionist) is clipped to the glyphs via `background-clip: text`,
+      so the color under each cell is the heat color for that cell's absolute
+      hour count (T17.5). A short game stays green/lime; a marathon goes
+      pink. The bar element itself keeps a plain background so the brackets
+      and ticks read cleanly on top. %>
   <div class="pito-ttb__bar-row">
-    <span class="pito-ttb__bar"
-          style="background-image: linear-gradient(to right, <%= gradient_stops %>);">
+    <span class="pito-ttb__bar">
       <span class="pito-ttb__track">
         <span class="pito-ttb__bracket">[</span>
-        <span class="pito-ttb__fill"><%= fill_text %></span>
+        <span class="pito-ttb__fill"
+              style="background-image: linear-gradient(to right, <%= gradient_stops %>);"><%= fill_text %></span>
         <span class="pito-ttb__bracket">]</span>
       </span>
       <%# Pillar ticks: a `|` mark per pillar, snapped to its cell midpoint on

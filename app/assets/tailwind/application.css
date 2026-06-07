@@ -794,21 +794,17 @@ html {
   color: var(--fg-default);
 }
 
-/* The `=` glyphs carry a static effort-ramp gradient via
-   background-clip:text — green→lime→amber→pink — so the text always reads
-   the full ramp regardless of max_x. Theme-aware: every stop is an accent
-   var or a color-mix of two accents (see block comment above). */
+/* The `=` glyphs carry the per-game ADAPTIVE heat ramp (T17.5): the
+   `background-image` linear-gradient is set INLINE on the element by
+   `Pito::TimeToBeatComponent#gradient_stops` (HEAT_THRESHOLDS projected onto
+   0..completionist), and clipped to the glyphs here. A short game reads
+   mostly green/lime; a marathon reads mostly pink. Theme-aware + contrast-
+   safe: every stop is a fg-mixed accent color-mix (see HEAT_THRESHOLDS / the
+   T17.1 sweep) — no literal hex. */
 .pito-ttb__fill {
   flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
-  background-image: linear-gradient(
-    to right,
-    color-mix(in oklch, var(--accent-green) 70%, var(--fg-default)),                                                  /* low        — green */
-    color-mix(in oklch, color-mix(in oklch, var(--accent-green), var(--accent-yellow)) 58%, var(--fg-default)),       /* some       — lime  */
-    color-mix(in oklch, color-mix(in oklch, var(--accent-orange) 60%, var(--accent-yellow)) 58%, var(--fg-default)),  /* commitment — amber */
-    color-mix(in oklch, color-mix(in oklch, var(--accent-red), var(--accent-purple)) 82%, var(--fg-default))          /* insanity   — pink  */
-  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
