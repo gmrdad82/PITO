@@ -224,7 +224,11 @@ export default class extends Controller {
   #arm(row) {
     this.armedRow = row
     row._resumeSavedHtml = row.innerHTML
-    row.innerHTML = `<span class="text-yellow text-xs italic px-1">press d again to delete</span>`
+    // Witty confirm copy injected server-side (Pito::Copy); orange = confirmation,
+    // 16px (no size class — the app is 16px-only), italic.
+    const prompt = this.element.querySelector("[data-delete-prompt]")?.dataset.deletePrompt
+                   || "press d again to delete"
+    row.innerHTML = `<span class="text-orange italic px-1">${prompt}</span>`
   }
 
   // Disarms any currently armed row, restoring its original HTML.
