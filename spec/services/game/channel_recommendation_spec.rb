@@ -80,6 +80,32 @@ RSpec.describe Game::ChannelRecommendation, type: :service do
     expect(described_class.call(game, limit: 2).size).to eq(2)
   end
 
+  describe "include_all:" do
+    it "returns EVERY channel, video-less ones scored 0 and sorted last" do
+      near = create(:channel, title: "Has video")
+      video_for(near, vec(0)) # score 100
+      empty1 = create(:channel, title: "No videos A")
+      empty2 = create(:channel, title: "No videos B")
+
+      results = described_class.call(game, include_all: true)
+      expect(results.map(&:channel)).to contain_exactly(near, empty1, empty2)
+      expect(results.first.channel).to eq(near)
+      expect(results.first.score).to eq(100)
+      expect(results.select { |r| r.score.zero? }.map(&:channel)).to contain_exactly(empty1, empty2)
+    end
+
+    it "does not apply the score floor when include_all is true" do
+      far = create(:channel, title: "Off-topic")
+      video_for(far, vec(1)) # score 0, below the 25 floor
+      results = described_class.call(game, include_all: true)
+      expect(results.map(&:channel)).to include(far)
+    end
+
+    it "still returns [] when there are no channels at all" do
+      expect(described_class.call(game, include_all: true)).to eq([])
+    end
+  end
+
   describe "explicit video→game links" do
     it "scores a channel 100 when one of its videos is linked to the game (beats weak embedding)" do
       ch = create(:channel, title: "Linked")

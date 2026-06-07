@@ -31,9 +31,10 @@ module Pito
       end
 
       def channel_results
-        # All matched channels, ranked best-first — every channel gets its own
-        # ScoreBarComponent (a weak match just shows a low tick).
-        @channel_results ||= Pito::Recommendations.channels_for(@game)
+        # Every channel the user has, ranked best-first — each gets its own
+        # ScoreBarComponent. Channels with no relevant videos/links score 0 and
+        # sort last, so the user always sees the full slate to pick from.
+        @channel_results ||= Pito::Recommendations.channels_for(@game, include_all: true)
       end
 
       def similar_game_results

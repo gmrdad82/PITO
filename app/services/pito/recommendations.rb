@@ -71,9 +71,11 @@ module Pito
     # @param game  [::Game]
     # @param limit [Integer, nil] maximum results; nil (default) returns ALL
     #   matched channels, ranked best-first.
+    # @param include_all [Boolean] when true, every channel is returned (video-less
+    #   ones at score 0, sorted last) — the "which channel suits this game?" surface.
     # @return [Array<Game::ChannelRecommendation::Result>]
-    def channels_for(game, limit: nil)
-      ::Game::ChannelRecommendation.call(game, limit: limit)
+    def channels_for(game, limit: nil, include_all: false)
+      ::Game::ChannelRecommendation.call(game, limit: limit, include_all: include_all)
     end
 
     # Games that a channel's top videos overlap with (channel→game direction).

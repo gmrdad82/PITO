@@ -30,13 +30,18 @@ class Game
 
     Result = Struct.new(:channel, :score, :distance, keyword_init: true)
 
-    def self.call(game, limit: nil)
-      new(game, limit: limit).call
+    def self.call(game, limit: nil, include_all: false)
+      new(game, limit: limit, include_all: include_all).call
     end
 
-    def initialize(game, limit: nil)
-      @game  = game
-      @limit = limit
+    # @param include_all [Boolean] when true, EVERY channel is returned —
+    #   channels with no relevant videos/links score 0 and sort last. The
+    #   "which of my channels suits this game?" surface uses this so the user
+    #   sees all their channels, not only the ones that already match.
+    def initialize(game, limit: nil, include_all: false)
+      @game        = game
+      @limit       = limit
+      @include_all = include_all
     end
 
     def call
@@ -57,13 +62,14 @@ class Game
       # matches — pin them at distance 0 (score 100), beating any embedding score.
       linked_channel_ids.each { |cid| best[cid] = LINKED_DISTANCE }
 
-      return [] if best.empty?
+      channel_ids = @include_all ? ::Channel.pluck(:id) : best.keys
+      return [] if channel_ids.empty?
 
-      channels = ::Channel.where(id: best.keys).index_by(&:id)
-      ranked = best
-        .filter_map { |cid, dist| channels[cid] && build_result(channels[cid], dist) }
-        .select { |result| result.score >= THRESHOLD_SCORE }
-        .sort_by { |result| -result.score }
+      channels = ::Channel.where(id: channel_ids).index_by(&:id)
+      ranked = channel_ids
+        .filter_map { |cid| channels[cid] && build_result(channels[cid], best[cid]) }
+        .select { |result| @include_all || result.score >= THRESHOLD_SCORE }
+        .sort_by { |result| [ -result.score, result.channel.id ] }
       @limit ? ranked.first(@limit) : ranked
     end
 
@@ -89,7 +95,8 @@ class Game
     end
 
     def build_result(channel, distance)
-      score = ((1 - distance) * 100).round.clamp(0, 100)
+      # No signal (no relevant video/link) → distance nil → score 0.
+      score = distance.nil? ? 0 : ((1 - distance) * 100).round.clamp(0, 100)
       Result.new(channel: channel, score: score, distance: distance)
     end
   end
