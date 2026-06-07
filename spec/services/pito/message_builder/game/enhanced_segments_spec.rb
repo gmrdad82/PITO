@@ -81,7 +81,7 @@ RSpec.describe Pito::MessageBuilder::Game::EnhancedSegments do
   describe ".call with channel results" do
     let(:connection) { create(:youtube_connection) }
     let(:channel)    { create(:channel, handle: "@fromsoft", youtube_connection: connection) }
-    let(:ch_result)  { Game::ChannelRecommendation::Result.new(channel: channel, score: 91, distance: 0.09) }
+    let(:ch_result)  { Game::ChannelRecommendation::Result.new(channel: channel, score: 91, breakdown: nil) }
     let(:event)      { build_enhanced_event }
 
     subject(:payload) do

@@ -1,32 +1,33 @@
 # frozen_string_literal: true
 
-# Games a channel's content overlaps with — the **channel→game** direction.
+# Games best suited to a channel — the **channel→game** direction ("what should
+# this channel cover next?"). Symmetric to Game::ChannelRecommendation: a game
+# `g` suits channel `c` when `c` already covers games like `g`.
 #
-# Design B: channels have no embedding of their own. A channel IS its videos, so
-# this probes with the channel's **top videos by view count** (materialized in
-# the polymorphic `stats` table) and, for each, finds the nearest games (cosine).
-# Game hits are merged keeping the best (closest) distance per game. Bounded:
-# `TOP_VIDEOS` probes × `GAMES_PER_VIDEO` neighbors — a handful of sub-ms HNSW
-# lookups, no synthetic channel vector and no centroid blur.
+#   K  — `g` is linked to one of `c`'s videos → LINK_SCORE (100).
+#   GG — best `GameSimilarity.between(g, linked_game)` across the games `c`
+#        already covers (the same composition, the other way round).
+#   E  — `c`'s top videos (by views) nearest `g` (cosine) — cold-start fallback.
 #
-# Returns an Array of `Result` structs (game, 0–100 score, cosine distance),
-# ranked best-first, dropping games below `THRESHOLD_SCORE`.
+#   game_score = max(K, GG, E), ranked best-first, floored at FLOOR.
 #
-# Nil channel / no embedded videos → `[]`. Games without an embedding are skipped.
+# Candidate games = those sharing a genre/developer/publisher with any of `c`'s
+# linked games, UNION the games nearest `c`'s probe videos. nil channel / no
+# signal → `[]`.
 class Channel
   class GameRecommendation
-    DEFAULT_LIMIT   = 8
-    THRESHOLD_SCORE = 25  # drop hits below this 0–100 score floor
-    TOP_VIDEOS      = 10  # top videos by views used to probe games
-    GAMES_PER_VIDEO = 8   # nearest games fetched per probe video
+    FLOOR           = Pito::Recommendation::Weights::FLOOR
+    LINK_SCORE      = Pito::Recommendation::Weights::LINK_SCORE
+    TOP_VIDEOS      = 10 # top videos by views used to probe games
+    GAMES_PER_VIDEO = 8  # nearest games fetched per probe video
 
-    Result = Struct.new(:game, :score, :distance, keyword_init: true)
+    Result = Struct.new(:game, :score, :breakdown, keyword_init: true)
 
-    def self.call(channel, limit: DEFAULT_LIMIT)
+    def self.call(channel, limit: nil)
       new(channel, limit: limit).call
     end
 
-    def initialize(channel, limit: DEFAULT_LIMIT)
+    def initialize(channel, limit: nil)
       @channel = channel
       @limit   = limit
     end
@@ -34,42 +35,82 @@ class Channel
     def call
       return [] if @channel.nil?
 
-      videos = probe_videos
-      return [] if videos.empty?
+      linked     = linked_games
+      e_by_game  = embedding_scores # game_id => best E (also the embedding candidates)
+      candidates = candidate_games(linked, e_by_game.keys)
+      return [] if candidates.empty?
 
-      best = {} # game_id => smallest cosine distance across the probes
-      videos.each do |video|
-        nearest_games(video).each do |game|
-          distance = game.neighbor_distance
-          best[game.id] = distance if best[game.id].nil? || distance < best[game.id]
-        end
-      end
-      return [] if best.empty?
+      linked_ids = linked.map(&:id).to_set
 
-      games = ::Game.where(id: best.keys).index_by(&:id)
-      best
-        .filter_map { |gid, dist| games[gid] && build_result(games[gid], dist) }
-        .select { |result| result.score >= THRESHOLD_SCORE }
-        .sort_by { |result| -result.score }
-        .first(@limit)
+      ranked = candidates.filter_map { |game|
+        k  = linked_ids.include?(game.id) ? LINK_SCORE.to_f : 0.0
+        gg = linked.map { |lg| Pito::Recommendation::GameSimilarity.between(game, lg)[:score] }.max || 0.0
+        e  = e_by_game[game.id] || 0.0
+        score = [ k, gg, e ].max.round
+        next if score < FLOOR
+
+        Result.new(game: game, score: score, breakdown: nil)
+      }.sort_by { |result| [ -result.score, result.game.id ] }
+
+      @limit ? ranked.first(@limit) : ranked
     end
 
     private
 
-    # Top videos by view count (materialized in `stats`) that actually have an
-    # embedding — the probes for the channel's interests. COALESCE keeps videos
-    # with no view stat (ordered last) so a channel still recommends something.
+    # Games the channel already covers (via its videos' explicit links), with
+    # facets preloaded for GameSimilarity.between.
+    def linked_games
+      ids = ::VideoGameLink.joins(:video).where(videos: { channel_id: @channel.id }).distinct.pluck(:game_id)
+      return [] if ids.empty?
+
+      ::Game.where(id: ids).includes(:genres, :developer_companies, :publisher_companies).to_a
+    end
+
+    def candidate_games(linked, embedding_ids)
+      ids = (facet_candidate_ids(linked) + embedding_ids + linked.map(&:id)).uniq
+      return [] if ids.empty?
+
+      ::Game.where(id: ids).includes(:genres, :developer_companies, :publisher_companies).to_a
+    end
+
+    # Games sharing >= 1 genre / developer / publisher with any covered game.
+    def facet_candidate_ids(linked)
+      genre_ids = linked.flat_map { |g| g.genres.map(&:id) }.uniq
+      dev_ids   = linked.flat_map { |g| g.developer_companies.map(&:id) }.uniq
+      pub_ids   = linked.flat_map { |g| g.publisher_companies.map(&:id) }.uniq
+
+      ids = []
+      ids += join_pool(:game_genres, :genre_id, genre_ids)
+      ids += join_pool(:game_developers, :company_id, dev_ids)
+      ids += join_pool(:game_publishers, :company_id, pub_ids)
+      ids.uniq
+    end
+
+    def join_pool(join, column, values)
+      return [] if values.blank?
+
+      ::Game.joins(join).where(join => { column => values }).distinct.pluck(:id)
+    end
+
+    # E — best video→game embedding similarity, keyed by game id. Probes the
+    # channel's top videos by views (materialized in `stats`).
+    def embedding_scores
+      scores = Hash.new(0.0)
+      probe_videos.each do |video|
+        nearest_games(video).each do |game|
+          e = Pito::Recommendation::Signals.embedding(game.neighbor_distance)
+          scores[game.id] = e if e > scores[game.id]
+        end
+      end
+      scores
+    end
+
     def probe_videos
       @channel.videos
         .where.not(summary_embedding: nil)
-        .joins(views_join)
+        .joins("LEFT JOIN stats ON stats.entity_type = 'Video' AND stats.entity_id = videos.id AND stats.kind = 'views'")
         .order(Arel.sql("COALESCE(stats.value, 0) DESC"))
         .limit(TOP_VIDEOS)
-    end
-
-    def views_join
-      "LEFT JOIN stats ON stats.entity_type = 'Video' " \
-        "AND stats.entity_id = videos.id AND stats.kind = 'views'"
     end
 
     def nearest_games(video)
@@ -77,11 +118,6 @@ class Channel
         .where.not(summary_embedding: nil)
         .nearest_neighbors(:summary_embedding, video.summary_embedding, distance: "cosine")
         .first(GAMES_PER_VIDEO)
-    end
-
-    def build_result(game, distance)
-      score = ((1 - distance) * 100).round.clamp(0, 100)
-      Result.new(game: game, score: score, distance: distance)
     end
   end
 end

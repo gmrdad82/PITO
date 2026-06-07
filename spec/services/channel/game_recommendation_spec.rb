@@ -46,7 +46,7 @@ RSpec.describe Channel::GameRecommendation, type: :service do
     expect(described_class.call(channel).map(&:game)).to eq([ near ])
   end
 
-  it "merges hits from multiple probe videos keeping the best distance" do
+  it "merges hits from multiple probe videos keeping the best match" do
     probe_video(vec(0, value: 0.8), views: 200)
     probe_video(vec(0), views: 50)
     game = create(:game, title: "Lies of P")
@@ -54,7 +54,7 @@ RSpec.describe Channel::GameRecommendation, type: :service do
 
     results = described_class.call(channel)
     expect(results.size).to eq(1)
-    expect(results.first.distance).to be_within(0.0001).of(0.0)
+    expect(results.first.score).to eq(100)
   end
 
   it "skips games without an embedding" do
@@ -89,8 +89,27 @@ RSpec.describe Channel::GameRecommendation, type: :service do
     expect(described_class.call(channel, limit: 2).size).to eq(2)
   end
 
-  it "includes results whose score equals exactly THRESHOLD_SCORE (boundary: in)" do
-    threshold = described_class::THRESHOLD_SCORE
+  it "recommends a similar game via a covered game (symmetric Dead Space hop)" do
+    shared_genre = create(:genre)
+    shared_dev   = create(:company)
+
+    pragmata = create(:game, title: "Pragmata")
+    create(:game_genre, game: pragmata, genre: shared_genre)
+    create(:game_developer, game: pragmata, company: shared_dev)
+    vid = create(:video, channel: channel)
+    VideoGameLink.create!(video: vid, game: pragmata)
+
+    dead_space = create(:game, title: "Dead Space")
+    create(:game_genre, game: dead_space, genre: shared_genre)
+    create(:game_developer, game: dead_space, company: shared_dev)
+
+    result = described_class.call(channel).find { |r| r.game == dead_space }
+    expect(result).to be_present
+    expect(result.score).to eq(32) # G=100 + D=100 → blend 32
+  end
+
+  it "includes results whose score equals exactly the FLOOR (boundary: in)" do
+    threshold = described_class::FLOOR
     # distance that maps to exactly the threshold score
     # score = ((1 - distance) * 100).round => distance = 1 - threshold/100.0
     exact_distance = 1.0 - threshold / 100.0

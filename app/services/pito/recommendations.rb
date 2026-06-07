@@ -78,12 +78,12 @@ module Pito
       ::Game::ChannelRecommendation.call(game, limit: limit, include_all: include_all)
     end
 
-    # Games that a channel's top videos overlap with (channel→game direction).
+    # Games best suited to a channel (channel→game direction).
     #
     # @param channel [::Channel]
-    # @param limit   [Integer] maximum results (default from service)
+    # @param limit   [Integer, nil] maximum results; nil (default) returns all.
     # @return [Array<Channel::GameRecommendation::Result>]
-    def games_for(channel, limit: ::Channel::GameRecommendation::DEFAULT_LIMIT)
+    def games_for(channel, limit: nil)
       ::Channel::GameRecommendation.call(channel, limit: limit)
     end
 

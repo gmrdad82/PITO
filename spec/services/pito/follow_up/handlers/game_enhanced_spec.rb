@@ -161,7 +161,7 @@ RSpec.describe Pito::FollowUp::Handlers::GameEnhanced, type: :service do
     let(:source_event) { build_enhanced_event }
     let(:connection)   { create(:youtube_connection) }
     let(:ch)           { create(:channel, handle: "@fromsoft", youtube_connection: connection) }
-    let(:ch_result)    { Game::ChannelRecommendation::Result.new(channel: ch, score: 91, distance: 0.09) }
+    let(:ch_result)    { Game::ChannelRecommendation::Result.new(channel: ch, score: 91, breakdown: nil) }
 
     context "when channel recommendations are found" do
       before do
