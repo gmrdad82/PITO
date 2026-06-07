@@ -30,7 +30,7 @@
   <%# Score bar — only when a score is provided %>
   <% if score? %>
     <div class="pito-channel-item__score">
-      <%= render(Pito::ScoreBarComponent.new(score: score)) %>
+      <%= render(Pito::ScoreBarComponent.new(score: score, show_label: false)) %>
     </div>
   <% end %>
 </div>
