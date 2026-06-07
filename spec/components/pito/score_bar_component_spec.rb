@@ -89,9 +89,23 @@ RSpec.describe Pito::ScoreBarComponent do
       expect(comp.overlay_left_percent).to be_nil
     end
 
-    it "clamps the score to 0..100" do
+    it "snaps to the middle of the 5% cell the score falls in" do
+      # score 50 → cell [50,55) → midpoint 52.5
       comp = described_class.new(score: 50)
-      expect(comp.overlay_left_percent).to eq(50.0)
+      expect(comp.overlay_left_percent).to eq(52.5)
+    end
+
+    it "snaps a 90-95 score to 92.5% (the documented example)" do
+      expect(described_class.new(score: 92).overlay_left_percent).to eq(92.5)
+      expect(described_class.new(score: 90).overlay_left_percent).to eq(92.5)
+    end
+
+    it "snaps a perfect 100 into the last cell midpoint (97.5%)" do
+      expect(described_class.new(score: 100).overlay_left_percent).to eq(97.5)
+    end
+
+    it "snaps a 0 score to the first cell midpoint (2.5%)" do
+      expect(described_class.new(score: 0).overlay_left_percent).to eq(2.5)
     end
   end
 
@@ -204,10 +218,11 @@ RSpec.describe Pito::ScoreBarComponent do
       expect(bar).not_to be_empty
     end
 
-    it "positions the bubble arrow at the score percent (left: N%)" do
+    it "positions the bubble + needle at the snapped cell midpoint (left: N%)" do
+      # score 50 snaps to the [50,55) cell midpoint = 52.5%
       node = render_inline(described_class.new(score: 50))
       html = node.to_html
-      expect(html).to include("left: 50.0%")
+      expect(html).to include("left: 52.5%")
     end
   end
 end

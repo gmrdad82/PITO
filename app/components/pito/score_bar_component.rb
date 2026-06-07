@@ -72,10 +72,19 @@ class Pito::ScoreBarComponent < ViewComponent::Base
     !score.nil?
   end
 
+  # Left offset (%) for the needle + bubble. The 20 cells split 0–100 into
+  # 5% slices, so instead of the raw score the needle snaps to the MIDDLE of
+  # the 5% cell the score falls in: floor(score/5)*5 + 2.5. A 90–95 score
+  # therefore lands at 92.5% — centred on its cell, which reads cleaner than
+  # a needle pinned to the exact percent.
+  CELL_WIDTH_PCT = 5
+
   def overlay_left_percent
     return nil if score.nil?
 
-    score.to_f.clamp(0.0, 100.0)
+    s    = score.to_f.clamp(0.0, 100.0)
+    cell = (s / CELL_WIDTH_PCT).floor.clamp(0, BAR_CELLS - 1)
+    (cell * CELL_WIDTH_PCT) + (CELL_WIDTH_PCT / 2.0)
   end
 
   def fill_text
