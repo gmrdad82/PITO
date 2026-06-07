@@ -18,10 +18,12 @@ module Pito
         self.verb = :list
         self.description_key = "pito.chat.list.descriptions.list"
 
-        # Recognised-but-not-yet-listable nouns. Only games can be listed today.
-        UNSUPPORTED_NOUN = /\b(channels?|videos?)\b/i
+        # Nouns we recognise but can't list yet (only games + channels work today).
+        UNSUPPORTED_NOUN = /\bvideos?\b/i
 
         def call
+          return list_channels if message.raw.match?(/\bchannels?\b/i)
+
           if (noun = message.raw[UNSUPPORTED_NOUN, 0])
             return Pito::Chat::Result::Error.new(
               message_key:  "pito.chat.errors.cannot_list",
@@ -30,7 +32,7 @@ module Pito
           end
 
           games = ::Game.order(:title)
-          return empty_result if games.empty?
+          return games_empty if games.empty?
 
           payload = {
             body:       Pito::Copy.render("pito.copy.games.list_intro", { count: games.size }),
@@ -43,7 +45,27 @@ module Pito
 
         private
 
-        def empty_result
+        # `list channels` → the same kv-grid as games, expanded to three columns
+        # (#id · name · handle). The third column rides on each row's `:value2`.
+        def list_channels
+          channels = ::Channel.order(:title)
+          if channels.empty?
+            return Pito::Chat::Result::Ok.new(events: [
+              { kind: :system, payload: { text: Pito::Copy.render("pito.copy.channels.list_empty") } }
+            ])
+          end
+
+          payload = {
+            body:       Pito::Copy.render("pito.copy.channels.list_intro", { count: channels.size }),
+            table_rows: channels.map do |channel|
+              { key: "##{channel.id}", value: channel.title.to_s, value2: channel.handle.to_s }
+            end
+          }
+
+          Pito::Chat::Result::Ok.new(events: [ { kind: :system, payload: payload } ])
+        end
+
+        def games_empty
           Pito::Chat::Result::Ok.new(events: [
             { kind: :system, payload: { text: Pito::Copy.render("pito.copy.games.list_empty") } }
           ])

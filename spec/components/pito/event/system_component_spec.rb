@@ -193,6 +193,24 @@ RSpec.describe Pito::Event::SystemComponent do
     end
   end
 
+  describe "table_rows with a third column (value2)" do
+    subject(:node) do
+      render_inline(described_class.new(payload: {
+        body: "Channels",
+        table_rows: [ { key: "#1", value: "Alpha Tube", value2: "@alpha" } ]
+      }))
+    end
+
+    it "uses a 3-track grid when any row carries value2" do
+      grid = node.css("div.grid").first
+      expect(grid["class"]).to include("grid-cols-[max-content_max-content_1fr]")
+    end
+
+    it "renders the third-column value" do
+      expect(node.text).to include("@alpha")
+    end
+  end
+
   describe "follow-up handle in the single meta line (no usage/affordance line)" do
     let(:conversation) { Conversation.create! }
     let(:turn) { create(:turn, conversation:) }

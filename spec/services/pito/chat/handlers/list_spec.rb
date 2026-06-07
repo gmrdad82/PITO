@@ -51,7 +51,7 @@ RSpec.describe Pito::Chat::Handlers::List do
     end
   end
 
-  describe "#call with a non-games noun (channels / videos)" do
+  describe "#call with a non-games noun" do
     let!(:game) { create(:game, title: "Lies of P") }
 
     def handler_for(raw)
@@ -61,21 +61,49 @@ RSpec.describe Pito::Chat::Handlers::List do
       )
     end
 
-    it "does NOT return the games shelf for `list channels`" do
-      result = handler_for("list channels").call
-      expect(result).to be_a(Pito::Chat::Result::Error)
-      expect(result.message_key).to eq("pito.chat.errors.cannot_list")
-      expect(result.message_args[:noun]).to eq("channels")
-    end
-
-    it "does NOT return the games shelf for `list videos`" do
+    it "does NOT return the games shelf for `list videos` (not listable yet)" do
       result = handler_for("list videos").call
       expect(result).to be_a(Pito::Chat::Result::Error)
+      expect(result.message_key).to eq("pito.chat.errors.cannot_list")
       expect(result.message_args[:noun]).to eq("videos")
     end
 
     it "still lists games for `list games`" do
-      expect(handler_for("list games").call).to be_a(Pito::Chat::Result::Ok)
+      result = handler_for("list games").call
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload][:table_rows].first[:value2]).to be_nil
+    end
+  end
+
+  describe "#call with the channels noun" do
+    let!(:beta)  { create(:channel, title: "Beta Cast", handle: "@beta", youtube_channel_id: "UCb") }
+    let!(:alpha) { create(:channel, title: "Alpha Tube", handle: "@alpha", youtube_channel_id: "UCa") }
+
+    def handler_for(raw)
+      described_class.new(
+        message: Pito::Chat::Message.new(verb: :list, body_tokens: [], kind: :new_turn, raw:),
+        conversation: Conversation.singleton
+      )
+    end
+
+    it "lists channels as 3-column rows (id, name, handle), sorted by name" do
+      rows = handler_for("list channels").call.events.first[:payload][:table_rows]
+      expect(rows).to eq([
+        { key: "##{alpha.id}", value: "Alpha Tube", value2: "@alpha" },
+        { key: "##{beta.id}",  value: "Beta Cast",  value2: "@beta" }
+      ])
+    end
+
+    it "renders the channels intro via Pito::Copy with the count" do
+      payload = handler_for("list channels").call.events.first[:payload]
+      expect(payload[:body]).to include("2")
+    end
+
+    it "returns a witty empty-state when no channels are connected" do
+      Channel.delete_all
+      payload = handler_for("list channels").call.events.first[:payload]
+      expect(payload[:text]).to be_present
+      expect(payload[:table_rows]).to be_nil
     end
   end
 end
