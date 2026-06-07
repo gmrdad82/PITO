@@ -15,6 +15,11 @@ module Pito
     SAMPLE_HOURS = { main: 31, extras: 71, completionist: 124 }.freeze
     PILLAR_KEYS  = %i[main extras completionist].freeze
 
+    # Cell count of the continuous `=` run between the brackets. 40 cells
+    # span 0..completionist, so each `=` is a 2.5% slice and the
+    # completionist tick lands in the middle of the last cell (98.75%).
+    BAR_CELLS = 40
+
     # Heat-map gradient stops, anchored to FIXED HOUR thresholds (not
     # percentages). Each stop's percentage is computed per-game by
     # projecting its hour value onto `max_x`. The adaptive gradient means:
@@ -102,6 +107,10 @@ module Pito
       return I18n.t("pito.game.ttb.em_dash") unless h.positive?
 
       I18n.t("pito.game.ttb.hours_short", n: h)
+    end
+
+    def fill_text
+      "=" * BAR_CELLS
     end
 
     def footage_value_label

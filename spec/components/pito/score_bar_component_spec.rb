@@ -50,8 +50,8 @@ RSpec.describe Pito::ScoreBarComponent do
   end
 
   describe "BAR_CELLS" do
-    it "is 60" do
-      expect(described_class::BAR_CELLS).to eq(60)
+    it "is 20 (each = spans a 5% score slice)" do
+      expect(described_class::BAR_CELLS).to eq(20)
     end
   end
 
@@ -96,9 +96,9 @@ RSpec.describe Pito::ScoreBarComponent do
   end
 
   describe "#fill_text" do
-    it "returns 60 = characters" do
+    it "returns 20 = characters" do
       comp = described_class.new
-      expect(comp.fill_text).to eq("=" * 60)
+      expect(comp.fill_text).to eq("=" * 20)
     end
   end
 

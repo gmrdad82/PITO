@@ -12,8 +12,10 @@
 #   game:  (Game, optional) — source record for score synthesis.
 #   score: (Integer, optional) — explicit override score; bypasses synthesis.
 class Pito::ScoreBarComponent < ViewComponent::Base
-  # Cell count of the continuous `=` run between the brackets.
-  BAR_CELLS = 60
+  # Cell count of the continuous `=` run between the brackets. 20 cells over
+  # the 0–100 score axis means each `=` spans a 5% slice (see the needle
+  # cell-mid snap in `overlay_left_percent`).
+  BAR_CELLS = 20
 
   TIERS = [
     [ 90, "excellent" ],
