@@ -28,11 +28,6 @@ en:
         no_results: "No results. Try a different title."
         error: "IGDB search failed. Check credentials."
         progress:
-          step1: "Fetching game info…"
-          step2: "Downloading cover art…"
-          step3: "Computing score…"
-          step4: "Indexing for recommendations…"
-          step5: "Preparing recommendations…"
           done: "Import complete!"
       themes:
         title: "Themes"

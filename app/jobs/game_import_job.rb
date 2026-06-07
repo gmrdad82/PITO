@@ -28,13 +28,13 @@
 class GameImportJob < ApplicationJob
   queue_as :default
 
-  STEP_LABELS = [
-    nil,                                    # 1-indexed; index 0 unused
-    "pito.sidebar.games_import.progress.step1",
-    "pito.sidebar.games_import.progress.step2",
-    "pito.sidebar.games_import.progress.step3",
-    "pito.sidebar.games_import.progress.step4",
-    "pito.sidebar.games_import.progress.step5"
+  STEP_COPY_KEYS = [
+    nil,                                 # 1-indexed; index 0 unused
+    "pito.copy.games.import.step1",
+    "pito.copy.games.import.step2",
+    "pito.copy.games.import.step3",
+    "pito.copy.games.import.step4",
+    "pito.copy.games.import.step5"
   ].freeze
 
   def perform(igdb_id:, title:, conversation_id:)
@@ -137,13 +137,13 @@ class GameImportJob < ApplicationJob
   # The JS has already rendered all 5 rows as shimmer; this is a no-op for the
   # first step but ensures later steps also show the shimmer while running.
   def broadcast_step_pending(broadcaster, step:)
-    label = I18n.t(STEP_LABELS[step])
+    label = Pito::Copy.render(STEP_COPY_KEYS[step])
     broadcaster.broadcast_import_step(step: step, label: label, done: false)
   end
 
   # Mark a sidebar step as done (checkmark, full-brightness label).
   def broadcast_step_done(broadcaster, step:)
-    label = I18n.t(STEP_LABELS[step])
+    label = Pito::Copy.render(STEP_COPY_KEYS[step])
     broadcaster.broadcast_import_step(step: step, label: label, done: true)
   end
 
