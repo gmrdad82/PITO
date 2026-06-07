@@ -1133,8 +1133,8 @@ html {
 
 /* ── Channel item (Pito::Channel::ItemComponent) ────────────────────────────
  *
- * Shared single-channel item: handle / title / id, with optional [visit]
- * link (via VisitComponent) and/or ScoreBarComponent below the id.
+ * Shared single-channel item: handle / title / id, with optional plain [view]
+ * link (show_visit:) and/or ScoreBarComponent below the id (score:).
  * Used in ListComponent (show_visit: true, no score) and in the enhanced
  * game message channel grid (show_visit: false, with score bar).
  */
@@ -1158,9 +1158,11 @@ html {
   white-space: nowrap;
 }
 
-/* Score bar: sits below the #id with a small top gap. */
-.pito-channel-item__score .pito-score-bar {
-  margin-top: 0.25rem;
+/* Score bar: keep the standalone bar's top margin (~1.75rem) so the floating
+   score bubble clears the #id above it — a tight 0.25rem made the bubble (the
+   stray "27") collide with the id line. */
+.pito-channel-item__score {
+  margin-top: 0.5rem;
 }
 
 /* ── Theme system ──────────────────────────────────────────────
