@@ -26,8 +26,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "name", null: false
       t.bigint "record_id", null: false
       t.string "record_type", null: false
-      t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
-      t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+      t.index [ "blob_id" ], name: "index_active_storage_attachments_on_blob_id"
+      t.index [ "record_type", "record_id", "name", "blob_id" ], name: "index_active_storage_attachments_uniqueness", unique: true
     end
 
     create_table "active_storage_blobs", force: :cascade do |t|
@@ -39,13 +39,13 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "key", null: false
       t.text "metadata"
       t.string "service_name", null: false
-      t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+      t.index [ "key" ], name: "index_active_storage_blobs_on_key", unique: true
     end
 
     create_table "active_storage_variant_records", force: :cascade do |t|
       t.bigint "blob_id", null: false
       t.string "variation_digest", null: false
-      t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+      t.index [ "blob_id", "variation_digest" ], name: "index_active_storage_variant_records_uniqueness", unique: true
     end
 
     create_table "api_requests", force: :cascade do |t|
@@ -53,7 +53,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "endpoint"
       t.string "provider", null: false
       t.integer "units"
-      t.index ["provider", "created_at"], name: "index_api_requests_on_provider_and_created_at"
+      t.index [ "provider", "created_at" ], name: "index_api_requests_on_provider_and_created_at"
     end
 
     create_table "app_settings", force: :cascade do |t|
@@ -66,7 +66,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.datetime "updated_at", null: false
       t.text "value"
       t.text "voyage_api_key"
-      t.index ["key"], name: "index_app_settings_on_key", unique: true
+      t.index [ "key" ], name: "index_app_settings_on_key", unique: true
     end
 
     create_table "channels", force: :cascade do |t|
@@ -78,9 +78,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.integer "video_count"
       t.string "youtube_channel_id", null: false
       t.bigint "youtube_connection_id"
-      t.index ["last_synced_at"], name: "index_channels_on_last_synced_at"
-      t.index ["youtube_channel_id"], name: "index_channels_on_youtube_channel_id", unique: true
-      t.index ["youtube_connection_id"], name: "index_channels_on_youtube_connection_id"
+      t.index [ "last_synced_at" ], name: "index_channels_on_last_synced_at"
+      t.index [ "youtube_channel_id" ], name: "index_channels_on_youtube_channel_id", unique: true
+      t.index [ "youtube_connection_id" ], name: "index_channels_on_youtube_connection_id"
     end
 
     create_table "companies", force: :cascade do |t|
@@ -89,7 +89,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "name", null: false
       t.string "slug"
       t.datetime "updated_at", null: false
-      t.index ["igdb_id"], name: "index_companies_on_igdb_id", unique: true
+      t.index [ "igdb_id" ], name: "index_companies_on_igdb_id", unique: true
     end
 
     create_table "conversations", force: :cascade do |t|
@@ -98,7 +98,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "title"
       t.datetime "updated_at", null: false
       t.uuid "uuid", null: false
-      t.index ["uuid"], name: "index_conversations_on_uuid", unique: true
+      t.index [ "uuid" ], name: "index_conversations_on_uuid", unique: true
     end
 
     create_table "events", force: :cascade do |t|
@@ -109,9 +109,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.integer "position", null: false
       t.bigint "turn_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["conversation_id", "position"], name: "index_events_on_conversation_id_and_position", unique: true
-      t.index ["conversation_id"], name: "index_events_on_conversation_id"
-      t.index ["turn_id"], name: "index_events_on_turn_id"
+      t.index [ "conversation_id", "position" ], name: "index_events_on_conversation_id_and_position", unique: true
+      t.index [ "conversation_id" ], name: "index_events_on_conversation_id"
+      t.index [ "turn_id" ], name: "index_events_on_turn_id"
     end
 
     create_table "footages", force: :cascade do |t|
@@ -126,7 +126,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "orientation"
       t.string "resolution"
       t.datetime "updated_at", null: false
-      t.index ["game_id", "filename"], name: "index_footages_on_game_id_and_filename", unique: true
+      t.index [ "game_id", "filename" ], name: "index_footages_on_game_id_and_filename", unique: true
     end
 
     create_table "game_developers", force: :cascade do |t|
@@ -134,8 +134,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.datetime "created_at", null: false
       t.bigint "game_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["company_id"], name: "index_game_developers_on_company_id"
-      t.index ["game_id", "company_id"], name: "index_game_developers_on_game_id_and_company_id", unique: true
+      t.index [ "company_id" ], name: "index_game_developers_on_company_id"
+      t.index [ "game_id", "company_id" ], name: "index_game_developers_on_game_id_and_company_id", unique: true
     end
 
     create_table "game_genres", force: :cascade do |t|
@@ -144,9 +144,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "genre_id", null: false
       t.integer "position"
       t.datetime "updated_at", null: false
-      t.index ["game_id", "genre_id"], name: "index_game_genres_on_game_id_and_genre_id", unique: true
-      t.index ["game_id", "position"], name: "index_game_genres_on_game_id_and_position"
-      t.index ["genre_id"], name: "index_game_genres_on_genre_id"
+      t.index [ "game_id", "genre_id" ], name: "index_game_genres_on_game_id_and_genre_id", unique: true
+      t.index [ "game_id", "position" ], name: "index_game_genres_on_game_id_and_position"
+      t.index [ "genre_id" ], name: "index_game_genres_on_genre_id"
     end
 
     create_table "game_platform_ownerships", force: :cascade do |t|
@@ -154,7 +154,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "game_id", null: false
       t.text "platform_token", null: false
       t.datetime "updated_at", null: false
-      t.index ["game_id", "platform_token"], name: "index_game_platform_ownerships_on_game_id_and_platform_token", unique: true
+      t.index [ "game_id", "platform_token" ], name: "index_game_platform_ownerships_on_game_id_and_platform_token", unique: true
       t.check_constraint "platform_token = ANY (ARRAY['ps'::text, 'switch'::text, 'steam'::text])", name: "game_platform_ownerships_platform_token_allowlist"
     end
 
@@ -163,8 +163,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.datetime "created_at", null: false
       t.bigint "game_id", null: false
       t.datetime "updated_at", null: false
-      t.index ["company_id"], name: "index_game_publishers_on_company_id"
-      t.index ["game_id", "company_id"], name: "index_game_publishers_on_game_id_and_company_id", unique: true
+      t.index [ "company_id" ], name: "index_game_publishers_on_company_id"
+      t.index [ "game_id", "company_id" ], name: "index_game_publishers_on_game_id_and_company_id", unique: true
     end
 
     create_table "games", force: :cascade do |t|
@@ -198,16 +198,16 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.integer "ttb_extras_seconds"
       t.integer "ttb_main_seconds"
       t.datetime "updated_at", null: false
-      t.index ["alternative_names"], name: "index_games_on_alternative_names", using: :gin
-      t.index ["igdb_id"], name: "index_games_on_igdb_id", unique: true, where: "(igdb_id IS NOT NULL)"
-      t.index ["igdb_slug"], name: "index_games_on_igdb_slug", unique: true, where: "(igdb_slug IS NOT NULL)"
-      t.index ["igdb_synced_at"], name: "index_games_on_igdb_synced_at"
-      t.index ["release_month", "release_day"], name: "index_games_on_release_month_and_release_day"
-      t.index ["release_year"], name: "index_games_on_release_year"
-      t.index ["score"], name: "index_games_on_score"
-      t.index ["search_vector"], name: "index_games_on_search_vector", using: :gin
-      t.index ["summary_embedding"], name: "index_games_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
-      t.index ["title"], name: "index_games_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
+      t.index [ "alternative_names" ], name: "index_games_on_alternative_names", using: :gin
+      t.index [ "igdb_id" ], name: "index_games_on_igdb_id", unique: true, where: "(igdb_id IS NOT NULL)"
+      t.index [ "igdb_slug" ], name: "index_games_on_igdb_slug", unique: true, where: "(igdb_slug IS NOT NULL)"
+      t.index [ "igdb_synced_at" ], name: "index_games_on_igdb_synced_at"
+      t.index [ "release_month", "release_day" ], name: "index_games_on_release_month_and_release_day"
+      t.index [ "release_year" ], name: "index_games_on_release_year"
+      t.index [ "score" ], name: "index_games_on_score"
+      t.index [ "search_vector" ], name: "index_games_on_search_vector", using: :gin
+      t.index [ "summary_embedding" ], name: "index_games_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
+      t.index [ "title" ], name: "index_games_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
     end
 
     create_table "genres", force: :cascade do |t|
@@ -216,7 +216,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "name", null: false
       t.string "slug"
       t.datetime "updated_at", null: false
-      t.index ["igdb_id"], name: "index_genres_on_igdb_id", unique: true
+      t.index [ "igdb_id" ], name: "index_genres_on_igdb_id", unique: true
     end
 
     create_table "notifications", force: :cascade do |t|
@@ -231,9 +231,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "channel_hash", null: false
       t.datetime "created_at", null: false
       t.binary "payload", null: false
-      t.index ["channel"], name: "index_solid_cable_messages_on_channel"
-      t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
-      t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
+      t.index [ "channel" ], name: "index_solid_cable_messages_on_channel"
+      t.index [ "channel_hash" ], name: "index_solid_cable_messages_on_channel_hash"
+      t.index [ "created_at" ], name: "index_solid_cable_messages_on_created_at"
     end
 
     create_table "solid_cache_entries", force: :cascade do |t|
@@ -242,9 +242,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.binary "key", null: false
       t.bigint "key_hash", null: false
       t.binary "value", null: false
-      t.index ["byte_size"], name: "index_solid_cache_entries_on_byte_size"
-      t.index ["key_hash", "byte_size"], name: "index_solid_cache_entries_on_key_hash_and_byte_size"
-      t.index ["key_hash"], name: "index_solid_cache_entries_on_key_hash", unique: true
+      t.index [ "byte_size" ], name: "index_solid_cache_entries_on_byte_size"
+      t.index [ "key_hash", "byte_size" ], name: "index_solid_cache_entries_on_key_hash_and_byte_size"
+      t.index [ "key_hash" ], name: "index_solid_cache_entries_on_key_hash", unique: true
     end
 
     create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -254,24 +254,24 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "job_id", null: false
       t.integer "priority", default: 0, null: false
       t.string "queue_name", null: false
-      t.index ["concurrency_key", "priority", "job_id"], name: "idx_on_concurrency_key_priority_job_id_d4bdd8da1e"
-      t.index ["expires_at", "concurrency_key"], name: "idx_on_expires_at_concurrency_key_c20fd0827b"
-      t.index ["job_id"], name: "index_solid_queue_blocked_executions_on_job_id", unique: true
+      t.index [ "concurrency_key", "priority", "job_id" ], name: "idx_on_concurrency_key_priority_job_id_d4bdd8da1e"
+      t.index [ "expires_at", "concurrency_key" ], name: "idx_on_expires_at_concurrency_key_c20fd0827b"
+      t.index [ "job_id" ], name: "index_solid_queue_blocked_executions_on_job_id", unique: true
     end
 
     create_table "solid_queue_claimed_executions", force: :cascade do |t|
       t.datetime "created_at", null: false
       t.bigint "job_id", null: false
       t.bigint "process_id"
-      t.index ["job_id"], name: "index_solid_queue_claimed_executions_on_job_id", unique: true
-      t.index ["process_id", "job_id"], name: "index_solid_queue_claimed_executions_on_process_id_and_job_id"
+      t.index [ "job_id" ], name: "index_solid_queue_claimed_executions_on_job_id", unique: true
+      t.index [ "process_id", "job_id" ], name: "index_solid_queue_claimed_executions_on_process_id_and_job_id"
     end
 
     create_table "solid_queue_failed_executions", force: :cascade do |t|
       t.datetime "created_at", null: false
       t.text "error"
       t.bigint "job_id", null: false
-      t.index ["job_id"], name: "index_solid_queue_failed_executions_on_job_id", unique: true
+      t.index [ "job_id" ], name: "index_solid_queue_failed_executions_on_job_id", unique: true
     end
 
     create_table "solid_queue_jobs", force: :cascade do |t|
@@ -285,17 +285,17 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "queue_name", null: false
       t.datetime "scheduled_at"
       t.datetime "updated_at", null: false
-      t.index ["active_job_id"], name: "index_solid_queue_jobs_on_active_job_id"
-      t.index ["class_name"], name: "index_solid_queue_jobs_on_class_name"
-      t.index ["finished_at"], name: "index_solid_queue_jobs_on_finished_at"
-      t.index ["queue_name", "finished_at"], name: "index_solid_queue_jobs_on_queue_name_and_finished_at"
-      t.index ["scheduled_at", "finished_at"], name: "index_solid_queue_jobs_on_scheduled_at_and_finished_at"
+      t.index [ "active_job_id" ], name: "index_solid_queue_jobs_on_active_job_id"
+      t.index [ "class_name" ], name: "index_solid_queue_jobs_on_class_name"
+      t.index [ "finished_at" ], name: "index_solid_queue_jobs_on_finished_at"
+      t.index [ "queue_name", "finished_at" ], name: "index_solid_queue_jobs_on_queue_name_and_finished_at"
+      t.index [ "scheduled_at", "finished_at" ], name: "index_solid_queue_jobs_on_scheduled_at_and_finished_at"
     end
 
     create_table "solid_queue_pauses", force: :cascade do |t|
       t.datetime "created_at", null: false
       t.string "queue_name", null: false
-      t.index ["queue_name"], name: "index_solid_queue_pauses_on_queue_name", unique: true
+      t.index [ "queue_name" ], name: "index_solid_queue_pauses_on_queue_name", unique: true
     end
 
     create_table "solid_queue_processes", force: :cascade do |t|
@@ -307,9 +307,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "name", null: false
       t.integer "pid", null: false
       t.bigint "supervisor_id"
-      t.index ["last_heartbeat_at"], name: "index_solid_queue_processes_on_last_heartbeat_at"
-      t.index ["name", "supervisor_id"], name: "index_solid_queue_processes_on_name_and_supervisor_id", unique: true
-      t.index ["supervisor_id"], name: "index_solid_queue_processes_on_supervisor_id"
+      t.index [ "last_heartbeat_at" ], name: "index_solid_queue_processes_on_last_heartbeat_at"
+      t.index [ "name", "supervisor_id" ], name: "index_solid_queue_processes_on_name_and_supervisor_id", unique: true
+      t.index [ "supervisor_id" ], name: "index_solid_queue_processes_on_supervisor_id"
     end
 
     create_table "solid_queue_ready_executions", force: :cascade do |t|
@@ -317,9 +317,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "job_id", null: false
       t.integer "priority", default: 0, null: false
       t.string "queue_name", null: false
-      t.index ["job_id"], name: "index_solid_queue_ready_executions_on_job_id", unique: true
-      t.index ["priority", "job_id"], name: "index_solid_queue_ready_executions_on_priority_and_job_id"
-      t.index ["queue_name", "priority", "job_id"], name: "idx_on_queue_name_priority_job_id_b116c992cd"
+      t.index [ "job_id" ], name: "index_solid_queue_ready_executions_on_job_id", unique: true
+      t.index [ "priority", "job_id" ], name: "index_solid_queue_ready_executions_on_priority_and_job_id"
+      t.index [ "queue_name", "priority", "job_id" ], name: "idx_on_queue_name_priority_job_id_b116c992cd"
     end
 
     create_table "solid_queue_recurring_executions", force: :cascade do |t|
@@ -327,8 +327,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "job_id", null: false
       t.datetime "run_at", null: false
       t.string "task_key", null: false
-      t.index ["job_id"], name: "index_solid_queue_recurring_executions_on_job_id", unique: true
-      t.index ["task_key", "run_at"], name: "index_solid_queue_recurring_executions_on_task_key_and_run_at", unique: true
+      t.index [ "job_id" ], name: "index_solid_queue_recurring_executions_on_job_id", unique: true
+      t.index [ "task_key", "run_at" ], name: "index_solid_queue_recurring_executions_on_task_key_and_run_at", unique: true
     end
 
     create_table "solid_queue_recurring_tasks", force: :cascade do |t|
@@ -343,8 +343,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "schedule", null: false
       t.boolean "static", default: true, null: false
       t.datetime "updated_at", null: false
-      t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
-      t.index ["static"], name: "index_solid_queue_recurring_tasks_on_static"
+      t.index [ "key" ], name: "index_solid_queue_recurring_tasks_on_key", unique: true
+      t.index [ "static" ], name: "index_solid_queue_recurring_tasks_on_static"
     end
 
     create_table "solid_queue_scheduled_executions", force: :cascade do |t|
@@ -353,8 +353,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.integer "priority", default: 0, null: false
       t.string "queue_name", null: false
       t.datetime "scheduled_at", null: false
-      t.index ["job_id"], name: "index_solid_queue_scheduled_executions_on_job_id", unique: true
-      t.index ["scheduled_at", "priority", "job_id"], name: "idx_on_scheduled_at_priority_job_id_cf978ceebd"
+      t.index [ "job_id" ], name: "index_solid_queue_scheduled_executions_on_job_id", unique: true
+      t.index [ "scheduled_at", "priority", "job_id" ], name: "idx_on_scheduled_at_priority_job_id_cf978ceebd"
     end
 
     create_table "solid_queue_semaphores", force: :cascade do |t|
@@ -363,9 +363,9 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "key", null: false
       t.datetime "updated_at", null: false
       t.integer "value", default: 1, null: false
-      t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
-      t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
-      t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
+      t.index [ "expires_at" ], name: "index_solid_queue_semaphores_on_expires_at"
+      t.index [ "key", "value" ], name: "index_solid_queue_semaphores_on_key_and_value"
+      t.index [ "key" ], name: "index_solid_queue_semaphores_on_key", unique: true
     end
 
     create_table "stats", force: :cascade do |t|
@@ -376,7 +376,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.datetime "synced_at"
       t.datetime "updated_at", null: false
       t.bigint "value"
-      t.index ["entity_type", "entity_id", "kind"], name: "index_stats_on_entity_and_kind", unique: true
+      t.index [ "entity_type", "entity_id", "kind" ], name: "index_stats_on_entity_and_kind", unique: true
     end
 
     create_table "turns", force: :cascade do |t|
@@ -388,8 +388,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.integer "position", null: false
       t.datetime "started_at"
       t.datetime "updated_at", null: false
-      t.index ["conversation_id", "position"], name: "index_turns_on_conversation_id_and_position", unique: true
-      t.index ["conversation_id"], name: "index_turns_on_conversation_id"
+      t.index [ "conversation_id", "position" ], name: "index_turns_on_conversation_id_and_position", unique: true
+      t.index [ "conversation_id" ], name: "index_turns_on_conversation_id"
     end
 
     create_table "video_game_links", force: :cascade do |t|
@@ -397,8 +397,8 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.bigint "game_id", null: false
       t.datetime "updated_at", null: false
       t.bigint "video_id", null: false
-      t.index ["game_id"], name: "index_video_game_links_on_game_id"
-      t.index ["video_id", "game_id"], name: "index_video_game_links_on_video_id_and_game_id", unique: true
+      t.index [ "game_id" ], name: "index_video_game_links_on_game_id"
+      t.index [ "video_id", "game_id" ], name: "index_video_game_links_on_video_id_and_game_id", unique: true
     end
 
     create_table "videos", force: :cascade do |t|
@@ -421,15 +421,15 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.string "title", null: false
       t.datetime "updated_at", null: false
       t.string "youtube_video_id", null: false
-      t.index ["channel_id"], name: "index_videos_on_channel_id"
-      t.index ["privacy_status"], name: "index_videos_on_privacy_status"
-      t.index ["publish_at"], name: "index_videos_on_publish_at", where: "(publish_at IS NOT NULL)"
-      t.index ["published_at"], name: "index_videos_on_published_at"
-      t.index ["search_vector"], name: "index_videos_on_search_vector", using: :gin
-      t.index ["summary_embedding"], name: "index_videos_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
-      t.index ["tags"], name: "index_videos_on_tags", using: :gin
-      t.index ["title"], name: "index_videos_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
-      t.index ["youtube_video_id"], name: "index_videos_on_youtube_video_id", unique: true
+      t.index [ "channel_id" ], name: "index_videos_on_channel_id"
+      t.index [ "privacy_status" ], name: "index_videos_on_privacy_status"
+      t.index [ "publish_at" ], name: "index_videos_on_publish_at", where: "(publish_at IS NOT NULL)"
+      t.index [ "published_at" ], name: "index_videos_on_published_at"
+      t.index [ "search_vector" ], name: "index_videos_on_search_vector", using: :gin
+      t.index [ "summary_embedding" ], name: "index_videos_on_summary_embedding_hnsw", opclass: :vector_cosine_ops, using: :hnsw
+      t.index [ "tags" ], name: "index_videos_on_tags", using: :gin
+      t.index [ "title" ], name: "index_videos_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
+      t.index [ "youtube_video_id" ], name: "index_videos_on_youtube_video_id", unique: true
     end
 
     create_table "youtube_connections", force: :cascade do |t|
@@ -443,7 +443,7 @@ class BetaMigration < ActiveRecord::Migration[8.1]
       t.text "refresh_token"
       t.jsonb "scopes", default: [], null: false
       t.datetime "updated_at", null: false
-      t.index ["google_subject_id"], name: "index_youtube_connections_on_google_subject_id", unique: true
+      t.index [ "google_subject_id" ], name: "index_youtube_connections_on_google_subject_id", unique: true
     end
 
     add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
