@@ -147,6 +147,27 @@ RSpec.describe Pito::Game::DetailComponent do
         expect(node.text).to include(I18n.t("pito.game.detail.no_cover"))
       end
     end
+
+    context "when the variant call raises a StandardError" do
+      it "cover_art_url returns nil (the rescue block swallows the error)" do
+        # Use a plain double for cover_art that raises on #variant (via method_missing).
+        # ActiveStorage::Attached::One delegates variant via method_missing; a
+        # duck-type double is the most reliable way to stub that call path.
+        cover_double = double("cover_art", variant: nil) # :nodoc:
+        allow(cover_double).to receive(:variant).and_raise(StandardError, "variant failed")
+        component = described_class.new(game: game)
+        allow(component).to receive(:cover_art_attached?).and_return(true)
+        allow(game).to receive(:cover_art).and_return(cover_double)
+        expect(component.cover_art_url).to be_nil
+      end
+    end
+  end
+
+  describe "rendering with nil score" do
+    it "does not raise when game.score is nil" do
+      game.update_column(:score, nil)
+      expect { render_inline(described_class.new(game: game.reload)) }.not_to raise_error
+    end
   end
 
   describe "empty associations" do
