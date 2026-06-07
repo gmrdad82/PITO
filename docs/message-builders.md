@@ -43,11 +43,11 @@ a pure function of the builder. The two never mix.
 ---
 
 ## P0 — MessageBuilder namespace + shared helpers
-- [ ] T0.1 Create `app/services/pito/message_builder.rb` declaring the `Pito::MessageBuilder` module + doc-block. complexity: [low]
-- [ ] T0.2 Add `Pito::MessageBuilder::Helpers#render_component(component)` wrapping `ApplicationController.renderer.render(component, layout: false)`. complexity: [low]
-- [ ] T0.3 Add `Helpers#html_payload(body:, **extra)` returning `{ "body" => body, "html" => true }.merge(extra.stringify_keys)`. complexity: [low]
-- [ ] T0.4 Run `bin/rails zeitwerk:check` + `bin/rubocop`. complexity: [manual]
-- [ ] T0.5 Commit: `Add Pito::MessageBuilder namespace + shared helpers`. complexity: [manual]
+- [x] T0.1 Create `app/services/pito/message_builder.rb` declaring the `Pito::MessageBuilder` module + doc-block. complexity: [low]
+- [x] T0.2 Add `Pito::MessageBuilder::Helpers#render_component(component)` wrapping `ApplicationController.renderer.render(component, layout: false)`. complexity: [low]
+- [x] T0.3 Add `Helpers#html_payload(body:, **extra)` returning `{ "body" => body, "html" => true }.merge(extra.stringify_keys)`. complexity: [low]
+- [x] T0.4 Run `bin/rails zeitwerk:check` + `bin/rubocop`. complexity: [manual]
+- [x] T0.5 Commit: `Add Pito::MessageBuilder namespace + shared helpers`. complexity: [manual]
 
 ## P1 — Migrate the 3 existing builders into the namespace
 - [ ] T1.1 Move `Pito::Game::DetailMessage` → `Pito::MessageBuilder::Game::Detail` (file + module). complexity: [low]
