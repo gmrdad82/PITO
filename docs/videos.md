@@ -618,3 +618,21 @@ Two more help affordances beyond `/help`:
 Exact triggers, copy, and how these relate to `/help` are TBD.
 
 - [ ] (tasks TBD after discussion)
+
+---
+
+## Follow-ups — re-evaluate at the end (after Phases 18–24)
+
+- [ ] **`kind:` String → Symbol.** The follow-up handlers + `chat/handlers/delete.rb`
+  self-heal via Phase 19 (rewritten as thin shims onto the symbol-using verb
+  handlers). Re-evaluate the LEFTOVERS and either normalise to symbols in one
+  focused commit or accept the split: `chat_controller` (8× `kind: "error"`), the
+  slash handlers (`config`/`disconnect`/`games`/`help`/`theme`), `themes/switch`,
+  `lib/pito/slash/{handler,help_renderer}`. (NOT `client_kind:`, the stats
+  `kind: "views"`, search `error: { kind: }`, or `where(kind: "…")` queries —
+  different `kind` concepts.) `Event` normalises `:kind` on save, so it's a style
+  split, not a bug.
+- [ ] **Help surface — `/help`, `#help`, bare `help`** (Help A / Help B above).
+  Design the unified help once the verb + repliable-action matrix is final
+  (Phases 18–24 done): what each entry lists, where the copy lives, how it stays in
+  sync with the grammar/registry.
