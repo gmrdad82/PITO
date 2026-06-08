@@ -1,0 +1,94 @@
+# frozen_string_literal: true
+
+module Pito
+  module Chat
+    # Context-aware target resolution shared by verb handlers (Phase 18, T18.2).
+    #
+    # A verb like `show`/`delete`/`reindex` acts on one game or video. It can be
+    # reached three ways; `resolve_target` returns the SAME kind of record for all
+    # three so the verb body stays identical (T18.1's unified entry):
+    #
+    #   * free-chat (`show game 5`)        → the TYPED ref (id `#N`/`N` or title),
+    #                                        parsed from `message.raw`.
+    #   * detail reply (`#<h> rm`)         → the source card's entity, read from its
+    #                                        `<id_key>` payload field. No ref typed.
+    #   * list reply (`#<h> show 5`)       → the typed ref, resolved AMONG the
+    #                                        source list's rows (id/title), so a row
+    #                                        that isn't in THAT list doesn't match.
+    #
+    # Mixed into `Pito::Chat::Handler`, so every verb handler has it. Callers pass
+    # the model class, the detail payload id key, and the noun filler words:
+    #
+    #   resolve_target(::Game, id_key: :game_id, noun_fillers: %w[game games])
+    #
+    # @return the record, or nil (not found / not in the list's scope), or
+    #   :needs_ref when free-chat / a list reply supplied no reference at all.
+    module TargetResolution
+      def resolve_target(entity_class, id_key:, noun_fillers:)
+        return resolve_free_chat(entity_class, noun_fillers) unless follow_up?
+
+        payload = follow_up.source_event.payload.with_indifferent_access
+        if payload[id_key].present?
+          entity_class.find_by(id: payload[id_key])              # detail context
+        else
+          resolve_in_list(entity_class, payload, noun_fillers)   # list context
+        end
+      end
+
+      private
+
+      def resolve_free_chat(entity_class, noun_fillers)
+        ref = extract_ref_from(message.raw, noun_fillers)
+        return :needs_ref if ref.blank?
+
+        find_by_ref(entity_class, ref)
+      end
+
+      def resolve_in_list(entity_class, payload, noun_fillers)
+        ref = strip_noun(follow_up.rest, noun_fillers)
+        return :needs_ref if ref.blank?
+
+        record = find_by_ref(entity_class, ref)
+        return nil if record.nil?
+
+        ids = list_row_ids(payload)
+        ids.empty? || ids.include?(record.id) ? record : nil
+      end
+
+      # ID form (`#5`/`5`/`# 5`) → by id; otherwise case-insensitive title.
+      # The lexer splits `#9` into `#` + `9`, so strip a leading `#` + whitespace.
+      def find_by_ref(entity_class, ref)
+        id = ref.sub(/\A#\s*/, "")
+        return entity_class.find_by(id: id) if id.match?(/\A\d+\z/)
+
+        entity_class.find_by("title ILIKE ?", ref)
+      end
+
+      # The game/video ids shown in a kv-table list: the first cell of each row is
+      # `#<id>` (or the legacy `key: "#<id>"` shape).
+      def list_row_ids(payload)
+        Array(payload[:table_rows]).filter_map do |row|
+          text = if row[:cells]
+                   Array(row[:cells]).first&.dig(:text)
+          else
+                   row[:key] # legacy { key:, value: } row
+          end
+          next if text.blank?
+
+          digits = text.to_s.sub(/\A#\s*/, "")
+          digits.to_i if digits.match?(/\A\d+\z/)
+        end
+      end
+
+      # Drop the verb word, then a leading noun filler — from raw chat input.
+      def extract_ref_from(raw, noun_fillers)
+        rest = raw.to_s.strip.sub(/\A\S+\s*/, "")
+        strip_noun(rest, noun_fillers)
+      end
+
+      def strip_noun(text, noun_fillers)
+        text.to_s.sub(/\A(?:#{noun_fillers.join('|')})\b\s*/i, "").strip
+      end
+    end
+  end
+end

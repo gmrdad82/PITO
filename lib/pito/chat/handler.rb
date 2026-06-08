@@ -2,6 +2,7 @@
 
 require_relative "../grammar/handler_dsl"
 require_relative "follow_up_context"
+require_relative "target_resolution"
 
 module Pito
   module Chat
@@ -36,6 +37,7 @@ module Pito
     # are reset on every subclass to prevent cross-handler bleed.
     class Handler
       extend Pito::Grammar::HandlerDsl
+      include Pito::Chat::TargetResolution
 
       attr_reader :message, :conversation, :channel, :follow_up
 
