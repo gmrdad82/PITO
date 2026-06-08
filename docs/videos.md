@@ -337,9 +337,9 @@ Locked decisions (from the design discussion, 2026-06-08):
 
 ## Phase 14 — Channel personality profile
 
-- [ ] T14.1 Build `Pito::Recommendation::ChannelProfile.call(channel)` — TF-weighted aggregate per facet (genre/theme/perspective freq-weights; score band; TTB band; era; platforms; dev/pub sets; embedding centroid) over PUBLISHED-video-linked games. complexity: [high]
-- [ ] T14.2 Spec the reinforce property: more confirming games → higher profile weight on the shared facets. complexity: [high]
-- [ ] T14.3 Commit: "Recommendation v2: channel personality profile". complexity: [manual]
+- [x] T14.1 Build `Pito::Recommendation::ChannelProfile.call(channel)` — TF-weighted aggregate per facet (genre/theme/perspective freq-weights; score band; TTB band; era; platforms; dev/pub sets; embedding centroid) over PUBLISHED-video-linked games. complexity: [high]
+- [x] T14.2 Spec the reinforce property: more confirming games → higher profile weight on the shared facets. complexity: [high]
+- [x] T14.3 Commit: "Recommendation v2: channel personality profile". complexity: [manual]
 
 ## Phase 15 — Channel recommendation rebuild (both directions)
 
