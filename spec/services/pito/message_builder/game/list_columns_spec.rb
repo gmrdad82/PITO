@@ -76,6 +76,55 @@ RSpec.describe Pito::MessageBuilder::Game::ListColumns do
     end
   end
 
+  # ── sort_key_for ─────────────────────────────────────────────────────────────
+
+  describe ".sort_key_for" do
+    let(:game) { create(:game, title: "Elden Ring", release_year: 2022) }
+
+    it "returns a proc for a base column regardless of selected_columns" do
+      key = described_class.sort_key_for("title", selected_columns: [])
+      expect(key).to be_a(Proc)
+      expect(key.call(game)).to eq("elden ring")
+    end
+
+    it "returns a proc for 'id' (base column) with no selected_columns" do
+      key = described_class.sort_key_for("id", selected_columns: [])
+      expect(key).to be_a(Proc)
+      expect(key.call(game)).to eq(game.id)
+    end
+
+    it "returns nil for a with-column NOT in selected_columns" do
+      key = described_class.sort_key_for("year", selected_columns: [])
+      expect(key).to be_nil
+    end
+
+    it "returns a proc for a with-column that IS in selected_columns" do
+      key = described_class.sort_key_for("year", selected_columns: [ :year ])
+      expect(key).to be_a(Proc)
+      expect(key.call(game)).to eq(2022)
+    end
+
+    it "returns nil for an unknown token" do
+      key = described_class.sort_key_for("bogus", selected_columns: [ :year ])
+      expect(key).to be_nil
+    end
+
+    it "returns a proc for the '#' alias pointing to :id" do
+      key = described_class.sort_key_for("#", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+
+    it "returns a proc for the 'game' alias pointing to :title" do
+      key = described_class.sort_key_for("game", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+
+    it "is case-insensitive for the token" do
+      key = described_class.sort_key_for("TITLE", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+  end
+
   # ── cells ────────────────────────────────────────────────────────────────────
 
   describe ".cells" do

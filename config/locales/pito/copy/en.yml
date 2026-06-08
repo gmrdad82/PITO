@@ -2224,6 +2224,9 @@ en:
           - "%{handle} reindex batch queued and dispatched."
           - "Voyage reindex for %{handle}: queued and good to go."
 
+      list:
+        sort_column_not_visible: "Can't sort by \"%{column}\" — that column isn't visible. Add it with `with %{column}` first, or sort by a shown column."
+
       games:
         import:
           step1:

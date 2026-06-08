@@ -59,6 +59,22 @@ module Pito
             return filtered ? games_filter_empty : games_empty
           end
 
+          sort = Pito::Chat::SortClause.parse(message.raw)
+          if sort
+            key = Pito::MessageBuilder::Game::ListColumns.sort_key_for(
+              sort[:token], selected_columns: columns
+            )
+            if key.nil?
+              payload = Pito::MessageBuilder::Text.call(
+                "pito.copy.list.sort_column_not_visible",
+                column: sort[:token]
+              )
+              return Pito::Chat::Result::Ok.new(events: [ { kind: :system, payload: payload } ])
+            end
+            games = games.to_a.sort_by { |g| key.call(g) }
+            games.reverse! if sort[:direction] == :desc
+          end
+
           payload = Pito::MessageBuilder::Game::List.call(games, conversation:, columns:)
 
           Pito::Chat::Result::Ok.new(events: [ { kind: :system, payload: payload } ])
@@ -98,6 +114,22 @@ module Pito
 
           if videos.empty?
             return videos_empty(channel)
+          end
+
+          sort = Pito::Chat::SortClause.parse(message.raw)
+          if sort
+            key = Pito::MessageBuilder::Video::ListColumns.sort_key_for(
+              sort[:token], selected_columns: columns
+            )
+            if key.nil?
+              payload = Pito::MessageBuilder::Text.call(
+                "pito.copy.list.sort_column_not_visible",
+                column: sort[:token]
+              )
+              return Pito::Chat::Result::Ok.new(events: [ { kind: :system, payload: payload } ])
+            end
+            videos = videos.to_a.sort_by { |v| key.call(v) }
+            videos.reverse! if sort[:direction] == :desc
           end
 
           payload = Pito::MessageBuilder::Video::List.call(videos, conversation:, columns:)

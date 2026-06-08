@@ -296,6 +296,87 @@ RSpec.describe Pito::Chat::Handlers::List do
     end
   end
 
+  # ── Sort clause — games ────────────────────────────────────────────────────
+
+  describe "#call with `list games sorted by year desc` (year not visible)" do
+    let!(:game) { create(:game, title: "Elden Ring", release_year: 2022) }
+
+    it "returns an error payload whose text includes the column name" do
+      result  = handler_for("list games sorted by year desc").call
+      payload = result.events.first[:payload]
+      expect(payload["text"]).to include("year")
+    end
+
+    it "does not return table_rows" do
+      result  = handler_for("list games sorted by year desc").call
+      payload = result.events.first[:payload]
+      expect(payload["table_rows"]).to be_nil
+    end
+  end
+
+  describe "#call with `list games with year sorted by year desc`" do
+    let!(:game_a) { create(:game, title: "Elden Ring",        release_year: 2022) }
+    let!(:game_b) { create(:game, title: "Hollow Knight",     release_year: 2017) }
+    let!(:game_c) { create(:game, title: "Tears of the Kingdom", release_year: 2023) }
+
+    it "returns games ordered by release_year descending" do
+      rows   = handler_for("list games with year sorted by year desc").call.events.first[:payload]["table_rows"]
+      titles = rows.map { |r| r[:cells][1][:text] }
+      expect(titles).to eq([ "Tears of the Kingdom", "Elden Ring", "Hollow Knight" ])
+    end
+  end
+
+  describe "#call with `list games sorted by title desc`" do
+    let!(:game_a) { create(:game, title: "Zelda") }
+    let!(:game_b) { create(:game, title: "Elden Ring") }
+    let!(:game_c) { create(:game, title: "Hollow Knight") }
+
+    it "returns games in reverse-alphabetical title order" do
+      rows   = handler_for("list games sorted by title desc").call.events.first[:payload]["table_rows"]
+      titles = rows.map { |r| r[:cells][1][:text] }
+      expect(titles).to eq([ "Zelda", "Hollow Knight", "Elden Ring" ])
+    end
+  end
+
+  # ── Sort clause — videos ────────────────────────────────────────────────────
+
+  describe "#call with `list videos sorted by views` (views not visible)" do
+    let!(:chan) { create(:channel, title: "Channel A", handle: "@chana", youtube_channel_id: "UCa2") }
+    let!(:vid)  { create(:video, :public, title: "Some Video", channel: chan) }
+
+    it "returns an error payload whose text includes 'views'" do
+      result  = handler_for("list videos sorted by views", channel: "@all").call
+      payload = result.events.first[:payload]
+      expect(payload["text"]).to include("views")
+    end
+
+    it "does not return table_rows" do
+      result  = handler_for("list videos sorted by views", channel: "@all").call
+      payload = result.events.first[:payload]
+      expect(payload["table_rows"]).to be_nil
+    end
+  end
+
+  describe "#call with `list videos with views sorted by views desc`" do
+    let!(:chan)   { create(:channel, title: "Sort Chan", handle: "@sortchan", youtube_channel_id: "UCsort") }
+    let!(:vid_a) { create(:video, :public, title: "Alpha Video", channel: chan) }
+    let!(:vid_b) { create(:video, :public, title: "Beta Video",  channel: chan) }
+    let!(:vid_c) { create(:video, :public, title: "Gamma Video", channel: chan) }
+
+    before do
+      create(:stat, entity: vid_a, kind: "views", value: 1_000)
+      create(:stat, entity: vid_b, kind: "views", value: 5_000)
+      create(:stat, entity: vid_c, kind: "views", value: 3_000)
+    end
+
+    it "returns videos ordered by view_count descending" do
+      rows   = handler_for("list videos with views sorted by views desc", channel: "@all").call
+                           .events.first[:payload]["table_rows"]
+      titles = rows.map { |r| r[:cells][1][:text] }
+      expect(titles).to eq([ "Beta Video", "Gamma Video", "Alpha Video" ])
+    end
+  end
+
   # ── Channel threading ──────────────────────────────────────────────────────
 
   describe "channel: threading — backward compatibility" do

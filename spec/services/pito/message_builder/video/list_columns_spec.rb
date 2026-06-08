@@ -64,6 +64,59 @@ RSpec.describe Pito::MessageBuilder::Video::ListColumns do
     end
   end
 
+  # ── sort_key_for ─────────────────────────────────────────────────────────────
+
+  describe ".sort_key_for" do
+    let(:chan) { create(:channel, handle: "@test") }
+    let(:vid)  { create(:video, :public, title: "Test Video", channel: chan) }
+
+    it "returns a proc for a base column regardless of selected_columns" do
+      key = described_class.sort_key_for("title", selected_columns: [])
+      expect(key).to be_a(Proc)
+      expect(key.call(vid)).to eq("test video")
+    end
+
+    it "returns a proc for 'channel' (base column) with no selected_columns" do
+      key = described_class.sort_key_for("channel", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+
+    it "returns a proc for 'privacy' (base column) with no selected_columns" do
+      key = described_class.sort_key_for("privacy", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+
+    it "returns nil for a with-column NOT in selected_columns" do
+      key = described_class.sort_key_for("views", selected_columns: [])
+      expect(key).to be_nil
+    end
+
+    it "returns a proc for a with-column that IS in selected_columns" do
+      key = described_class.sort_key_for("views", selected_columns: [ :views ])
+      expect(key).to be_a(Proc)
+    end
+
+    it "returns nil for an unknown token" do
+      key = described_class.sort_key_for("bogus", selected_columns: [ :views ])
+      expect(key).to be_nil
+    end
+
+    it "returns nil for 'game' with-column NOT in selected_columns" do
+      key = described_class.sort_key_for("game", selected_columns: [])
+      expect(key).to be_nil
+    end
+
+    it "returns a proc for 'handle' alias pointing to :channel" do
+      key = described_class.sort_key_for("handle", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+
+    it "is case-insensitive for the token" do
+      key = described_class.sort_key_for("TITLE", selected_columns: [])
+      expect(key).to be_a(Proc)
+    end
+  end
+
   # ── cells ────────────────────────────────────────────────────────────────────
 
   describe ".cells" do

@@ -18,6 +18,38 @@ module Pito
       module ListColumns
         module_function
 
+        # Maps canonical column → sort specification.
+        #   key:           Proc called with a Game instance, returns a sortable value.
+        #   requires_with: true  → only valid when the column is present in selected_columns.
+        #                  false → always visible (base column).
+        SORT_SPECS = {
+          id:           { key: ->(g) { g.id },                                                  requires_with: false },
+          title:        { key: ->(g) { g.title.to_s.downcase },                                 requires_with: false },
+          platform:     { key: ->(g) { Array(g.platforms).join(", ").downcase },                requires_with: true },
+          genre:        { key: ->(g) { g.genres.map(&:name).join(", ").downcase },              requires_with: true },
+          developer:    { key: ->(g) { g.developer_companies.map(&:name).join(", ").downcase }, requires_with: true },
+          publisher:    { key: ->(g) { g.publisher_companies.map(&:name).join(", ").downcase }, requires_with: true },
+          release_date: { key: ->(g) { g.release_date || Date.new(0) },                         requires_with: true },
+          year:         { key: ->(g) { g.release_year || 0 },                                   requires_with: true }
+        }.freeze
+
+        # Maps every sort token (downcased) → canonical column Symbol.
+        SORT_VOCAB = {
+          "id"           => :id,
+          "#"            => :id,
+          "title"        => :title,
+          "game"         => :title,
+          "platform"     => :platform,
+          "platforms"    => :platform,
+          "genre"        => :genre,
+          "genres"       => :genre,
+          "developer"    => :developer,
+          "dev"          => :developer,
+          "publisher"    => :publisher,
+          "release date" => :release_date,
+          "year"         => :year
+        }.freeze
+
         COLUMNS = {
           platform:     {
             aliases: %w[platform platforms],
@@ -76,6 +108,22 @@ module Pito
           cols.map do |col|
             { text: COLUMNS.fetch(col)[:value].call(game), class: "text-fg-dim" }
           end
+        end
+
+        # Returns the sort-key proc for +token+ if it resolves to a visible column
+        # (a base column, or a with-column present in +selected_columns+); else nil.
+        #
+        # @param token            [String]        user-supplied sort token (raw, any case).
+        # @param selected_columns [Array<Symbol>] columns chosen via the `with` clause.
+        # @return [Proc, nil]
+        def sort_key_for(token, selected_columns:)
+          canonical = SORT_VOCAB[token.to_s.strip.downcase]
+          return nil unless canonical
+
+          spec = SORT_SPECS[canonical]
+          return nil if spec[:requires_with] && !selected_columns.include?(canonical)
+
+          spec[:key]
         end
       end
     end
