@@ -2,19 +2,22 @@
 
 module Pito
   module Recommendation
-    # game → game similarity — the primitive the channel directions compose.
+    # game → game similarity — the STATIC intrinsic kernel the channel
+    # directions compose over. (v2)
     #
-    # Blends five signals into one 0–100 score (see Weights): embedding (E),
-    # genre (G), developer (D), publisher (P), and score-proximity (S). Returns
-    # `Result`s ranked best-first, each carrying a `breakdown` so the score is
-    # explainable. Drops anything below Weights::FLOOR.
+    # Blends the v2 signal set (see Weights) — embedding · genre · theme ·
+    # perspective · score-smile · TTB-smile · era · platform · developer ·
+    # publisher — but only over the signals actually PRESENT for the pair
+    # (`breakdown_for`): a facet missing on both games is omitted, not scored 0,
+    # and `Weights.blend` normalizes by the present-weight sum. Returns `Result`s
+    # ranked best-first with an explainable `breakdown`; drops below Weights::FLOOR.
     #
     # Candidate pool = the embedding-nearest games UNION games sharing at least
     # one genre / developer / publisher with the target. The union matters: a
-    # same-developer game that sits far in embedding space still surfaces on D,
-    # and a never-embedded game still scores on its facets. (At scale the pool
-    # would move into SQL; here it stays a bounded in-memory blend so every
-    # signal is trivially testable.)
+    # same-developer game far in embedding space still surfaces on D, and a
+    # never-embedded game still scores on its facets. (At scale the pool would
+    # move into SQL; here it stays a bounded in-memory blend so every signal is
+    # trivially testable.)
     class GameSimilarity
       DEFAULT_LIMIT  = 10
       CANDIDATE_POOL = 50 # embedding-nearest games pulled before facet union
@@ -26,22 +29,57 @@ module Pito
       end
 
       # Pairwise blended similarity between two SPECIFIC games — no candidate
-      # pool, no floor. This is what the channel directions compose over the
-      # link graph (max similarity between a target and a channel's linked
-      # games). Returns { score: 0–100, breakdown: { e:, g:, d:, p:, s: } }.
-      # `between(g, g)` is 100 only when g carries facets/embedding; identity is
-      # not assumed, so callers needing a definitive self-match use LINK_SCORE.
+      # pool, no floor. This is what the channel directions compose. Returns
+      # { score: 0–100, breakdown: { present signals only } }. `between(g, g)`
+      # is 100 only when g carries facets/embedding; identity is not assumed, so
+      # callers needing a definitive self-match use LINK_SCORE.
       def self.between(game_a, game_b)
-        breakdown = {
-          e: Signals.embedding(cosine_distance(game_a&.summary_embedding, game_b&.summary_embedding)),
-          g: Signals.jaccard(facet(game_a, :genres), facet(game_b, :genres)),
-          t: Signals.jaccard(game_a&.themes, game_b&.themes),
-          pp: Signals.jaccard(game_a&.player_perspectives, game_b&.player_perspectives),
-          d: Signals.jaccard(facet(game_a, :developer_companies), facet(game_b, :developer_companies)),
-          p: Signals.jaccard(facet(game_a, :publisher_companies), facet(game_b, :publisher_companies)),
-          s: Signals.score_proximity(game_a&.score, game_b&.score)
-        }
+        breakdown = breakdown_for(
+          facets_of(game_a), facets_of(game_b),
+          cosine_distance(game_a&.summary_embedding, game_b&.summary_embedding)
+        )
         { score: Weights.blend(breakdown), breakdown: breakdown }
+      end
+
+      # Snapshot of a game's facet values (ids for associations, raw for the
+      # scalars). nil game → empty snapshot (everything absent).
+      def self.facets_of(game)
+        return {} if game.nil?
+
+        {
+          genres:       facet(game, :genres),
+          themes:       Array(game.themes),
+          perspectives: Array(game.player_perspectives),
+          devs:         facet(game, :developer_companies),
+          pubs:         facet(game, :publisher_companies),
+          platforms:    Array(game.platforms),
+          score:        game.score,
+          ttb:          game.ttb_main_seconds,
+          year:         game.release_year
+        }
+      end
+
+      # Build a breakdown containing ONLY the signals present for the pair: a
+      # jaccard facet is present when EITHER game has it (an empty-vs-something
+      # match is a real 0); score/ttb/era/embedding need BOTH sides. Absent
+      # signals are omitted so `Weights.blend` normalizes over what's comparable.
+      def self.breakdown_for(facets_a, facets_b, embedding_distance)
+        bd = {}
+        bd[:e]  = Signals.embedding(embedding_distance) unless embedding_distance.nil?
+        bd[:g]  = Signals.jaccard(facets_a[:genres], facets_b[:genres])             if union?(facets_a[:genres], facets_b[:genres])
+        bd[:t]  = Signals.jaccard(facets_a[:themes], facets_b[:themes])             if union?(facets_a[:themes], facets_b[:themes])
+        bd[:pp] = Signals.jaccard(facets_a[:perspectives], facets_b[:perspectives]) if union?(facets_a[:perspectives], facets_b[:perspectives])
+        bd[:d]  = Signals.jaccard(facets_a[:devs], facets_b[:devs])                 if union?(facets_a[:devs], facets_b[:devs])
+        bd[:p]  = Signals.jaccard(facets_a[:pubs], facets_b[:pubs])                 if union?(facets_a[:pubs], facets_b[:pubs])
+        bd[:platform] = Signals.platform_overlap(facets_a[:platforms], facets_b[:platforms]) if union?(facets_a[:platforms], facets_b[:platforms])
+        bd[:s]  = Signals.score_smile(facets_a[:score], facets_b[:score])  if facets_a[:score] && facets_b[:score]
+        bd[:ttb] = Signals.ttb_smile(facets_a[:ttb], facets_b[:ttb])       if facets_a[:ttb] && facets_b[:ttb]
+        bd[:era] = Signals.era(facets_a[:year], facets_b[:year])           if facets_a[:year] && facets_b[:year]
+        bd
+      end
+
+      def self.union?(a, b)
+        (Array(a) + Array(b)).any?
       end
 
       def self.facet(game, association)
@@ -88,22 +126,10 @@ module Pito
         return [] if candidates.empty?
 
         distances     = embedding_distances(candidates.map(&:id))
-        target_genres = facet_ids(@game, :genres)
-        target_devs   = facet_ids(@game, :developer_companies)
-        target_pubs   = facet_ids(@game, :publisher_companies)
-        target_themes = @game.themes
-        target_persps = @game.player_perspectives
+        target_facets = self.class.facets_of(@game)
 
         candidates.filter_map { |cand|
-          breakdown = {
-            e: Signals.embedding(distances[cand.id]),
-            g: Signals.jaccard(target_genres, facet_ids(cand, :genres)),
-            t: Signals.jaccard(target_themes, cand.themes),
-            pp: Signals.jaccard(target_persps, cand.player_perspectives),
-            d: Signals.jaccard(target_devs,   facet_ids(cand, :developer_companies)),
-            p: Signals.jaccard(target_pubs,   facet_ids(cand, :publisher_companies)),
-            s: Signals.score_proximity(@game.score, cand.score)
-          }
+          breakdown = self.class.breakdown_for(target_facets, self.class.facets_of(cand), distances[cand.id])
           score = Weights.blend(breakdown)
           next if score < Weights::FLOOR
 
@@ -155,12 +181,6 @@ module Pito
               .where.not(summary_embedding: nil)
               .nearest_neighbors(:summary_embedding, @game.summary_embedding, distance: "cosine")
               .each_with_object({}) { |row, acc| acc[row.id] = row.neighbor_distance }
-      end
-
-      # Preloaded-association ids (no extra query for candidates loaded via
-      # `includes`); the target itself queries once.
-      def facet_ids(game, association)
-        game.public_send(association).map(&:id)
       end
     end
   end

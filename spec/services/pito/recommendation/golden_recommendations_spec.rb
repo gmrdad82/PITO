@@ -14,32 +14,31 @@ RSpec.describe "Golden recommendation rankings (frozen corpus)", type: :service 
   # Order of equal-score ties is intentionally ignored (it depends on row id).
   expected = {
     "Pragmata" => {
-      "Scars Above" => 83, "Dead Space" => 81, "Elden Ring" => 67,
-      "Mad Max" => 65, "Ghosts 'n Goblins Resurrection" => 28, "Super Meat Boy" => 6
+      "Scars Above" => 70, "Dead Space" => 67, "Ghosts 'n Goblins Resurrection" => 36,
+      "Elden Ring" => 45, "Mad Max" => 43
     },
     "Dead Space" => {
-      "Scars Above" => 83, "Pragmata" => 81, "Mad Max" => 66,
-      "Elden Ring" => 65, "Ghosts 'n Goblins Resurrection" => 21, "Super Meat Boy" => 7
+      "Scars Above" => 72, "Pragmata" => 67, "Mad Max" => 46,
+      "Elden Ring" => 43, "Ghosts 'n Goblins Resurrection" => 21
     },
     "Scars Above" => {
-      "Pragmata" => 83, "Dead Space" => 83, "Elden Ring" => 65,
-      "Mad Max" => 65, "Ghosts 'n Goblins Resurrection" => 22, "Super Meat Boy" => 8
+      "Dead Space" => 72, "Pragmata" => 70, "Elden Ring" => 43,
+      "Mad Max" => 42, "Ghosts 'n Goblins Resurrection" => 22
     },
     "Mad Max" => {
-      "Dead Space" => 66, "Pragmata" => 65, "Elden Ring" => 65,
-      "Scars Above" => 65, "Ghosts 'n Goblins Resurrection" => 19, "Super Meat Boy" => 6
+      "Dead Space" => 46, "Elden Ring" => 46, "Ghosts 'n Goblins Resurrection" => 20,
+      "Pragmata" => 43, "Scars Above" => 42
     },
     "Elden Ring" => {
-      "Pragmata" => 67, "Dead Space" => 65, "Mad Max" => 65,
-      "Scars Above" => 65, "Ghosts 'n Goblins Resurrection" => 22, "Super Meat Boy" => 6
+      "Mad Max" => 46, "Pragmata" => 45, "Dead Space" => 43,
+      "Scars Above" => 43, "Ghosts 'n Goblins Resurrection" => 22
     },
     "Ghosts 'n Goblins Resurrection" => {
-      "Pragmata" => 28, "Elden Ring" => 22, "Scars Above" => 22,
-      "Dead Space" => 21, "Mad Max" => 19, "Super Meat Boy" => 13
+      "Pragmata" => 36, "Elden Ring" => 22, "Scars Above" => 22,
+      "Dead Space" => 21, "Mad Max" => 20, "Super Meat Boy" => 12
     },
     "Super Meat Boy" => {
-      "Ghosts 'n Goblins Resurrection" => 13, "Scars Above" => 8, "Dead Space" => 7,
-      "Pragmata" => 6, "Mad Max" => 6, "Elden Ring" => 6
+      "Ghosts 'n Goblins Resurrection" => 12
     }
   }
 

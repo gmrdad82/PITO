@@ -140,12 +140,4 @@ RSpec.describe Pito::Recommendation::Signals do
       expect(described_class.platform_overlap([], [])).to eq(0.0)
     end
   end
-
-  describe "Pito::Recommendation::Weights.dynamic_embedding_weight" do
-    it "is minimal when facets are present and rises (capped) as they go missing" do
-      expect(Pito::Recommendation::Weights.dynamic_embedding_weight(1.0)).to eq(0.05)
-      expect(Pito::Recommendation::Weights.dynamic_embedding_weight(0.0)).to eq(0.18)
-      expect(Pito::Recommendation::Weights.dynamic_embedding_weight(0.5)).to be_within(0.001).of(0.115)
-    end
-  end
 end

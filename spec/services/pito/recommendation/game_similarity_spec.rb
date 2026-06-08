@@ -48,13 +48,15 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
   # ── single-signal weighting (embedding stays identical ⇒ E=100 is stable) ──
 
   it "scores an identical-everything twin at 100 with a full breakdown" do
+    # score: 100 (elite) → score_smile(100,100) = 100 → all signals 100 → blend 100
     facets = { genres: [ genre_x ], developers: [ dev_a ], publishers: [ pub_b ],
-               score: 80, themes: [ "Action" ], perspectives: [ "Third person" ] }
+               score: 100, themes: [ "Action" ], perspectives: [ "Third person" ] }
     target = make_game(embedding: vec(0), **facets)
     make_game(embedding: vec(0), **facets)
 
     result = described_class.call(target).first
     expect(result.score).to eq(100)
+    # no ttb_main_seconds / release_year / platforms set by factory → those signals are absent
     expect(result.breakdown).to eq(e: 100.0, g: 100.0, t: 100.0, pp: 100.0, s: 100.0, d: 100.0, p: 100.0)
   end
 
@@ -67,11 +69,13 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
   it "adds genre overlap on top of embedding" do
     target  = make_game(embedding: vec(0), genres: [ genre_x ])
     with_g  = make_game(embedding: vec(0), genres: [ genre_x ])
+    # target HAS genre_x → genre facet is PRESENT for the pair (union non-empty)
+    # → without gets g: 0.0 in its breakdown (not absent), dragging its score down
     without = make_game(embedding: vec(0))
 
     by_game = described_class.call(target).index_by(&:game)
     expect(by_game[with_g].score).to eq(W.blend(e: 100, g: 100))
-    expect(by_game[without].score).to eq(W.blend(e: 100))
+    expect(by_game[without].score).to eq(W.blend(e: 100, g: 0))
   end
 
   it "weights a shared developer above a shared publisher" do
@@ -80,20 +84,23 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
     pub    = make_game(embedding: vec(0), publishers: [ pub_b ])
 
     by_game = described_class.call(target).index_by(&:game)
-    expect(by_game[dev].score).to eq(W.blend(e: 100, d: 100))
-    expect(by_game[pub].score).to eq(W.blend(e: 100, p: 100))
+    # target has pub_b → publisher facet is present for the dev candidate (p: 0)
+    # target has dev_a → developer facet is present for the pub candidate (d: 0)
+    expect(by_game[dev].score).to eq(W.blend(e: 100, d: 100, p: 0))
+    expect(by_game[pub].score).to eq(W.blend(e: 100, p: 100, d: 0))
     expect(by_game[dev].score).to be > by_game[pub].score
   end
 
-  it "weights a shared perspective as the strongest single facet signal" do
-    target = make_game(embedding: vec(0), perspectives: [ "Third person" ])
-    pp     = make_game(embedding: vec(1), perspectives: [ "Third person" ]) # orthogonal embed, shares PP only
-    none   = make_game(embedding: vec(1), genres: [ genre_x ])              # orthogonal, no shared signal
+  it "weights a shared genre as the strongest single facet signal" do
+    # G=0.22 > PP=0.20; orthogonal embedding (E=0) present on both candidates
+    target    = make_game(embedding: vec(0), genres: [ genre_x ])
+    with_genre = make_game(embedding: vec(1), genres: [ genre_x ]) # orthogonal embed, shares genre only
+    none       = make_game(embedding: vec(1), perspectives: [ "Third person" ]) # orthogonal, no shared genre
 
     results = described_class.call(target).index_by(&:game)
-    expect(results[pp].score).to eq(W.blend(pp: 100))
-    expect(results[pp].score).to be > W.blend(g: 100)
-    expect(results).not_to have_key(none) # nothing shared → below floor
+    expect(results[with_genre].score).to eq(W.blend(e: 0, g: 100))
+    expect(results[with_genre].score).to be > W.blend(e: 0, pp: 100)
+    expect(results).not_to have_key(none) # only pp: 0 + e: 0 shared → below floor
   end
 
   it "ranks a closer score higher than a distant one" do
@@ -122,7 +129,7 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
     result = described_class.call(target).find { |r| r.game == cand }
     expect(result).to be_present
     expect(result.score).to eq(W.blend(g: 100, d: 100))
-    expect(result.breakdown[:e]).to eq(0.0)
+    expect(result.breakdown[:e]).to be_nil # no embedding on either → e absent from breakdown
   end
 
   # ── invariants ─────────────────────────────────────────────────────────────
@@ -160,7 +167,9 @@ RSpec.describe Pito::Recommendation::GameSimilarity, type: :service do
       g2 = make_game(embedding: nil, genres: [ genre_x ], developers: [ dev_a ])
       out = described_class.between(g1, g2)
       expect(out[:score]).to eq(W.blend(g: 100, d: 100))
-      expect(out[:breakdown]).to eq(e: 0.0, g: 100.0, t: 0.0, pp: 0.0, d: 100.0, p: 0.0, s: 0.0)
+      # no embedding / themes / perspectives / publishers / score on these games →
+      # only the signals with a non-empty union are present in the breakdown
+      expect(out[:breakdown]).to eq(g: 100.0, d: 100.0)
     end
 
     it "computes cosine embedding similarity in Ruby (identical = E 100)" do

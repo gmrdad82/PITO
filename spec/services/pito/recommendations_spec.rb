@@ -292,7 +292,10 @@ RSpec.describe Pito::Recommendations, type: :service do
         expect(result.game).to eq(near)
         expect(result.score).to be_a(Integer)
         expect(result.score).to be_between(0, 100)
-        expect(result.breakdown).to include(:e, :g, :d, :p, :s)
+        # v2: breakdown carries ONLY the signals present for the pair (here the
+        # shared embedding); every value is a 0–100 float.
+        expect(result.breakdown).to be_a(Hash).and include(:e)
+        expect(result.breakdown.values).to all(be_a(Float))
       end
     end
   end

@@ -328,12 +328,12 @@ Locked decisions (from the design discussion, 2026-06-08):
 
 ## Phase 13 — Kernel re-weight (game↔game) + recompute baseline
 
-- [ ] T13.1 Add TTB / release_year / platforms into the `GameSimilarity` breakdown. complexity: [high]
-- [ ] T13.2 Define Weights v2: genre/theme/perspective high, score-smile + TTB-smile high-at-tails, dev ≈2× pub, year+platform shared slice, embedding dynamic-minor. complexity: [high]
-- [ ] T13.3 Wire score→score_smile, ttb→ttb_smile, year+platform additive shared slice, dynamic E into the blend. complexity: [high]
-- [ ] T13.4 Recompute game↔game over the 7-game fixture; REPORT the full matrix for user confirmation. complexity: [manual]
-- [ ] T13.5 Re-lock the golden game↔game spec to the confirmed numbers. complexity: [high]
-- [ ] T13.6 Commit: "Recommendation v2: re-weighted game↔game kernel (TTB/year/platform + smiles)". complexity: [manual]
+- [x] T13.1 Add TTB / release_year / platforms into the `GameSimilarity` breakdown. complexity: [high]
+- [x] T13.2 Define Weights v2: genre/theme/perspective high, score-smile + TTB-smile high-at-tails, dev ≈2× pub, year+platform shared slice, embedding dynamic-minor. complexity: [high]
+- [x] T13.3 Wire score→score_smile, ttb→ttb_smile, year+platform additive shared slice, dynamic E into the blend. complexity: [high]
+- [x] T13.4 Recompute game↔game over the 7-game fixture; REPORT the full matrix for user confirmation. complexity: [manual]
+- [x] T13.5 Re-lock the golden game↔game spec to the confirmed numbers. complexity: [high]
+- [x] T13.6 Commit: "Recommendation v2: re-weighted game↔game kernel (TTB/year/platform + smiles)". complexity: [manual]
 
 ## Phase 14 — Channel personality profile
 

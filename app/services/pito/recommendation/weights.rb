@@ -5,53 +5,60 @@ module Pito
     # Single source of truth for recommendation signal weights, shared by every
     # direction (game→game, game→channel, channel→game). Tunable in one place.
     #
-    # Seven signals blended into 0–100 (weights sum to 1.0):
-    #   PP — player_perspective overlap. The strongest discriminator: a
-    #        third-person action game and a side-view platformer are *not* the
-    #        same kind of game even when their genre tags collide ("Adventure").
-    #   E  — embedding / semantic similarity.
-    #   G  — genre overlap.
-    #   S  — score proximity.
-    #   T  — theme overlap (Action / Sci-fi / Horror / Survival …).
-    #   D  — developer overlap (counts for something).
-    #   P  — publisher overlap (counts less).
+    # v2 — ten signals, blended over the ones that are actually PRESENT for a
+    # given pair (see `.blend`). Weights are RELATIVE — the blend normalizes by
+    # the present-weight sum, so they need not total 1.0 and missing facets never
+    # count as dissimilarity (absence of data is not a mismatch).
     #
-    # Weights tuned empirically against real IGDB data so that, vs Pragmata:
-    # Dead Space ≈ 81, Mad Max ≈ 65, Ghosts 'n Goblins ≈ 28, Super Meat Boy ≈ 6.
+    #   PP — player_perspective overlap (third-person vs side-view vs first-person)
+    #   G  — genre overlap
+    #   T  — theme overlap (Action / Sci-fi / Horror / Survival …)
+    #   S  — score "smile": two >90 (elite) or two <60 (bad) games count far more
+    #        than two ~75s; the 60–90 mid is the smudge.
+    #   TTB— time-to-beat "smile": very short and very long (≥150h) games are
+    #        distinctive; ~30–40h is generic.
+    #   ERA / PLATFORM — release-year proximity + platform overlap. A small shared
+    #        slice (≈half each): matching both fills it, neither overshoots.
+    #   D  — developer overlap (≈2× publisher).
+    #   P  — publisher overlap (the smallest structured signal).
+    #   E  — embedding / semantic similarity. Deliberately minor: descriptions are
+    #        noisy. Its RELATIVE influence rises only as structured facets go
+    #        missing (the present-signal normalization below is the "dynamic
+    #        fallback"), and it can never outrank the heavy structured weights
+    #        while they are present.
     #
-    # An explicit video→game link is definitive and bypasses the blend entirely
-    # (LINK_SCORE). Anything below FLOOR is dropped (kept low so weak-but-real
-    # matches like Super Meat Boy still surface).
+    # An explicit video→game link is definitive on the channel directions and
+    # bypasses the blend (LINK_SCORE — or its graded form on genre-channels).
+    # Below FLOOR is dropped (kept low so weak-but-real matches still surface).
     module Weights
-      PP = 0.45 # player perspective overlap (primary discriminator)
-      E  = 0.20 # embedding / semantic similarity
-      G  = 0.20 # genre overlap
-      S  = 0.06 # score proximity
-      T  = 0.05 # theme overlap
-      D  = 0.03 # developer overlap (counts for something)
-      P  = 0.01 # publisher overlap (counts less)
+      PP       = 0.20
+      G        = 0.22
+      T        = 0.14
+      S        = 0.14
+      TTB      = 0.12
+      ERA      = 0.04
+      PLATFORM = 0.04
+      D        = 0.06
+      P        = 0.03
+      E        = 0.03
 
-      BLEND = { e: E, g: G, t: T, pp: PP, s: S, d: D, p: P }.freeze
+      BLEND = { e: E, g: G, t: T, pp: PP, s: S, ttb: TTB, era: ERA, platform: PLATFORM, d: D, p: P }.freeze
 
       LINK_SCORE = 100 # explicit link → definitive match
       FLOOR      = 5   # drop blended scores below this (near-noise only)
 
-      # Blend a breakdown hash ({ e:, g:, t:, pp:, s:, d:, p: } each 0–100) into a
-      # single 0–100 score using the weights above. Missing keys count as 0.
+      # Normalized weighted blend over ONLY the signals the caller put in
+      # `breakdown` (each 0–100). Absent facets are omitted upstream — NOT scored
+      # as 0 — so they neither help nor penalise. Dividing by the present-weight
+      # sum is also what makes embedding a dynamic fallback: as structured facets
+      # drop out the denominator shrinks and E's relative share grows, but the
+      # heavy structured weights still dominate whenever they are present.
       def self.blend(breakdown)
-        BLEND.sum { |key, weight| weight * breakdown[key].to_f }.round
-      end
+        keys = breakdown.keys.select { |k| BLEND.key?(k) }
+        return 0 if keys.empty?
 
-      # v2 — embedding is a dynamic fallback (D-rec-4): minimal weight when a game
-      # is richly tagged, rising toward the cap as structured facets go missing,
-      # but capped so it never outranks the important structured signals.
-      # @param facet_presence [Float] 0..1 — fraction of structured facets present.
-      E_FALLBACK_BASE = 0.05
-      E_FALLBACK_CAP  = 0.18
-
-      def self.dynamic_embedding_weight(facet_presence)
-        p = facet_presence.to_f.clamp(0.0, 1.0)
-        E_FALLBACK_BASE + (E_FALLBACK_CAP - E_FALLBACK_BASE) * (1.0 - p)
+        total = keys.sum { |k| BLEND[k] }
+        (keys.sum { |k| BLEND[k] * breakdown[k].to_f } / total).round
       end
     end
   end
