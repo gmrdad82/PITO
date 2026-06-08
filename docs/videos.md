@@ -87,8 +87,15 @@ feed that engine.
 - Phase 14 — Recommendation v2: channel personality profile (TF-weighted aggregate)
 - Phase 15 — Recommendation v2: channel recommendation rebuild (profile-fit + graded-K, both ways; validate)
 - Phase 16 — Recommendation v2: golden scenario matrix + harden the flaky pool spec
-- Phase 17 — Unified kv-table for lists: `with <cols>` (games + videos) + `list games` channel scope
-- Phase 18 — Dispatcher unification: one command, any entry (kill show/delete/link duplication)
+- Phase Copy — Pito::Copy 1-or-50 guard (foundation — run FIRST, before Phase 17)
+- Phase 17 — Lists v2: N-col kv-table + headings + `with`/`sorted by` + `list games` channel scope
+- Phase 18 — Unified dispatch: one handler interprets chat ≡ #hashtag (resolution + adapter + action gating)
+- Phase 19 — Migrate show / show video / delete / link / unlink onto the unified handler
+- Phase 20 — `reindex` (Voyage re-embed only); drop `resync`
+- Phase 21 — YouTube write-through: delete / publish / unlist / schedule (Confirmable)
+- Phase 22 — `import game` (IGDB sidebar → dispatch show game) + `footage` only
+- Phase 23 — Cleanup: unify `/themes preview|apply`, drop `similar`, Pito::Copy 50-variant sweep
+- Phase 24 — `sync` family (full refresh) + `import videos`; Confirmable, done-only broadcast
 - Help A — `/help` for commands (keep) [TO DISCUSS]
 - Help B — `#help` + `help` for hashtags & free messages [TO DISCUSS]
 
@@ -358,74 +365,224 @@ Locked decisions (from the design discussion, 2026-06-08):
 - [x] T16.2 Harden the order-dependent `GameSimilarity` pool/limit spec (deterministic clean slate). complexity: [high]
 - [x] T16.3 Run the FULL suite to completion green (no abort, deterministic count); commit. complexity: [manual]
 
-## Phase 17 — Unified kv-table for lists: `with <cols>` + `list games` channel scope
+# Command & dispatcher unification + Lists v2 (Phases 17–24)
 
-> The lists render via the system component's `table_rows` **kv-table** (a CSS
-> grid of `KeyValueRowComponent` spans — VERIFIED: there is NO `<table>`). Today
-> it caps at 3 columns (key/value/value2). Extend it past 3, add a `with <cols>`
-> magic word to **`list games`** and **`list videos`** (NOT `list channels`), and
-> scope `list games` by the shift+tab channel.
+> The chat verb set and the `#<handle>` follow-up set are THE SAME COMMANDS from
+> different locations. Unify so each command is built + sent ONE way, from one
+> handler, regardless of entry. No duplication. Decisions (2026-06-08):
+> Q1 YouTube write-through = YES (delete/publish/unlist/schedule write to YouTube,
+> each Confirmable). Q3 resolution: free-chat by typed ref; `#<list> <verb> <ref>`
+> resolves the ref AMONG that list's rows (id/title); `#<detail> <verb>` uses the
+> card's entity (no ref). Q4 link/unlink autosuggested by link existence (suggest
+> `link` if unlinked, `unlink` if linked). Q5 `sorted by|ordered by` = asc implicit
+> / desc explicit; ERROR if the column isn't visible. Q6 heading row on EVERY
+> kv-table. Q7 `import` = IGDB import only (overloaded by noun: `import game` =
+> IGDB; `import videos` = YouTube). Every command's copy = **50-variant `Pito::Copy`**.
 >
-> NOTE: discard the prior one-shot Phase-17 attempt (a separate `pito-video-list`
-> CSS grid — it diverged from the kv-table). Rebuild on the kv-table, atomically.
-
-Requirements:
-- **No `<table>`** — extend the existing `table_rows` kv-table to N columns. Both
-  lists feed the SAME mechanism.
-- **`with` magic word, comma enumerator** — `list … with <col>[,<col>…]`, accept
-  `,` and `, ` (split `/\s*,\s*/`), order preserved, dedup, unknown ignored.
-- **`list games with`** columns: `platform`, `genre`, `developer`, `publisher`,
-  `release date`, `year` (release date and year are **two distinct** columns).
-- **`list videos with`** columns: `game` (linked game title), `duration`, `views`,
-  `likes`, `comments` (counts via `Pito::Stats`). `@handle` renders **cyan**;
-  `duration` via the extracted `H:MM:SS`/`M:SS` formatter (`9:34`, `1:02:22`,
-  `43:23`, `1:00:32`).
-- **`list channels`** — NO `with` extension.
-- **`list games` shift+tab channel scope** — read the threaded `channel` param:
-  `@all` (or none) → no channel filter; `@<handle>` → only games that have **≥1
-  video on that channel**. (Mirrors how `list videos` already scopes by channel.)
-- **Autosuggest** — after `with `, tab-complete the column names for THAT list
-  (games' set vs videos' set).
-
-- [ ] T17.1 Extend `table_rows` + the system component to render N columns (row = ordered cells `{ text:, class: }`); keep 2/3-col back-compat. complexity: [high]
-- [ ] T17.2 Extract the duration formatter into `Pito::Video::DurationFormat` (`H:MM:SS`/`M:SS`); reuse in `Video::DetailComponent`. complexity: [low]
-- [ ] T17.3 Add a shared `with <cols>` parser (magic word `with`, `,`/`, ` enumerator, order-preserving, dedup, unknown-ignored). complexity: [high]
-- [ ] T17.4 `list games with` → kv-table columns: platform, genre, developer, publisher, release date, year. complexity: [high]
-- [ ] T17.5 `list videos with` → kv-table columns: game, duration, views, likes, comments (counts via Stats; `@handle` cyan; duration via DurationFormat). complexity: [high]
-- [ ] T17.6 `list channels` — explicitly NO `with` (ignore/reject the clause). complexity: [low]
-- [ ] T17.7 `list games` channel scope from the shift+tab `channel` param (`@all`→all; `@handle`→games with ≥1 video on that channel). complexity: [high]
-- [ ] T17.8 Make the video list follow-up-able (`reply_target: "video_list"`) — `show video` wired via the UNIFIED handler (Phase 18). complexity: [low]
-- [ ] T17.9 Autosuggest the `with` column names per list type (games cols vs videos cols). complexity: [high]
-- [ ] T17.10 Specs: N-col kv-table, both `with` sets, channels-excluded, list-games channel scope, duration format, autosuggest. complexity: [high]
-- [ ] T17.11 Run the new specs; make green. complexity: [low]
-- [ ] T17.12 Commit: "Lists: N-column kv-table + `with <cols>` (games/videos) + list-games channel scope". complexity: [manual]
-
-## Phase 18 — Dispatcher unification: one command, any entry point
-
-> AUDIT (2026-06-08): `show`, `delete`/`rm`, and `link` are implemented TWICE —
-> the chat VERB and a FOLLOW-UP action that REIMPLEMENTS resolve + build.
-> `#<handle> <cmd>` is the SAME command from a different location; the follow-up
-> should resolve only its CONTEXT (the entity behind the handle) and delegate to
-> the same verb logic. `import` already does this (shared `FootageImport`
-> builder) — the model to copy.
+> Q8 DROP `resync`. Keep `reindex` = Voyage re-embed ONLY (rebuild the vector, no
+> field refetch, no stats). Q9 `sync` does EVERYTHING for its target: refetch
+> fields (IGDB/YouTube) + dispatch a Voyage re-embed IF embedded fields changed +
+> refresh `Pito::Stats`. Q10 the bulk/background verbs (`sync …`, `import videos`)
+> are **Confirmable** and publish a **single Standard "done" message on completion**
+> (no up-front ack, no page refresh).
 >
-> Offenders:
-> - **show** — `show` verb + `game_list` `show` (+ the would-be video_list `show`); already DRIFTED (the follow-up forgot the Enhanced message — patched, not fixed).
-> - **delete/rm** — `delete` verb + `game_list` `delete` + `game_detail` `rm` (3 resolve+wrap copies; they share the `DeleteConfirmation` builder but nothing else).
-> - **link (game↔video)** — `link` verb + `game_detail` `link` (both resolve the other side + `VideoGameLink.find_or_create_by!` + ack).
+> **UNIVERSAL INVARIANT — EVERYTHING PRODUCES AT LEAST ONE STANDARD MESSAGE.** No
+> verb is ever silent. If it resolves locally (fast) it replies with its Standard
+> message immediately; if it needs a slower background job, the job broadcasts the
+> Standard message when it finishes. Every handler + every job is responsible for
+> emitting/publishing at least one Standard message — this is a spec assertion on
+> every command.
 >
-> Clean (follow-up-only or already delegating — leave alone): `import`, `resync`,
-> `reindex`, `similar`, `channel`, `visit`, `consume`, `preview`/`apply`,
-> `confirm`/`cancel`.
+> **BULK = ONE SUMMARY.** For a multi-entity verb (`sync videos`, `sync channel
+> with videos`, `import videos`, any `@all` fan-out) the "at least one" is
+> **exactly ONE Standard summary** message (Pito::Copy 50, with affected counts) —
+> per-entity messages are SUPPRESSED. 40 affected videos → 1 message, never 40.
+> (Enhanced summary is future.) Singular verbs keep their normal per-entity messages.
+>
+> **Pito::Copy is 1-or-50.** Every `Pito::Copy` key holds EITHER exactly 1 entry
+> (single/fixed copy) OR a full ≥50-variant dictionary — nothing between. A spec
+> guard enforces this across all keys (Phase Copy, built FIRST).
+>
+> Canonical verb + repliable-action matrix:
+> - `list|ls channels|videos|games` → repliable. Allowed reply actions:
+>   - channels: `visit`
+>   - videos: `show`, `rm|delete`, `publish`, `unlist`, `schedule`, `reindex`, `sync`, `link`, `unlink`
+>   - games: `show`, `rm|delete`, `reindex`, `sync`, `link`, `unlink`
+> - `show video|game` → Standard + Enhanced (video Enhanced = Pito::Copy intro
+>   placeholder for now; Analytics later). Repliable:
+>   - show game: `rm|delete`, `reindex`, `sync`, `link`, `footage`
+>   - show video: `rm|delete`, `publish`, `unlist`, `schedule`, `reindex`, `sync`, `link`
+> - `rm|delete video|game` → Confirmable (video also deletes on YouTube)
+> - `reindex video|game` → Voyage re-embed only, **Confirmable** (Phase 20)
+> - `sync game|video|videos|channel|channel with videos` → Confirmable, full refresh, done-only broadcast (Phase 24)
+> - `link video|game` / `unlink video|game` (autosuggested by existence)
+> - `footage game` (snippet) · `import game` (IGDB sidebar → dispatch show game)
+> - `import videos` (Confirmable, newer-only YouTube import, done-only broadcast)
+> - `publish video` / `unlist video` (Confirmable, YouTube) · `schedule video <when>` (Confirmable, YouTube, ≥30m future)
 
-- [ ] T18.1 Decide the unification approach: (1) shared command core per verb that both the verb handler and the follow-up call, vs (2) follow-up normalizes to the command + routes through the real verb handler with context attached. complexity: [manual]
-- [ ] T18.2 `show` — one core that builds `[Detail(system), Enhanced(enhanced)]` for a game; point the `show` verb + `game_list` `show` at it (free-chat ≡ `#<handle>`). complexity: [high]
-- [ ] T18.3 `show video` — one core that builds `[Detail(system)]`; point the `show video` verb + the `video_list` `show` at it. complexity: [high]
-- [ ] T18.4 `delete` — one core that builds the `game_delete` confirmation; point the `delete` verb + `game_list`/`game_detail` delete actions at it. complexity: [high]
-- [ ] T18.5 `link` — one core that resolves + `find_or_create` + acks; point the `link` verb + `game_detail` `link` at it. complexity: [high]
-- [ ] T18.6 Delete the now-dead duplicated resolve/build logic from the follow-up handlers. complexity: [high]
-- [ ] T18.7 Specs: free-chat and `#<handle> …` emit IDENTICAL events for show / show video / delete / link. complexity: [high]
-- [ ] T18.8 Run the suite green; commit. complexity: [manual]
+## Phase Copy (foundation — run FIRST, before Phase 17) — Pito::Copy 1-or-50 guard
+
+> Front-load the copy infrastructure so every later task inherits the floor. RULE:
+> each `Pito::Copy` key holds EITHER exactly **1** entry (single/fixed copy) OR a
+> full **≥50**-variant dictionary — nothing between. A spec guard enforces this
+> across ALL keys and fails the suite on any violation; bring every existing
+> dictionary key up to ≥50 now. This replaces the old end-of-run copy sweep, and
+> every later phase's "50-variant Pito::Copy" task inherits this guard.
+
+- [ ] TC.1 Ensure `Pito::Copy` exposes a discoverable registry of every key (for the guard to enumerate). complexity: [high]
+- [ ] TC.2 Add a spec guard: each key's variant count is `== 1` OR `>= 50` (single copy or full dictionary); fail otherwise, naming the offending keys. complexity: [high]
+- [ ] TC.3 Audit existing keys; bring every dictionary key up to ≥50 variants (leave deliberate single-copy keys at 1). complexity: [high]
+- [ ] TC.4 Run the guard + suite green. complexity: [low]
+- [ ] TC.5 Commit. complexity: [manual]
+
+## Phase 17 — Lists v2: N-column kv-table + headings + `with`/`sorted by` + channel scope
+
+> Lists render via the system component's `table_rows` **kv-table** (a CSS grid of
+> `KeyValueRowComponent` spans — VERIFIED: NO `<table>`), capped at 3 cols today.
+> Extend to N, add a heading row to EVERY kv-table, add `with <cols>` +
+> `sorted by|ordered by` to `list games`/`list videos` (NOT channels), scope
+> `list games` by the shift+tab channel. Discard the prior one-shot grid attempt.
+> Repliable actions on these lists are wired by the unified handler (Phases 18–19).
+
+- [ ] T17.1 Extend `table_rows` + the system component to render N ordered cells per row; keep 2/3-col back-compat. complexity: [high]
+- [ ] T17.2 Add a heading row to EVERY list kv-table (games/videos/channels), even with no extra columns. complexity: [low]
+- [ ] T17.3 Extract `Pito::Video::DurationFormat` (`H:MM:SS`/`M:SS`: 9:34 / 1:02:22 / 43:23 / 1:00:32); reuse in `Video::DetailComponent`. complexity: [low]
+- [ ] T17.4 Shared `with <cols>` parser: magic word `with`, comma enumerator (`,` and `, `, split `/\s*,\s*/`), order-preserving, dedup, unknown-ignored. complexity: [high]
+- [ ] T17.5 `list games with` → columns: platform, genre, developer, publisher, release date, year (release date + year are TWO columns). complexity: [high]
+- [ ] T17.6 `list videos with` → columns: game, duration, views, likes, comments (counts via Stats; `@handle` cyan; duration via DurationFormat). complexity: [high]
+- [ ] T17.7 `list channels` — explicitly NO `with`/`sorted by` (ignore/reject). complexity: [low]
+- [ ] T17.8 `sorted by|ordered by <col> [asc|desc]` — asc implicit; desc explicit; ERROR when the column isn't VISIBLE. complexity: [high]
+- [ ] T17.9 `list games` channel scope from the shift+tab `channel` param (`@all`/none → all; `@handle` → games with ≥1 video on that channel). complexity: [high]
+- [ ] T17.10 Stamp every list message follow-up-able (`game_list`/`video_list`/`channel_list`). complexity: [low]
+- [ ] T17.11 Autosuggest: after `with ` → per-list columns; after `sorted by`/`ordered by ` → the visible columns. complexity: [high]
+- [ ] T17.12 Specs: N-col kv-table + heading row, both `with` sets, channels-excluded, sort (asc/desc + not-visible error), list-games channel scope, duration format, autosuggest. complexity: [high]
+- [ ] T17.13 Run the new specs; make green. complexity: [low]
+- [ ] T17.14 Commit: "Lists v2: N-col kv-table + headings + `with`/`sorted by` + list-games channel scope". complexity: [manual]
+
+## Phase 18 — Unified dispatch: one handler interprets chat ≡ #hashtag
+
+> A verb handler interprets BOTH free-chat (`show game X`) and a `#<handle>` reply
+> (`#<handle> show X`) → SAME parsed command, SAME handler, SAME built + sent
+> events. No duplicated handler logic, no extra "core" class (the verb handler IS
+> the orchestrator; the follow-up reuses it). Resolution (Q3): free-chat by typed
+> ref; `#<list> <verb> <ref>` resolves the ref among the list message's rows
+> (id/title); `#<detail> <verb>` uses the card's entity (no ref).
+
+- [ ] T18.1 Give each verb handler a unified entry accepting EITHER a free-chat message OR a follow-up context (`{ source_event, rest }`). complexity: [high]
+- [ ] T18.2 Resolution: free-chat → typed ref; list context → ref resolved among the list message's row ids/titles; detail context → the card's entity (no ref). complexity: [high]
+- [ ] T18.3 Result adapter: map a verb handler's `Chat::Result::Ok` events → `FollowUp::Result::Append` (Confirmable verbs → confirmation event) so one handler serves both paths. complexity: [high]
+- [ ] T18.4 Follow-up dispatch: after resolving the live event + handle, hand `<verb> <rest>` to the matching verb handler with the context. complexity: [high]
+- [ ] T18.5 Gate allowed reply actions per message to the canonical matrix (channels: visit; videos: show/rm/publish/unlist/schedule/resync/link/unlink; games: show/rm/resync/link/unlink; show game: rm/resync/link/footage; show video: rm/publish/unlist/schedule/resync/link). complexity: [high]
+- [ ] T18.6 Spec: free-chat and `#<handle>` produce IDENTICAL built+sent events for a representative verb (per resolution mode). complexity: [high]
+- [ ] T18.7 Commit. complexity: [manual]
+
+## Phase 19 — Migrate show / show video / delete / link / unlink onto the unified handler
+
+> Collapse the duplicated follow-up actions onto the verb handlers (Phase 18),
+> then DELETE the reimplementations. `show video` now emits Standard + Enhanced
+> (Enhanced = `Pito::Copy` intro placeholder — Analytics later).
+
+- [ ] T19.1 `show game` (verb + `game_list` show) → one handler, Standard + Enhanced. complexity: [high]
+- [ ] T19.2 `show video` (verb + `video_list` show) → one handler, Standard + Enhanced (Enhanced = `Pito::Copy` intro placeholder). complexity: [high]
+- [ ] T19.3 `delete|rm game|video` (verb + `game_list` delete + `game_detail` rm) → one handler (Confirmable). complexity: [high]
+- [ ] T19.4 `link game|video` (verb + `game_detail` link) → one handler. complexity: [high]
+- [ ] T19.5 `unlink game|video` (verb + new detail/list action) → one handler. complexity: [high]
+- [ ] T19.6 Autosuggest `link` vs `unlink` by link existence (offer the one that applies). complexity: [high]
+- [ ] T19.7 Delete the dead duplicated resolve/build logic from the follow-up handlers. complexity: [high]
+- [ ] T19.8 50-variant `Pito::Copy` for any new/changed outcome lines. complexity: [low]
+- [ ] T19.9 Specs: chat ≡ `#<handle>` identical for show / show video / delete / link / unlink. complexity: [high]
+- [ ] T19.10 Commit. complexity: [manual]
+
+## Phase 20 — `reindex` (Voyage re-embed only); drop `resync`
+
+> Keep ONLY `reindex` as the narrow Voyage op: force-rebuild a game/video vector in
+> Voyage, regardless of whether fields changed (use when the embedding model or the
+> embed text changed). NO IGDB/YouTube refetch, NO `Pito::Stats` — the full refresh
+> lives in `sync` (Phase 24). Drop the `resync` verb/alias entirely. **Confirmable.**
+
+- [ ] T20.1 Keep `reindex <game|video> <ref>` as the Voyage re-embed verb; remove the `resync` verb/alias + its grammar. complexity: [high]
+- [ ] T20.2 Confirmable: emit a confirmation event; on confirm, enqueue the Voyage re-embed. complexity: [high]
+- [ ] T20.3 Point the existing follow-up `reindex` actions (`game_enhanced` / `video_detail`) at the unified handler; delete any `resync` follow-up action. complexity: [high]
+- [ ] T20.4 50-variant `Pito::Copy` for the reindex confirm + outcome. complexity: [low]
+- [ ] T20.5 Specs: confirm → reindex enqueues the Voyage re-embed; `resync` is gone; chat ≡ `#<handle>`. complexity: [high]
+- [ ] T20.6 Commit. complexity: [manual]
+
+## Phase 21 — YouTube write-through: delete / publish / unlist / schedule (Confirmable)
+
+> REVERSES the earlier local-only choice (T4.13). Each Confirmable, each writes to
+> YouTube for real via the existing `VideoSyncBack` / `VideosClient` primitives:
+> `delete|rm video` → destroy locally AND `videos.delete` on YouTube (Pito::Copy
+> MUST state it deletes on YouTube); `publish video` → public on YouTube now;
+> `unlist video` → unlisted on YouTube; `schedule video <when>` → private +
+> `publishAt` on YouTube, `<when>` must be ≥ 30 minutes in the future (else error).
+
+- [ ] T21.1 `delete video` executor: destroy locally + `videos.delete` on YouTube; copy says so. complexity: [high]
+- [ ] T21.2 `publish video` → Confirmable; executor sets public locally + pushes privacy to YouTube. complexity: [high]
+- [ ] T21.3 `unlist video` → Confirmable; executor sets unlisted locally + pushes to YouTube. complexity: [high]
+- [ ] T21.4 `schedule video <when>` → Confirmable; validate `<when>` ≥ 30m future; set private + publishAt locally + push to YouTube. complexity: [high]
+- [ ] T21.5 50-variant `Pito::Copy` for each confirm + outcome (delete/publish/unlist/schedule) — delete copy states YouTube deletion. complexity: [low]
+- [ ] T21.6 Specs: each writes through (stub the YouTube client), ≥30m guard, confirm flow, chat ≡ `#<handle>`. complexity: [high]
+- [ ] T21.7 Commit. complexity: [manual]
+
+## Phase 22 — `import game` (IGDB sidebar → dispatch `show game`) + `footage` only
+
+> `/games import` becomes the chat verb **`import game`**: opens the existing IGDB
+> search Sidebar; on completion it DISPATCHES THE `show game` EVENT (unified
+> Standard + Enhanced) — it must NOT reimplement those messages. `import` now means
+> IGDB import, so the footage action is **`footage` only** (drop `import` alias).
+
+- [ ] T22.1 `import game` verb → opens the IGDB search Sidebar (reuse the current one). complexity: [high]
+- [ ] T22.2 On import completion, dispatch the unified `show game` event (Standard + Enhanced); delete any reimplemented post-import message. complexity: [high]
+- [ ] T22.3 Rename the footage action/verb to `footage` only; drop `import` as its alias (grammar + copy + follow-up). complexity: [high]
+- [ ] T22.4 Specs: import-complete dispatches `show game` (identical events); `footage` snippet still works; `import` no longer triggers footage. complexity: [high]
+- [ ] T22.5 Commit. complexity: [manual]
+
+## Phase 23 — Cleanup: unify `/themes preview|apply`, drop `similar`, Pito::Copy 50-variant sweep
+
+> `/themes preview|apply` (slash, `slash/handlers/theme.rb`) and the `theme_list`
+> follow-up `preview`/`apply` both persist `AppSetting.theme` + broadcast — UNIFY
+> onto one path. `similar` is DROPPED + cleaned. Every command's copy = a
+> 50-variant `Pito::Copy` dictionary — audit + fill gaps.
+
+- [ ] T23.1 Extract the theme preview/apply logic into one path; point both the `/themes` slash and the `theme_list` follow-up at it. complexity: [high]
+- [ ] T23.2 Drop the `similar` follow-up action (`game_enhanced`) + its copy/specs; scrub references. complexity: [high]
+- [ ] T23.3 Final copy check: the Phase Copy guard is green across ALL commands (every key 1-or-≥50); fill any remaining gaps. complexity: [low]
+- [ ] T23.4 Specs: themes preview/apply identical via both entries; `similar` gone; copy audit green. complexity: [high]
+- [ ] T23.5 Commit. complexity: [manual]
+
+## Phase 24 — `sync` family (full refresh) + `import videos`; Confirmable, done-only broadcast
+
+> `sync` does EVERYTHING for its target: refetch fields from IGDB (game) / YouTube
+> (video, channel), then — IF indexable (embedded) fields changed — **dispatch the
+> `reindex` op** for that entity (reuse it; do NOT re-embed inline), AND refresh
+> `Pito::Stats` (views/likes/comments for videos; subscribers/views for channels).
+> Message count follows from this: **indexable fields changed → ≥2 Standard
+> messages** (one from `sync`, one from the dispatched `reindex`); **only
+> `Pito::Stats` changed → 1 Standard message** now (possibly +1 Enhanced later);
+> nothing changed → still 1 Standard message (the invariant). Every form is
+> **Confirmable** and runs in the BACKGROUND, publishing its Standard **"done"**
+> result on completion (no up-front ack, no page refresh — "everything produces and
+> publishes"). Scope by the shift+tab channel
+> (`@all`/none → all connected channels; `@<handle>` → that one). `import videos`
+> is the YouTube import (vs `import game` = IGDB sidebar, Phase 22). 50-variant
+> `Pito::Copy`. Forms:
+> - `sync game <ref>` — IGDB fields + conditional Voyage re-embed.
+> - `sync video <ref>` — YouTube fields + conditional Voyage re-embed + `Pito::Stats`.
+> - `sync videos [scope]` — full sync of every video on the scoped channel(s).
+> - `sync channel [scope]` — channel fields + `Pito::Stats` for the scoped channel(s).
+> - `sync channel with videos [scope]` — the channel AND all its videos.
+> - `import videos [scope]` — import only NEWER videos from YouTube for the scoped channel(s).
+
+- [ ] T24.1 `sync game|video <ref>` verb → Confirmable; executor refetches fields, dispatches `reindex` IFF indexable fields changed (≥2 Standard msgs), + (video) `Pito::Stats` (stats-only → 1 Standard msg). complexity: [high]
+- [ ] T24.2 `sync videos [scope]` → Confirmable; full sync of every video on the scoped channel(s). complexity: [high]
+- [ ] T24.3 `sync channel [scope]` → Confirmable; channel fields + `Pito::Stats` for the scoped channel(s). complexity: [high]
+- [ ] T24.4 `sync channel with videos [scope]` → Confirmable; channel + all its videos. complexity: [high]
+- [ ] T24.5 `import videos [scope]` → Confirmable; import NEWER-only YouTube videos for the scoped channel(s). complexity: [high]
+- [ ] T24.6 Resolve the shift+tab channel scope (`@all`/none → all connected; `@<handle>` → that one). complexity: [high]
+- [ ] T24.7 Background execution publishes EXACTLY ONE Standard summary message on completion (via `Pito::Stream::Broadcaster`) with affected counts — per-entity messages SUPPRESSED in bulk (40 videos → 1 message); no up-front ack. complexity: [high]
+- [ ] T24.8 50-variant `Pito::Copy` for each verb's confirm + done message. complexity: [low]
+- [ ] T24.9 Specs: each verb confirms → enqueues the right job for the scope; the job broadcasts the done message; chat ≡ `#<handle>`. complexity: [high]
+- [ ] T24.10 Commit. complexity: [manual]
 
 ---
 
