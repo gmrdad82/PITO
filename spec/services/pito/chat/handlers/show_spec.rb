@@ -87,6 +87,22 @@ RSpec.describe Pito::Chat::Handlers::Show do
     end
   end
 
+  context "title containing a colon (regression — lexer ':' token mangled the ref)" do
+    let!(:sb) { create(:game, title: "Stellar Blade: Blood Rain") }
+
+    it "resolves the colon title typed naturally through the real lexer/parser" do
+      result = show_real("show Stellar Blade: Blood Rain")
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(sb.id)
+    end
+
+    it "still resolves the prefix-only title when no colon is typed" do
+      create(:game, title: "Stellar Blade")
+      result = show_real("show Stellar Blade")
+      expect(result.events.first[:payload]["game_id"]).to be_present
+    end
+  end
+
   context "ILIKE partial vs exact — two games sharing a prefix" do
     let!(:exact_game)   { create(:game, title: "Lies of P") }
     let!(:prefix_game)  { create(:game, title: "Lies of P: Expanded") }

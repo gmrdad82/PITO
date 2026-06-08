@@ -96,12 +96,14 @@ module Pito
 
         # ── Shared helpers ─────────────────────────────────────────────────────
 
+        # Rebuild the ref from the RAW input so punctuation the lexer splits
+        # into its own tokens — a colon in "Stellar Blade: Blood Rain", an
+        # apostrophe, etc. — and the exact spacing survive. Joining lexer token
+        # VALUES inserts spaces around those tokens ("Stellar Blade : Blood
+        # Rain") and breaks the title ILIKE match.
         def extract_ref(noun_fillers)
-          message.body_tokens
-                 .map(&:value)
-                 .reject { |w| noun_fillers.include?(w.to_s.downcase) }
-                 .join(" ")
-                 .strip
+          rest = message.raw.to_s.strip.sub(/\A\S+\s*/, "")          # drop the verb word
+          rest.sub(/\A(?:#{noun_fillers.join('|')})\b\s*/i, "").strip # drop a leading noun filler
         end
 
         def needs_ref
