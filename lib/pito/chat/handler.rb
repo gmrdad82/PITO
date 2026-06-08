@@ -13,13 +13,12 @@ module Pito
     #   (e.g. `:list`, `:show`).
     # - Set `self.description_key = "pito.chat.<verb>.descriptions.<verb>"` — I18n key.
     # - Implement `#call` → returning one of:
-    #   - `Pito::Chat::Result::Ok`     — command handled, events ready.
-    #   - `Pito::Chat::Result::Error`  — handler-level error.
-    #   - `Pito::Chat::Result::Refine` — input is a refinement of an open turn.
+    #   - `Pito::Chat::Result::Ok`    — command handled, events ready.
+    #   - `Pito::Chat::Result::Error` — handler-level error.
     #
     # Unlike slash handlers, chat handlers do NOT receive an `authenticated` flag —
     # they are only reachable after the dispatcher confirms the message is not a
-    # slash command and is not refinement input for an open turn.
+    # slash command.
     #
     # ## Instance accessors
     #

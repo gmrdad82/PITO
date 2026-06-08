@@ -22,8 +22,6 @@ module Pito
         case message.kind
         when :new_turn
           dispatch_new_turn(message)
-        when :refinement
-          dispatch_refinement(message)
         when :unknown
           dispatch_unknown(message)
         end
@@ -51,11 +49,6 @@ module Pito
         end
 
         handler = handler_class.new(message:, conversation: @conversation)
-        handler.call
-      end
-
-      def dispatch_refinement(message)
-        handler = Pito::Chat::Handlers::RefineDemo.new(message:, conversation: @conversation)
         handler.call
       end
 

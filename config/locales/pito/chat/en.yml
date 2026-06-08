@@ -28,5 +28,3 @@ en:
       conversations:
         errors:
           title_blank: "title cannot be blank"
-      refine_demo:
-        acknowledged: "[DEMO refinement] Received: %{input}"
