@@ -2,43 +2,72 @@
 
 require "rails_helper"
 
-# Phase 18 contract: a verb reached via a `#<handle>` reply produces the SAME
+# Phase 18/19 contract: a verb reached via a `#<handle>` reply produces the SAME
 # built+sent events as the same verb typed in free chat. The follow-up path runs
 # the identical verb handler (T18.4) and only wraps the result (T18.3), so the
-# events match modulo the per-message random reply_handle (not asserted here).
+# events match modulo the per-message random reply_handle / sampled copy.
 #
-# This locks the contract for two representative verbs; per-verb detail-context
-# parity (`#<handle> rm` with no ref) is added as each verb migrates in T19.
-RSpec.describe "Chat ≡ #hashtag parity (Phase 18)", type: :service do
+# Locks the contract for ALL migrated verbs: show, show video, delete, link, unlink.
+RSpec.describe "Chat ≡ #hashtag parity (Phase 18/19)", type: :service do
   let(:conversation) { Conversation.singleton }
-  # A game_list source event — "show"/"delete" are its allowed reply actions.
-  let(:game_list_event) { instance_double(Event, payload: { "reply_target" => "game_list" }) }
-  let!(:game)           { create(:game, title: "Dead Space") }
+  let!(:game)        { create(:game, title: "Dead Space") }
+  let!(:channel)     { create(:channel, handle: "@par", youtube_channel_id: "UCpar1") }
+  let!(:video)       { create(:video, :public, title: "Boss Rush", channel:) }
 
   def free_events(input)
     Pito::Chat::Dispatcher.call(input:, conversation:).events
   end
 
-  def reply_events(rest)
-    Pito::FollowUp::VerbDelegator.call(source_event: game_list_event, rest:, conversation:).events
+  def reply_events(reply_target, rest, **extra)
+    source = instance_double(Event, payload: { "reply_target" => reply_target }.merge(extra.transform_keys(&:to_s)))
+    Pito::FollowUp::VerbDelegator.call(source_event: source, rest:, conversation:).events
   end
 
-  it "`show <id>` → same event kinds + same resolved game" do
+  it "`show game` → same kinds + same game (free-chat vs game_list reply)" do
     free  = free_events("show #{game.id}")
-    reply = reply_events("show #{game.id}")
+    reply = reply_events("game_list", "show #{game.id}")
 
-    expect(reply.map { |e| e[:kind] }).to eq(free.map { |e| e[:kind] })
-    expect(reply.map { |e| e[:kind] }).to eq([ :system, :enhanced ])
+    expect(reply.map { |e| e[:kind] }).to eq(free.map { |e| e[:kind] }).and eq([ :system, :enhanced ])
     expect(reply.first[:payload].with_indifferent_access[:game_id])
-      .to eq(free.first[:payload].with_indifferent_access[:game_id])
-      .and eq(game.id)
+      .to eq(free.first[:payload].with_indifferent_access[:game_id]).and eq(game.id)
   end
 
-  it "`delete <id>` → same single confirmation event" do
-    free  = free_events("delete #{game.id}")
-    reply = reply_events("delete #{game.id}")
+  it "`show video` → same kinds + same video (free-chat vs video_list reply)" do
+    free  = free_events("show video #{video.id}")
+    reply = reply_events("video_list", "show #{video.id}")
 
-    expect(reply.map { |e| e[:kind].to_s }).to eq(free.map { |e| e[:kind].to_s })
-    expect(reply.map { |e| e[:kind].to_s }).to eq([ "confirmation" ])
+    expect(reply.map { |e| e[:kind] }).to eq(free.map { |e| e[:kind] }).and eq([ :system, :enhanced ])
+    expect(reply.first[:payload].with_indifferent_access[:video_id])
+      .to eq(free.first[:payload].with_indifferent_access[:video_id]).and eq(video.id)
+  end
+
+  it "`delete` → same single confirmation event (free-chat vs game_list reply)" do
+    free  = free_events("delete #{game.id}")
+    reply = reply_events("game_list", "delete #{game.id}")
+
+    expect(reply.map { |e| e[:kind] }).to eq(free.map { |e| e[:kind] }).and eq([ :confirmation ])
+  end
+
+  it "`link` → :system ack + link created, both ways (free-chat vs game_detail reply)" do
+    free = free_events("link game #{game.id} to video #{video.id}")
+    expect(free.map { |e| e[:kind] }).to eq([ :system ])
+    expect(VideoGameLink.exists?(game:, video:)).to be(true)
+
+    VideoGameLink.where(game:, video:).delete_all
+    reply = reply_events("game_detail", "link video #{video.id}", game_id: game.id)
+    expect(reply.map { |e| e[:kind] }).to eq([ :system ])
+    expect(VideoGameLink.exists?(game:, video:)).to be(true)
+  end
+
+  it "`unlink` → :system ack + link removed, both ways (free-chat vs game_detail reply)" do
+    VideoGameLink.find_or_create_by!(game:, video:)
+    free = free_events("unlink game #{game.id} from video #{video.id}")
+    expect(free.map { |e| e[:kind] }).to eq([ :system ])
+    expect(VideoGameLink.exists?(game:, video:)).to be(false)
+
+    VideoGameLink.find_or_create_by!(game:, video:)
+    reply = reply_events("game_detail", "unlink video #{video.id}", game_id: game.id)
+    expect(reply.map { |e| e[:kind] }).to eq([ :system ])
+    expect(VideoGameLink.exists?(game:, video:)).to be(false)
   end
 end
