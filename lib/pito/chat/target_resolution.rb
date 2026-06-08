@@ -35,6 +35,23 @@ module Pito
         end
       end
 
+      # The source event's `reply_target` (follow-up replies only; nil in free chat).
+      def reply_target
+        return nil unless follow_up?
+
+        follow_up.source_event.payload.to_h.with_indifferent_access[:reply_target].to_s.presence
+      end
+
+      # True when a verb that handles BOTH game + video should take the video
+      # branch. In a follow-up reply the entity type is fixed by the source event's
+      # `reply_target` (video_list / video_detail) — the reconstructed `<verb>
+      # <rest>` carries no noun. In free chat it's the noun word the user typed.
+      def video_target?(video_noun_fillers)
+        return reply_target.to_s.start_with?("video") if follow_up?
+
+        message.body_tokens.any? { |t| video_noun_fillers.include?(t.value.to_s.downcase) }
+      end
+
       # The display reference for user-facing messages (e.g. not-found copy),
       # mirroring the three modes `resolve_target` uses: the typed ref (free-chat
       # or list reply), or the source card's entity id (detail reply).

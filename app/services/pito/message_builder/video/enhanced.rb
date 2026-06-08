@@ -4,21 +4,25 @@ module Pito
   module MessageBuilder
     module Video
       # Builds the payload for the ENHANCED video message — a placeholder intro
-      # rendered by the EnhancedComponent typewriter path.
+      # rendered by the EnhancedComponent (the pito-blue chrome).
       #
-      # Streamed after `show video <ref>`. Rendered as `kind: :enhanced`
-      # (the pito-blue chrome) and is NOT follow-up-able — only the standard
-      # detail message carries a #handle.
+      # Streamed after `show video <ref>` as `kind: :enhanced`, and NOT
+      # follow-up-able — only the standard detail message carries a #handle.
       #
-      # Analytics/stats are a later feature; this emits a plain body line via
-      # Pito::Copy so the enhanced slot is visually present from day one.
+      # Analytics/stats are a later feature; for now this emits an HTML body (the
+      # Enhanced slot always renders HTML, like the game recommendations card) so
+      # the slot is visually present + styled from day one.
       module Enhanced
+        extend Pito::MessageBuilder::Helpers
         module_function
 
         # @param video [::Video]
-        # @return [Hash] enhanced event payload (body string, no html key).
+        # @return [Hash] enhanced event payload (html body).
         def call(video)
-          { "body" => Pito::Copy.render("pito.copy.video.enhanced_placeholder", { title: video.title }) }
+          intro = Pito::Copy.render("pito.copy.video.enhanced_placeholder", { title: video.title })
+          html_payload(
+            body: %(<div class="pito-video-enhanced-message">#{ERB::Util.html_escape(intro)}</div>)
+          )
         end
       end
     end

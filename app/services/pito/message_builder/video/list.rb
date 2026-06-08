@@ -8,8 +8,8 @@ module Pito
       # Returns a table_rows payload (kv-table via SystemComponent) with a
       # 4-column cells row per video: id, title, channel @handle, privacy label.
       #
-      # NOT stamped follow-up-able (no video_list follow-up handler exists;
-      # consistent with the simplest viable choice).
+      # Stamped follow-up-able (reply_target: "video_list") so the user can reply
+      # `#<handle> show <id>` / `rm <id>` etc. — delegated to the verb handlers.
       #
       # NOTE: The caller is responsible for checking videos.empty? and returning
       # an appropriate empty-state before calling this builder.
@@ -17,15 +17,17 @@ module Pito
         module_function
 
         # @param videos       [ActiveRecord::Relation | Array<::Video>] non-empty, pre-fetched.
-        # @param conversation [Conversation] used for future follow-up stamping (unused now).
+        # @param conversation [Conversation] used to generate the reply handle.
         # @param columns      [Array<Symbol>] extra canonical column keys (from ListColumns).
-        # @return [Hash] string-keyed payload with body and table_rows.
+        # @return [Hash] string-keyed payload with body, table_rows, and follow-up fields.
         def call(videos, conversation:, columns: [])
-          {
+          payload = {
             "body"          => Pito::Copy.render("pito.copy.videos.list_intro", { count: videos.size }),
             "table_heading" => [ "#", "Title", "Channel", "Privacy", *ListColumns.headings(columns) ],
             "table_rows"    => videos.map { |video| row_for(video, columns) }
           }
+          Pito::FollowUp.make_followupable!(payload, target: "video_list", conversation: conversation)
+          payload
         end
 
         def row_for(video, columns = [])

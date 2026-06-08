@@ -200,9 +200,10 @@ RSpec.describe Pito::Chat::Handlers::List do
         expect(payload["html"]).to be_falsey
       end
 
-      it "is NOT follow-up-able (no video_list follow-up engine)" do
+      it "is follow-up-able for the video_list target" do
         payload = handler_for("list videos", channel: "@all").call.events.first[:payload]
-        expect(Pito::FollowUp.followupable?(payload)).to be(false)
+        expect(Pito::FollowUp.followupable?(payload)).to be(true)
+        expect(payload["reply_target"]).to eq("video_list")
       end
     end
 

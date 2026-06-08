@@ -21,8 +21,9 @@ RSpec.describe Pito::MessageBuilder::Video::Enhanced do
       expect(payload["body"]).to include("My Gaming Highlights")
     end
 
-    it "has no html key (plain typewriter body)" do
-      expect(payload).not_to have_key("html")
+    it "is an HTML payload (the Enhanced slot always renders HTML)" do
+      expect(payload["html"]).to be(true)
+      expect(payload["body"]).to include('class="pito-video-enhanced-message"')
     end
   end
 end

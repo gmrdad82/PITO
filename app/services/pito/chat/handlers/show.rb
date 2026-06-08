@@ -21,7 +21,7 @@ module Pito
         VIDEO_NOUN_FILLERS = %w[video videos].freeze
 
         def call
-          if video_noun_present?
+          if video_target?(VIDEO_NOUN_FILLERS)
             handle_video
           else
             handle_game
@@ -31,10 +31,6 @@ module Pito
         private
 
         # ── Video branch ───────────────────────────────────────────────────────
-
-        def video_noun_present?
-          message.body_tokens.any? { |t| VIDEO_NOUN_FILLERS.include?(t.value.to_s.downcase) }
-        end
 
         def handle_video
           video = resolve_target(::Video, id_key: :video_id, noun_fillers: VIDEO_NOUN_FILLERS)
