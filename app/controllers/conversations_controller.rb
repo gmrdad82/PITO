@@ -53,7 +53,7 @@ class ConversationsController < ApplicationController
     new_title = conversation_params[:title]
 
     if new_title.blank?
-      render json: { error: I18n.t("pito.chat.conversations.errors.title_blank") }, status: :unprocessable_entity
+      render json: { error: I18n.t("pito.chat.conversations.errors.title_blank") }, status: :unprocessable_content
       return
     end
 
