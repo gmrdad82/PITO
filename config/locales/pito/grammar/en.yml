@@ -15,7 +15,8 @@ en:
       chat:
         list: "List games in your library"
         show: "Show a game or video's details (by id or title)"
-        import: "Get the footage probe command for a game (by id or title)"
+        import: "Import a game from IGDB into your library"
+        footage: "Get the footage probe command for a game (by id or title)"
         delete: "Delete a game or video (by id or title)"
         reindex: "Re-embed a game or video in Voyage (by id or title)"
         publish: "Publish a video locally (set public, clear schedule)"

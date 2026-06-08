@@ -555,11 +555,11 @@ Locked decisions (from the design discussion, 2026-06-08):
 > Standard + Enhanced) — it must NOT reimplement those messages. `import` now means
 > IGDB import, so the footage action is **`footage` only** (drop `import` alias).
 
-- [ ] T22.1 `import game` verb → opens the IGDB search Sidebar (reuse the current one). complexity: [high]
-- [ ] T22.2 On import completion, dispatch the unified `show game` event (Standard + Enhanced); delete any reimplemented post-import message. complexity: [high]
-- [ ] T22.3 Rename the footage action/verb to `footage` only; drop `import` as its alias (grammar + copy + follow-up). complexity: [high]
-- [ ] T22.4 Specs: import-complete dispatches `show game` (identical events); `footage` snippet still works; `import` no longer triggers footage. complexity: [high]
-- [ ] T22.5 Commit. complexity: [manual]
+- [x] T22.1 `import game` verb → opens the IGDB search Sidebar (reuse the current one). complexity: [high]
+- [x] T22.2 On import completion, dispatch the unified `show game` event (Standard + Enhanced); delete any reimplemented post-import message. complexity: [high]
+- [x] T22.3 Rename the footage action/verb to `footage` only; drop `import` as its alias (grammar + copy + follow-up). complexity: [high]
+- [x] T22.4 Specs: import-complete dispatches `show game` (identical events); `footage` snippet still works; `import` no longer triggers footage. complexity: [high]
+- [x] T22.5 Commit. complexity: [manual]
 
 ## Phase 23 — Cleanup: unify `/themes preview|apply`, drop `similar`, Pito::Copy 50-variant sweep
 

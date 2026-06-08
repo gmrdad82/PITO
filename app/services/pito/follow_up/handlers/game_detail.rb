@@ -6,7 +6,7 @@ module Pito
       # Follow-up handler for game-detail events (reply_target: "game_detail").
       #
       # The detail message is stamped `reply_target: "game_detail"` by
-      # `Pito::Game::DetailMessage.call`. The user can reply:
+      # `Pito::MessageBuilder::Game::Detail.call`. The user can reply:
       #
       #   #<handle> rm / delete
       #     → Delegated to Chat::Handlers::Delete via VerbDelegator.
@@ -19,9 +19,9 @@ module Pito
       #     → Delegated to Chat::Handlers::Link via VerbDelegator. The handler
       #       reads game_id from the source event and the video ref from rest.
       #
-      #   #<handle> import <path>
+      #   #<handle> footage <path>
       #     → Append the copyable `pito:tools:probe` snippet for this game +
-      #       footage folder (shared FootageImport builder with the `import`
+      #       footage folder (shared FootageImport builder with the `footage`
       #       chat verb). Reachable via shift+r, which seeds `#<handle> `.
       #
       # NAMESPACE GOTCHA: Inside Pito::FollowUp::Handlers::*, the bare constant
@@ -30,7 +30,7 @@ module Pito
       class GameDetail < Pito::FollowUp::Handler
         self.target "game_detail"
         self.mode   :append
-        self.actions "rm", "delete", "resync", "link", "unlink", "import"
+        self.actions "rm", "delete", "resync", "link", "unlink", "footage"
 
         # @param event        [Event]        the game-detail event.
         # @param rest         [String]       text after `#<handle> `.
@@ -46,8 +46,8 @@ module Pito
           case action
           when "resync"
             handle_resync(event, conversation)
-          when "import"
-            handle_import(event, args, conversation)
+          when "footage"
+            handle_footage(event, args, conversation)
           else
             Pito::FollowUp::Result::Error.new(
               message_key:  "pito.follow_up.game_detail.errors.invalid_action",
@@ -71,13 +71,13 @@ module Pito
           )
         end
 
-        # ── import <path> ────────────────────────────────────────────────────────
+        # ── footage <path> ────────────────────────────────────────────────────────
 
-        # `#<handle> import <path>` — the game is already known from the segment,
+        # `#<handle> footage <path>` — the game is already known from the segment,
         # so the whole `args` tail is the footage folder. Emits the same copyable
-        # probe-command snippet as the `import <ref> <path>` chat verb (shared
+        # probe-command snippet as the `footage <ref> <path>` chat verb (shared
         # FootageImport builder, different dispatch).
-        def handle_import(event, args, conversation)
+        def handle_footage(event, args, conversation)
           game = resolve_game_from_event(event)
           return game_not_found_error if game.nil?
 

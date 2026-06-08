@@ -122,8 +122,8 @@ RSpec.describe Pito::FollowUp::Handlers::GameDetail, type: :service do
 
   # ── actions list ─────────────────────────────────────────────────────────────
 
-  it "declares rm, delete, resync, link, unlink, and import actions" do
-    expect(described_class.actions).to eq([ "rm", "delete", "resync", "link", "unlink", "import" ])
+  it "declares rm, delete, resync, link, unlink, and footage actions" do
+    expect(described_class.actions).to eq([ "rm", "delete", "resync", "link", "unlink", "footage" ])
   end
 
   # ── link to video (delegated to Chat::Handlers::Link) ───────────────────────
@@ -214,10 +214,10 @@ RSpec.describe Pito::FollowUp::Handlers::GameDetail, type: :service do
 
   # ── unknown action ───────────────────────────────────────────────────────────
 
-  describe "#call — import <path>" do
+  describe "#call — footage <path>" do
     let(:source_event) { build_detail_event }
 
-    subject(:result) { handler.call(event: source_event, rest: "import /mnt/clips", conversation:) }
+    subject(:result) { handler.call(event: source_event, rest: "footage /mnt/clips", conversation:) }
 
     it "returns a Result::Append with a system event" do
       expect(result).to be_a(Pito::FollowUp::Result::Append)
@@ -231,12 +231,12 @@ RSpec.describe Pito::FollowUp::Handlers::GameDetail, type: :service do
     end
 
     it "keeps a multi-word folder path whole" do
-      result = handler.call(event: source_event, rest: "import /mnt/Ghosts n Goblins", conversation:)
+      result = handler.call(event: source_event, rest: "footage /mnt/Ghosts n Goblins", conversation:)
       expect(result.events.first[:payload]["body"]).to include("path=&quot;/mnt/Ghosts n Goblins/*&quot;")
     end
 
     it "errors with missing_path when no path is given" do
-      result = handler.call(event: source_event, rest: "import", conversation:)
+      result = handler.call(event: source_event, rest: "footage", conversation:)
       expect(result).to be_a(Pito::FollowUp::Result::Error)
       expect(result.message_key).to eq("pito.follow_up.game_detail.errors.missing_path")
     end
@@ -244,7 +244,7 @@ RSpec.describe Pito::FollowUp::Handlers::GameDetail, type: :service do
     it "errors when the segment's game no longer exists" do
       event = build_detail_event("game_id" => game.id)
       game.destroy
-      result = handler.call(event: event, rest: "import /mnt/clips", conversation:)
+      result = handler.call(event: event, rest: "footage /mnt/clips", conversation:)
       expect(result).to be_a(Pito::FollowUp::Result::Error)
     end
   end

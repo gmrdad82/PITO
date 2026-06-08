@@ -9,8 +9,8 @@
 # done (Esc to close).
 #
 # T16.9: only TWO messages go to the main chat —
-#   (a) the standard detail message (Pito::Game::DetailMessage) after steps 1–3.
-#   (b) the enhanced message (Pito::Copy body + make_followupable!) after steps 4–5.
+#   (a) the standard detail message (Pito::MessageBuilder::Game::Detail) after steps 1–3.
+#   (b) the enhanced message (Pito::MessageBuilder::Game::Enhanced) after steps 4–5.
 # Both land inside the job's Turn so they get the normal timestamp + follow-up chrome.
 #
 # Flow:

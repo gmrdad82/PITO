@@ -10,8 +10,12 @@ en:
         needs_ref: "Which game? Use `list games` to see ids, then `show game <id>`."
       import:
         descriptions:
-          import: "Get the footage probe command for a game (by id or title)"
-        needs_ref: "Which game? Use `list games` to see ids, then `import <id>`."
+          import: "Import a game from IGDB into your library"
+        usage_hint: "To import a game from IGDB, type `import game <title>` (e.g. `import game Hollow Knight`)."
+      footage:
+        descriptions:
+          footage: "Get the footage probe command for a game (by id or title)"
+        needs_ref: "Which game? Use `list games` to see ids, then `footage <id> <path>`."
       delete:
         descriptions:
           delete: "Delete a game or video (by id or title)"

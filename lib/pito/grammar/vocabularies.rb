@@ -165,6 +165,13 @@ module Pito
         canonical: %w[import]
       ).freeze
 
+      # Noun for the `import` chat verb (drives ghost completion: `import ` → `game`).
+      IMPORT_NOUNS = Vocabulary.define(
+        name:      :import_nouns,
+        canonical: %w[game],
+        synonyms:  { "games" => "game" }
+      ).freeze
+
       # All registered theme slugs plus the special alias "default" (→ tokyo-night).
       # Backed by the theme Registry so adding a new definition file automatically
       # extends the vocabulary on next boot — no manual wiring needed.
@@ -239,7 +246,8 @@ module Pito
           VIDEO_TITLES,
           THEME_SUBCOMMANDS,
           THEME_NAMES,
-          GAMES_SUBCOMMANDS
+          GAMES_SUBCOMMANDS,
+          IMPORT_NOUNS
         ]
       end
 
