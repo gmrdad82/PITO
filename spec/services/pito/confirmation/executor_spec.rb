@@ -102,6 +102,44 @@ RSpec.describe Pito::Confirmation::Executor, type: :service do
     end
   end
 
+  # ── confirm / video_delete ───────────────────────────────────────────────
+
+  describe ".confirm — video_delete" do
+    let!(:v_channel) { create(:channel) }
+    let!(:video)     { create(:video, channel: v_channel, title: "My Let's Play") }
+
+    it "destroys the video and returns outcome text with the title" do
+      text = nil
+      expect {
+        text = described_class.confirm("video_delete", { "video_id" => video.id, "video_title" => "My Let's Play" })
+      }.to change(Video, :count).by(-1)
+      expect(text).to include("My Let's Play")
+    end
+
+    it "is a no-op (still returns text) when the video is already gone" do
+      text = described_class.confirm("video_delete", { "video_id" => 0, "video_title" => "Vanished" })
+      expect(text).to include("Vanished")
+    end
+  end
+
+  # ── cancel / video_delete ───────────────────────────────────────────────
+
+  describe ".cancel — video_delete" do
+    let!(:v_channel) { create(:channel) }
+    let!(:video)     { create(:video, channel: v_channel, title: "Cancelled Video") }
+
+    it "does NOT destroy the video" do
+      expect {
+        described_class.cancel("video_delete", { "video_id" => video.id, "video_title" => "Cancelled Video" })
+      }.not_to change(Video, :count)
+    end
+
+    it "returns a non-empty cancelled message" do
+      text = described_class.cancel("video_delete", { "video_id" => video.id, "video_title" => "Cancelled Video" })
+      expect(text).to be_present
+    end
+  end
+
   # ── confirm / game_resync ─────────────────────────────────────────────────
 
   describe ".confirm — game_resync" do
@@ -110,7 +148,7 @@ RSpec.describe Pito::Confirmation::Executor, type: :service do
     it "enqueues GameIgdbSync and returns outcome text mentioning the title" do
       allow(GameIgdbSync).to receive(:perform_later)
       text = described_class.confirm("game_resync", { "game_id" => game.id, "game_title" => "Sekiro" })
-      expect(GameIgdbSync).to have_received(:perform_later).with(game.id)
+      expect(GameIgdbSync).to have_received(:perform_later).with(game.id, conversation_id: nil)
       expect(text).to include("Sekiro")
     end
 

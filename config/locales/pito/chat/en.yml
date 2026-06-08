@@ -14,8 +14,21 @@ en:
         needs_ref: "Which game? Use `list games` to see ids, then `import <id>`."
       delete:
         descriptions:
-          delete: "Delete a game (by id or title)"
-        needs_ref: "Which game? Use `list games` to see ids, then `rm game <id>`."
+          delete: "Delete a game or video (by id or title)"
+        needs_ref: "Which game or video? Use `list games` to see ids, then `rm game <id>` or `rm video <id>`."
+      publish:
+        descriptions:
+          publish: "Publish a video locally (set public, clear schedule)"
+        needs_ref: "Which video? Use `list videos` to see ids, then `publish video <id>`."
+      unlist:
+        descriptions:
+          unlist: "Unlist a video locally"
+        needs_ref: "Which video? Use `list videos` to see ids, then `unlist video <id>`."
+      schedule:
+        descriptions:
+          schedule: "Schedule a video for future publishing"
+        needs_ref: "Usage: `schedule video <id|title> YYYY-MM-DD` or `schedule video <id|title> YYYY-MM-DD HH:MM`."
+        bad_when: "Couldn't parse that date. Use `YYYY-MM-DD` or `YYYY-MM-DD HH:MM` (UTC)."
       link:
         descriptions:
           link: "Link a video to a game"

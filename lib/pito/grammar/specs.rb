@@ -116,6 +116,27 @@ module Pito
           ),
           Spec.new(
             namespace:       :chat,
+            name:            :publish,
+            slots:           [ Slot.new(name: :title, kind: :free, optional: true) ],
+            description_key: "pito.grammar.chat.publish"
+          ),
+          Spec.new(
+            namespace:       :chat,
+            name:            :unlist,
+            slots:           [ Slot.new(name: :title, kind: :free, optional: true) ],
+            description_key: "pito.grammar.chat.unlist"
+          ),
+          Spec.new(
+            namespace:       :chat,
+            name:            :schedule,
+            slots:           [
+              Slot.new(name: :title, kind: :free, optional: true),
+              Slot.new(name: :when,  kind: :free, optional: true)
+            ],
+            description_key: "pito.grammar.chat.schedule"
+          ),
+          Spec.new(
+            namespace:       :chat,
             name:            :find,
             slots:           chat_shared_slots,
             description_key: "pito.grammar.chat.find"

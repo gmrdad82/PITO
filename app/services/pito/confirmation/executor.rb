@@ -32,6 +32,8 @@ module Pito
             confirm_disconnect(payload)
           when "game_delete"
             confirm_game_delete(payload)
+          when "video_delete"
+            confirm_video_delete(payload)
           when "game_resync"
             confirm_game_resync(payload)
           when "game_reindex"
@@ -66,6 +68,13 @@ module Pito
           title   = payload[:game_title].to_s
           ::Game.find_by(id: payload[:game_id])&.destroy!
           Pito::Copy.render("pito.copy.games.deleted", { title: title })
+        end
+
+        def confirm_video_delete(payload)
+          payload = payload.with_indifferent_access
+          title   = payload[:video_title].to_s
+          ::Video.find_by(id: payload[:video_id])&.destroy!
+          Pito::Copy.render("pito.copy.videos.deleted", { title: title })
         end
 
         # Enqueue a full IGDB resync for the game.
