@@ -173,17 +173,17 @@ feed that engine.
 
 ## Phase 6 — `list games upcoming [genres] [platforms]` (task 9)
 
-- [ ] T6.1 Widen the PLATFORMS vocabulary so `ps` maps to ALL PlayStation tokens (PS5 + PS4). complexity: [high]
-- [ ] T6.2 Add a genre vocabulary alias set if missing (rpg/action/etc → canonical). complexity: [low]
-- [ ] T6.3 Add a `list games [upcoming] [genres…] [platforms…]` grammar entry (order-independent, `upcoming` optional). complexity: [high]
-- [ ] T6.4 Add an `upcoming?` scope to `Game` (release date in the future / unreleased). complexity: [high]
-- [ ] T6.5 Implement `list games` filtering in `handlers/list.rb` (genre AND platform AND optional upcoming). complexity: [high]
-- [ ] T6.6 Resolve platform filter tokens through the widened mapping (match any synonym). complexity: [high]
-- [ ] T6.7 Build a games-list message/component (no pagination, list all). complexity: [high]
-- [ ] T6.8 Add copy keys for the games list + empty state. complexity: [low]
-- [ ] T6.9 Add specs: upcoming-only, genre filter, platform mapping (ps matches PS5 + PS4), combined, order-independent. complexity: [high]
-- [ ] T6.10 Run the new specs; make green. complexity: [low]
-- [ ] T6.11 Commit: "Add list games upcoming with genre + platform mapping". complexity: [manual]
+- [x] T6.1 Widen platform mapping so `ps` matches ALL PlayStation (PS5 + PS4) — in `Pito::Chat::GameListFilter`. complexity: [high]
+- [x] T6.2 Add a genre alias set (rpg/action/etc → canonical ILIKE on `Genre#name`). complexity: [low]
+- [x] T6.3 Parse `list games [upcoming] [genres…] [platforms…]` order-independent in the list handler. complexity: [high]
+- [x] T6.4 `Game.upcoming` scope (already existed). complexity: [high]
+- [x] T6.5 Implement filtering in `handlers/list.rb` (genre/platform OR within type, AND across types + upcoming). complexity: [high]
+- [x] T6.6 Resolve platform filter tokens through the synonym map (match any synonym). complexity: [high]
+- [x] T6.7 Render the filtered relation via the existing `Game::List` message. complexity: [high]
+- [x] T6.8 Add the filtered empty-state copy key. complexity: [low]
+- [x] T6.9 Specs: upcoming-only, genre, platform mapping (ps → PS5 + PS4), combined, order-independent (28 examples). complexity: [high]
+- [x] T6.10 Run the new specs; make green. complexity: [low]
+- [x] T6.11 Commit: "Add list games upcoming with genre + platform mapping". complexity: [manual]
 
 ## Phase 7 — `list videos published|unlisted` by shift+tab channel (task 10)
 

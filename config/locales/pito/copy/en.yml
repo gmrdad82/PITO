@@ -2551,6 +2551,17 @@ en:
           - "Your collection's bare. /games import."
           - "No games found. /games import to add one."
           - "Library empty — /games import to begin."
+        list_filter_empty:
+          - "No games match those filters."
+          - "Nothing in your library matches that."
+          - "No matches. Try loosening the filters."
+          - "Zero games for those filters."
+          - "No games fit those criteria."
+          - "Your library has nothing matching that combination."
+          - "No results. Try a broader filter."
+          - "Nothing found for those filters."
+          - "No library entries match those filters."
+          - "Filters applied — zero games remain."
         not_found:
           - "No game matching %{ref}."
           - "Couldn't find %{ref}."

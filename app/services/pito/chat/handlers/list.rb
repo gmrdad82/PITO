@@ -11,6 +11,10 @@
 # `list games` parse identically — both land here. Other nouns (`list videos`,
 # `list channels`) are not listable yet, so we surface a clear error rather than
 # silently returning the games shelf.
+#
+# Filtering syntax: `list games [upcoming] [<genres>…] [<platforms>…]`
+# All parts optional, order-independent. See Pito::Chat::GameListFilter for the
+# synonym maps and filter semantics.
 module Pito
   module Chat
     module Handlers
@@ -31,8 +35,12 @@ module Pito
             )
           end
 
-          games = ::Game.order(:title)
-          return games_empty if games.empty?
+          filtered = Pito::Chat::GameListFilter.filtered?(message.raw)
+          games    = Pito::Chat::GameListFilter.call(message.raw)
+
+          if games.empty?
+            return filtered ? games_filter_empty : games_empty
+          end
 
           payload = Pito::MessageBuilder::Game::List.call(games, conversation:)
 
@@ -59,6 +67,12 @@ module Pito
         def games_empty
           Pito::Chat::Result::Ok.new(events: [
             { kind: :system, payload: Pito::MessageBuilder::Text.call("pito.copy.games.list_empty") }
+          ])
+        end
+
+        def games_filter_empty
+          Pito::Chat::Result::Ok.new(events: [
+            { kind: :system, payload: Pito::MessageBuilder::Text.call("pito.copy.games.list_filter_empty") }
           ])
         end
       end
