@@ -480,8 +480,8 @@ Locked decisions (from the design discussion, 2026-06-08):
 - [x] T18.3 Result adapter: map a verb handler's `Chat::Result::Ok` events → `FollowUp::Result::Append` (Confirmable verbs → confirmation event) so one handler serves both paths. complexity: [high]
 - [x] T18.4 Follow-up dispatch: after resolving the live event + handle, hand `<verb> <rest>` to the matching verb handler with the context. complexity: [high]
 - [x] T18.5 Gate allowed reply actions per message to the canonical matrix (channels: visit; videos: show/rm/publish/unlist/schedule/resync/link/unlink; games: show/rm/resync/link/unlink; show game: rm/resync/link/footage; show video: rm/publish/unlist/schedule/resync/link). — gating enforced in VerbDelegator via `Registry.actions_for(reply_target)`; the per-target action lists get set to the canonical matrix as handlers migrate (T19). complexity: [high]
-- [ ] T18.6 Spec: free-chat and `#<handle>` produce IDENTICAL built+sent events for a representative verb (per resolution mode). complexity: [high]
-- [ ] T18.7 Commit. complexity: [manual]
+- [x] T18.6 Spec: free-chat and `#<handle>` produce IDENTICAL built+sent events for a representative verb (per resolution mode). complexity: [high]
+- [x] T18.7 Commit. — backbone landed per-task; full suite green closes the phase. complexity: [manual]
 
 ## Phase 19 — Migrate show / show video / delete / link / unlink onto the unified handler
 
