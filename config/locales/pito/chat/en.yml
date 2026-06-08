@@ -8,6 +8,10 @@ en:
         descriptions:
           show: "Show a game's details (by id or title)"
         needs_ref: "Which game? Use `list games` to see ids, then `show game <id>`."
+      import:
+        descriptions:
+          import: "Get the footage probe command for a game (by id or title)"
+        needs_ref: "Which game? Use `list games` to see ids, then `import <id>`."
       delete:
         descriptions:
           delete: "Delete a game (by id or title)"

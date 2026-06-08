@@ -103,6 +103,12 @@ module Pito
           ),
           Spec.new(
             namespace:       :chat,
+            name:            :import,
+            slots:           [ Slot.new(name: :title, kind: :enum, source: :game_titles, optional: true) ],
+            description_key: "pito.grammar.chat.import"
+          ),
+          Spec.new(
+            namespace:       :chat,
             name:            :delete,
             aliases:         [ :rm ],
             slots:           [ Slot.new(name: :title, kind: :enum, source: :game_titles, optional: true) ],

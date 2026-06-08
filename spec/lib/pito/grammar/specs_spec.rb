@@ -17,6 +17,10 @@ RSpec.describe Pito::Grammar::Specs do
       expect(all_specs.map(&:name)).to include(:show)
     end
 
+    it "includes the :import chat spec" do
+      expect(all_specs.map(&:name)).to include(:import)
+    end
+
     it "includes the :find chat spec" do
       expect(all_specs.map(&:name)).to include(:find)
     end
@@ -57,9 +61,17 @@ RSpec.describe Pito::Grammar::Specs do
         expect(spec.slot(:noun).source).to eq(:nouns)
       end
 
-      it "registers :show and :find specs" do
+      it "registers :show, :import and :find specs" do
         names = Pito::Grammar::Registry.specs(namespace: :chat).map(&:name)
-        expect(names).to include(:list, :show, :find)
+        expect(names).to include(:list, :show, :import, :find)
+      end
+
+      it "registers :import with a single optional :title enum slot" do
+        spec = Pito::Grammar::Registry.spec(namespace: :chat, name: :import)
+        expect(spec).not_to be_nil
+        expect(spec.slots.length).to eq(1)
+        expect(spec.slot(:title).source).to eq(:game_titles)
+        expect(spec.slot(:title).optional?).to be(true)
       end
     end
 

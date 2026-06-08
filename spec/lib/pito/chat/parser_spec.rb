@@ -29,6 +29,17 @@ RSpec.describe Pito::Chat::Parser do
       expect(result.kind).to eq(:new_turn)
     end
 
+    it "recognises :import as a new-turn verb" do
+      result = described_class.call(lex("import Pragmata"), raw: "import Pragmata", conversation:)
+      expect(result.verb).to eq(:import)
+      expect(result.kind).to eq(:new_turn)
+    end
+
+    it "parses `import <id>` to verb :import" do
+      result = described_class.call(lex("import 1"), raw: "import 1", conversation:)
+      expect(result.verb).to eq(:import)
+    end
+
     it "recognises :find as a new-turn verb" do
       result = described_class.call(lex("find items"), raw: "find items", conversation:)
       expect(result.verb).to eq(:find)

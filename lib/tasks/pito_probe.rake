@@ -23,8 +23,12 @@ namespace :pito do
       game = Game.find_by(id: game_id)
       abort "Game #{game_id} not found." unless game
 
-      files = Dir.glob(File.expand_path(path_pattern)).select { |f| File.file?(f) }.sort
-      abort "No files matched: #{path_pattern}" if files.empty?
+      # Only video footage — mp4 / mkv / mov. Everything else in the folder is ignored.
+      video_exts = %w[.mp4 .mkv .mov].freeze
+      files = Dir.glob(File.expand_path(path_pattern))
+                 .select { |f| File.file?(f) && video_exts.include?(File.extname(f).downcase) }
+                 .sort
+      abort "No mp4/mkv/mov files matched: #{path_pattern}" if files.empty?
 
       puts "==> Probing #{files.length} file(s) for game '#{game.title}' (id=#{game.id})"
       puts ""
