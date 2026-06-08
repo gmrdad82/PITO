@@ -475,7 +475,7 @@ Locked decisions (from the design discussion, 2026-06-08):
 > ref; `#<list> <verb> <ref>` resolves the ref among the list message's rows
 > (id/title); `#<detail> <verb>` uses the card's entity (no ref).
 
-- [ ] T18.1 Give each verb handler a unified entry accepting EITHER a free-chat message OR a follow-up context (`{ source_event, rest }`). complexity: [high]
+- [x] T18.1 Give each verb handler a unified entry accepting EITHER a free-chat message OR a follow-up context (`{ source_event, rest }`). complexity: [high]
 - [ ] T18.2 Resolution: free-chat → typed ref; list context → ref resolved among the list message's row ids/titles; detail context → the card's entity (no ref). complexity: [high]
 - [ ] T18.3 Result adapter: map a verb handler's `Chat::Result::Ok` events → `FollowUp::Result::Append` (Confirmable verbs → confirmation event) so one handler serves both paths. complexity: [high]
 - [ ] T18.4 Follow-up dispatch: after resolving the live event + handle, hand `<verb> <rest>` to the matching verb handler with the context. complexity: [high]

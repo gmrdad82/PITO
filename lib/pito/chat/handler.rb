@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../grammar/handler_dsl"
+require_relative "follow_up_context"
 
 module Pito
   module Chat
@@ -24,6 +25,10 @@ module Pito
     #
     # - `message` (`Pito::Chat::Message`) — parsed message (verb, body_tokens, raw).
     # - `conversation` (`Conversation`) — the active conversation record.
+    # - `follow_up` (`Pito::Chat::FollowUpContext`, or nil) — present when this verb
+    #   was reached via a `#<handle>` reply instead of free chat. Same verb logic
+    #   runs either way; only reference resolution (T18.2) and result-wrapping
+    #   (T18.3) consult it. `follow_up?` is the predicate.
     #
     # ## `inherited` reset semantics
     #
@@ -32,12 +37,20 @@ module Pito
     class Handler
       extend Pito::Grammar::HandlerDsl
 
-      attr_reader :message, :conversation, :channel
+      attr_reader :message, :conversation, :channel, :follow_up
 
-      def initialize(message:, conversation:, channel: nil)
+      def initialize(message:, conversation:, channel: nil, follow_up: nil)
         @message = message
         @conversation = conversation
         @channel = channel
+        @follow_up = follow_up
+      end
+
+      # True when this verb was invoked from a `#<handle>` follow-up reply rather
+      # than a free-chat message. The verb logic is identical; only resolution and
+      # result-wrapping branch on it.
+      def follow_up?
+        !@follow_up.nil?
       end
 
       def call
