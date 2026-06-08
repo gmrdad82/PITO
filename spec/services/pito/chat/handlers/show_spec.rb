@@ -16,6 +16,15 @@ RSpec.describe Pito::Chat::Handlers::Show do
     )
   end
 
+  # Dispatch through the REAL lexer + parser (not hand-built tokens) so that
+  # tokenization regressions — e.g. apostrophes — are exercised end to end.
+  def show_real(input)
+    msg = Pito::Chat::Parser.call(
+      Pito::Lex::Lexer.call(input), raw: input, conversation: Conversation.singleton
+    )
+    described_class.new(message: msg, conversation: Conversation.singleton).call
+  end
+
   let!(:game) { create(:game, title: "Lies of P") }
 
   it "shows a game by title (ILIKE), dropping the noun filler" do
@@ -61,6 +70,21 @@ RSpec.describe Pito::Chat::Handlers::Show do
     result = handler_for.call
     expect(result).to be_a(Pito::Chat::Result::Error)
     expect(result.message_key).to eq("pito.chat.show.needs_ref")
+  end
+
+  context "title containing an apostrophe (regression — lexer split ' into :unknown)" do
+    let!(:gng) { create(:game, title: "Ghosts 'n Goblins Resurrection") }
+
+    it "resolves the game when typed naturally through the real lexer/parser" do
+      result = show_real("show Ghosts 'n Goblins Resurrection")
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(gng.id)
+    end
+
+    it "still resolves with the optional 'game' noun filler" do
+      result = show_real("show game Ghosts 'n Goblins Resurrection")
+      expect(result.events.first[:payload]["game_id"]).to eq(gng.id)
+    end
   end
 
   context "ILIKE partial vs exact — two games sharing a prefix" do
