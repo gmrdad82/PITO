@@ -13,12 +13,19 @@ RSpec.describe Pito::FollowUp::Handlers::GameList do
     expect(described_class.mode).to eq(:append)
   end
 
-  it "appends the detail card for `show <id>`" do
+  it "appends the detail card AND the enhanced message for `show <id>` (mirrors the verb)" do
     result = handler.call(event: nil, rest: "show ##{game.id}", conversation: conversation)
     expect(result).to be_a(Pito::FollowUp::Result::Append)
-    payload = result.events.first[:payload]
-    expect(payload["body"]).to include("Lies of P")
-    expect(payload["reply_target"]).to eq("game_detail")
+
+    kinds = result.events.map { |e| e[:kind] }
+    expect(kinds).to eq([ "system", "enhanced" ])
+
+    detail = result.events.find { |e| e[:kind] == "system" }[:payload]
+    expect(detail["body"]).to include("Lies of P")
+    expect(detail["reply_target"]).to eq("game_detail")
+
+    enhanced = result.events.find { |e| e[:kind] == "enhanced" }[:payload]
+    expect(enhanced["body"]).to include("pito-game-enhanced-message")
   end
 
   it "resolves by title too" do

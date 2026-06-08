@@ -27,8 +27,11 @@ module Pito
           if action == "show"
             return not_found(ref) unless game
 
+            # Mirror the `show game <id>` verb exactly: the Standard detail card
+            # PLUS the Enhanced recommendations message (not just the card).
             Pito::FollowUp::Result::Append.new(events: [
-              { kind: "system", payload: Pito::MessageBuilder::Game::Detail.call(game, conversation:) }
+              { kind: "system",   payload: Pito::MessageBuilder::Game::Detail.call(game, conversation:) },
+              { kind: "enhanced", payload: Pito::MessageBuilder::Game::Enhanced.call(game) }
             ])
           elsif DELETE_ACTIONS.include?(action)
             # Spawn the SAME delete confirmation as `delete game <id>`.
