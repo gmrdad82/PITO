@@ -5,6 +5,16 @@ en:
       # Each key resolves to a String (single line) or Array (variants).
       # Migrated from legacy pito.* namespace in P3.
 
+      search:
+        remake:
+          - "(remake)"
+          - "(the remake)"
+          - "(remade)"
+        remaster:
+          - "(remaster)"
+          - "(remastered)"
+          - "(the remaster)"
+
       footage:
         probe_prompt:
           - "Got hours of useless footage lying around?"
