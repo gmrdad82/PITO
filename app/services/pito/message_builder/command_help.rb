@@ -4,9 +4,12 @@ module Pito
   module MessageBuilder
     # Two-level `--help` dispatcher for chat verbs.
     #
-    # CommandHelp.call(:show)              → verb-level page (lists all noun forms)
-    # CommandHelp.call(:show, noun: :game) → noun-level page for show game
-    # CommandHelp.call(:list)              → delegates to Game::ListHelp (any noun)
+    # CommandHelp.call(:show)                 → verb-level page (lists all noun forms)
+    # CommandHelp.call(:show, noun: :game)    → noun-level page for show game
+    # CommandHelp.call(:list)                 → delegates to Game::ListHelp (default)
+    # CommandHelp.call(:list, noun: :games)   → delegates to Game::ListHelp
+    # CommandHelp.call(:list, noun: :videos)  → delegates to Video::ListHelp
+    # CommandHelp.call(:list, noun: :channels)→ delegates to Channel::ListHelp (witty)
     #
     # Copy lives at pito.copy.chat_help.<verb>:
     #   verb-level usage  → pito.copy.chat_help.<verb>.usage  (String)
@@ -41,7 +44,13 @@ module Pito
       # @param noun [Symbol, nil]
       # @return [Hash, nil]
       def call(verb, noun: nil)
-        return Pito::MessageBuilder::Game::ListHelp.call if verb == :list
+        if verb == :list
+          case noun
+          when :videos   then return Pito::MessageBuilder::Video::ListHelp.call
+          when :channels then return Pito::MessageBuilder::Channel::ListHelp.call
+          else                return Pito::MessageBuilder::Game::ListHelp.call
+          end
+        end
 
         nouns = VERB_NOUNS[verb]
         return nil unless nouns # unknown verb

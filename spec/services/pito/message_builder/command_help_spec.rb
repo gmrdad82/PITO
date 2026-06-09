@@ -6,20 +6,88 @@ RSpec.describe Pito::MessageBuilder::CommandHelp do
   describe ".call" do
     # ── :list delegation ──────────────────────────────────────────────────────
 
-    context "when verb is :list (any noun)" do
-      it "delegates to Game::ListHelp and returns its payload" do
-        list_payload = Pito::MessageBuilder::Game::ListHelp.call
-        result = described_class.call(:list)
+    context "when verb is :list" do
+      context "noun: nil (default → games)" do
+        it "delegates to Game::ListHelp and returns its payload" do
+          list_payload = Pito::MessageBuilder::Game::ListHelp.call
+          result = described_class.call(:list)
 
-        expect(result).to be_a(Hash)
-        expect(result["html"]).to be(true)
-        expect(result["body"]).to eq(list_payload["body"])
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+          expect(result["body"]).to eq(list_payload["body"])
+        end
       end
 
-      it "still delegates when a noun is provided" do
-        list_payload = Pito::MessageBuilder::Game::ListHelp.call
-        result = described_class.call(:list, noun: :games)
-        expect(result["body"]).to eq(list_payload["body"])
+      context "noun: :games" do
+        it "delegates to Game::ListHelp" do
+          list_payload = Pito::MessageBuilder::Game::ListHelp.call
+          result = described_class.call(:list, noun: :games)
+          expect(result["body"]).to eq(list_payload["body"])
+        end
+      end
+
+      context "noun: :videos" do
+        subject(:result) { described_class.call(:list, noun: :videos) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "body includes 'Usage:'" do
+          expect(result["body"]).to include("Usage:")
+        end
+
+        it "body mentions 'list videos'" do
+          expect(result["body"]).to include("list videos")
+        end
+
+        it "body mentions the 'game' column" do
+          expect(result["body"]).to include("game")
+        end
+
+        it "body mentions the 'duration' column" do
+          expect(result["body"]).to include("duration")
+        end
+
+        it "body mentions the 'views' column" do
+          expect(result["body"]).to include("views")
+        end
+
+        it "body mentions the 'likes' column" do
+          expect(result["body"]).to include("likes")
+        end
+
+        it "body mentions the 'comments' column" do
+          expect(result["body"]).to include("comments")
+        end
+
+        it "body is wrapped in .pito-help-block" do
+          expect(result["body"]).to include('class="pito-help-block"')
+        end
+      end
+
+      context "noun: :channels" do
+        subject(:result) { described_class.call(:list, noun: :channels) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "body includes 'Usage:'" do
+          expect(result["body"]).to include("Usage:")
+        end
+
+        it "body mentions 'list channels'" do
+          expect(result["body"]).to include("list channels")
+        end
+
+        it "body includes a witty one-liner" do
+          # The channels help always appends one line from channels_help array.
+          # With the deterministic sampler (first entry) that's the first variant.
+          expect(result["body"]).to include("Nothing here")
+        end
       end
     end
 

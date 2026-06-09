@@ -348,8 +348,8 @@ Per-verb man pages (one atomic task each — author `pito.copy.chat_help.<verb>`
 `list <noun> --help` must be noun-aware (today it always shows the games man page).
 
 - [x] T8.1 `list games --help` — games columns man page (done, Phase 5/6).
-- [ ] T8.2 `list channels --help` — `Usage: list channels` + one random witty line from a ~50-variant `Pito::Copy` pool (no args: "there's nothing here" / "what did you expect?" / "found what you were looking for" tone).
-- [ ] T8.3 `list videos --help` — games-style man page with the **video** columns: `game, games` / `duration` / `views` / `likes` / `comments` (copy from `Pito::Copy`).
+- [x] T8.2 `list channels --help` — `Usage: list channels` + one random witty line from a ~50-variant `Pito::Copy` pool (no args: "there's nothing here" / "what did you expect?" / "found what you were looking for" tone).
+- [x] T8.3 `list videos --help` — games-style man page with the **video** columns: `game, games` / `duration` / `views` / `likes` / `comments` (copy from `Pito::Copy`).
 
 ## Phase 9 — `show game --help` / `show video --help`
 
@@ -357,8 +357,8 @@ Same man style. Each accepts a **title or an id** (id = the plain number, **no `
 multi-word titles must be wrapped in `"…"`. (Implementation of `show` itself is known-bad
 and will be revisited — these tasks are the `--help` man pages only.)
 
-- [ ] T9.1 `show game --help` — `Usage: show game <title|id>`; accepts a game title (multi-word in `"…"`) or a game id (plain number). Copy from `Pito::Copy`.
-- [ ] T9.2 `show video --help` — `Usage: show video <title|id>`; accepts a video title (multi-word in `"…"`) or a video id (plain number). Copy from `Pito::Copy`.
+- [x] T9.1 `show game --help` — `Usage: show game <title|id>`; accepts a game title (multi-word in `"…"`) or a game id (plain number). Copy from `Pito::Copy`.
+- [x] T9.2 `show video --help` — `Usage: show video <title|id>`; accepts a video title (multi-word in `"…"`) or a video id (plain number). Copy from `Pito::Copy`.
 
 ## Phase 10 — Fix `show game` / `show video` implementation
 
@@ -374,8 +374,8 @@ get here.
 
 Same man style. Copy from `Pito::Copy`.
 
-- [ ] T11.1 `import videos --help` — `Usage: import videos [for @handle]`; explains: imports for ALL channels when shift+tab is `@all`, for the selected channel when shift+tab has one, or for `@handle` when `for @handle` is given.
-- [ ] T11.2 `import game --help` — `Usage: import game [game title]`; explains: opens the IGDB import Sidebar with the title prefilled (if given) and runs an IGDB search.
+- [x] T11.1 `import videos --help` — `Usage: import videos [for @handle]`; explains: imports for ALL channels when shift+tab is `@all`, for the selected channel when shift+tab has one, or for `@handle` when `for @handle` is given.
+- [x] T11.2 `import game --help` — `Usage: import game [game title]`; explains: opens the IGDB import Sidebar with the title prefilled (if given) and runs an IGDB search.
 
 ## Phase 12 — Fix `import videos` / `import game` implementation
 
@@ -389,8 +389,8 @@ Real behavior is currently wrong (hallucinated). Fix to match the above.
 Same man style. Copy from `Pito::Copy`. The `with <items>` clause is a parsed comma-list
 built to be extensible (today `videos`; future `analytics` for both forms).
 
-- [ ] T13.1 `sync videos --help` — `Usage: sync videos [only id,id,id]`; scope = shift+tab channel (`@all` = all channels); `only` takes one or more **local numeric ids** (comma-separated, **no titles**). (Future: optional `with analytics` — not now.)
-- [ ] T13.2 `sync channels --help` — `Usage: sync channels [with <items>]`; scope = shift+tab channel (`@all` = all channels); `with` is a comma-list of sync targets (today `videos`; future `analytics`) — e.g. `with videos`, `with videos,analytics`.
+- [x] T13.1 `sync videos --help` — `Usage: sync videos [only id,id,id]`; scope = shift+tab channel (`@all` = all channels); `only` takes one or more **local numeric ids** (comma-separated, **no titles**). (Future: optional `with analytics` — not now.)
+- [x] T13.2 `sync channels --help` — `Usage: sync channels [with <items>]`; scope = shift+tab channel (`@all` = all channels); `with` is a comma-list of sync targets (today `videos`; future `analytics`) — e.g. `with videos`, `with videos,analytics`.
 
 ## Phase 14 — Rework `sync` implementation (drop `sync game` + legacy forms)
 
@@ -406,7 +406,7 @@ forms.
 
 Same man style. Copy from `Pito::Copy`.
 
-- [ ] T15.1 `footage game --help` — `Usage: footage game <id> <path>`; `<id>` = local game id (plain number, **no title**); `<path>` = local folder where the footage is stored.
+- [x] T15.1 `footage game --help` — `Usage: footage game <id> <path>`; `<id>` = local game id (plain number, **no title**); `<path>` = local folder where the footage is stored.
 
 ## Phase 16 — Rework `footage game` implementation (id only, no title)
 
@@ -422,8 +422,8 @@ Same man style. Copy from `Pito::Copy`. Both accept a **local id only** (plain n
 `#`) — **never a title**. (Implementation rework to enforce id-only is deferred — `--help`
 man pages only for now.)
 
-- [ ] T17.1 `delete game --help` — `Usage: delete game <id>`; `<id>` = local game id (plain number, no title).
-- [ ] T17.2 `delete video --help` — `Usage: delete video <id>`; `<id>` = local video id (plain number, no title).
+- [x] T17.1 `delete game --help` — `Usage: delete game <id>`; `<id>` = local game id (plain number, no title).
+- [x] T17.2 `delete video --help` — `Usage: delete video <id>`; `<id>` = local video id (plain number, no title).
 
 ## Phase 18 — Rework `delete game` / `delete video` implementation (id only)
 
@@ -438,8 +438,8 @@ number, never title). Drop title resolution + misaligned copy/specs per the glob
 Same man style. Copy from `Pito::Copy`. Both accept a **local id only** (plain number, no
 `#`) — **never a title**.
 
-- [ ] T19.1 `reindex game --help` — `Usage: reindex game <id>`; `<id>` = local game id (re-embed in Voyage).
-- [ ] T19.2 `reindex video --help` — `Usage: reindex video <id>`; `<id>` = local video id (re-embed in Voyage).
+- [x] T19.1 `reindex game --help` — `Usage: reindex game <id>`; `<id>` = local game id (re-embed in Voyage).
+- [x] T19.2 `reindex video --help` — `Usage: reindex video <id>`; `<id>` = local video id (re-embed in Voyage).
 
 ## Phase 20 — Rework `reindex game` / `reindex video` implementation (id only)
 
@@ -453,9 +453,9 @@ Rework to **local id only** (never title). Drop title resolution + misaligned co
 Same man style. Copy from `Pito::Copy`. All accept a **local video id only** (plain number,
 no `#`) — **never a title**.
 
-- [ ] T21.1 `publish video --help` — `Usage: publish video <id>`; `<id>` = local video id (sets YouTube visibility public).
-- [ ] T21.2 `unlist video --help` — `Usage: unlist video <id>`; `<id>` = local video id (sets YouTube visibility unlisted).
-- [ ] T21.3 `schedule video --help` — `Usage: schedule video <id> <date>`; `<id>` = local video id; `<date>` = `dd-mm-yyyy hh:mm`, **local time**, at least **30 min** from now.
+- [x] T21.1 `publish video --help` — `Usage: publish video <id>`; `<id>` = local video id (sets YouTube visibility public).
+- [x] T21.2 `unlist video --help` — `Usage: unlist video <id>`; `<id>` = local video id (sets YouTube visibility unlisted).
+- [x] T21.3 `schedule video --help` — `Usage: schedule video <id> <date>`; `<id>` = local video id; `<date>` = `dd-mm-yyyy hh:mm`, **local time**, at least **30 min** from now.
 
 ## Phase 22 — Rework `publish` / `unlist` / `schedule` video implementation (id only)
 
@@ -471,10 +471,10 @@ copy/specs per the global rule.
 Same man style. Copy from `Pito::Copy`. Both sides are **local ids only** (plain numbers,
 no `#`, never titles). `link` connector = `to`; `unlink` connector = `from`.
 
-- [ ] T23.1 `link game --help` — `Usage: link game <id> to video <id>` (e.g. `link game 12 to video 32`).
-- [ ] T23.2 `link video --help` — `Usage: link video <id> to game <id>`.
-- [ ] T23.3 `unlink game --help` — `Usage: unlink game <id> from video <id>` (e.g. `unlink game 12 from video 32`).
-- [ ] T23.4 `unlink video --help` — `Usage: unlink video <id> from game <id>`.
+- [x] T23.1 `link game --help` — `Usage: link game <id> to video <id>` (e.g. `link game 12 to video 32`).
+- [x] T23.2 `link video --help` — `Usage: link video <id> to game <id>`.
+- [x] T23.3 `unlink game --help` — `Usage: unlink game <id> from video <id>` (e.g. `unlink game 12 from video 32`).
+- [x] T23.4 `unlink video --help` — `Usage: unlink video <id> from game <id>`.
 
 ## Phase 24 — Rework `link` / `unlink` implementation (local ids only)
 
