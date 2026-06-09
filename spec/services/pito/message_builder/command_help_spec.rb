@@ -51,5 +51,30 @@ RSpec.describe Pito::MessageBuilder::CommandHelp do
         expect(result).to be_nil
       end
     end
+
+    describe "10 new verbs each render a valid help payload" do
+      %i[import sync footage delete reindex publish unlist schedule link unlink].each do |verb|
+        context "verb :#{verb}" do
+          subject(:result) { described_class.call(verb: verb) }
+
+          it "returns an html payload" do
+            expect(result).to be_a(Hash)
+            expect(result["html"]).to be(true)
+          end
+
+          it "body includes 'Usage:'" do
+            expect(result["body"]).to include("Usage:")
+          end
+
+          it "body includes the verb name" do
+            expect(result["body"]).to include(verb.to_s)
+          end
+
+          it "body includes '--help'" do
+            expect(result["body"]).to include("--help")
+          end
+        end
+      end
+    end
   end
 end
