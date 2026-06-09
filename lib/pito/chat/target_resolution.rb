@@ -142,7 +142,11 @@ module Pito
       end
 
       def strip_noun(text, noun_fillers)
-        text.to_s.sub(/\A(?:#{noun_fillers.join('|')})\b\s*/i, "").strip
+        ref = text.to_s.sub(/\A(?:#{noun_fillers.join('|')})\b\s*/i, "").strip
+        # Strip surrounding double-quotes so `show game "Elden Ring"` resolves the
+        # same as `show game Elden Ring`.  The lexer already unescapes the content;
+        # the raw string still carries the literal quote characters.
+        ref.match(/\A"(.*)"\z/)&.[](1) || ref
       end
     end
   end

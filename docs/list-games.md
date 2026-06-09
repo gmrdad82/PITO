@@ -367,8 +367,8 @@ These tasks fix the actual commands so they accept a title (multi-word in `"…"
 plain id (no `#`) and resolve/show the right entity. Exact bugs to be specified when we
 get here.
 
-- [ ] T10.1 Fix `show game` implementation — title or plain id resolution + correct game detail render (details TBD on review).
-- [ ] T10.2 Fix `show video` implementation — title or plain id resolution + correct video detail render (details TBD on review).
+- [x] T10.1 Fix `show game` — bug found: quoted multi-word titles weren't quote-stripped before ILIKE so `show game "Elden Ring"` never matched. Fixed in `TargetResolution#strip_noun`; renders Game::Detail. complexity: [high]
+- [x] T10.2 Fix `show video` — same quote-stripping fix; `show video "…"` resolves; renders Video::Detail. complexity: [high]
 
 ## Phase 11 — `import videos --help` / `import game --help`
 

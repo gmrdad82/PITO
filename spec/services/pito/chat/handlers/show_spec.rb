@@ -72,6 +72,43 @@ RSpec.describe Pito::Chat::Handlers::Show do
     expect(result.message_key).to eq("pito.chat.show.needs_ref")
   end
 
+  context "double-quoted multi-word game title" do
+    let!(:elden) { create(:game, title: "Elden Ring") }
+    let!(:tears) { create(:game, title: "Tears of the Kingdom") }
+
+    it "resolves a two-word title wrapped in double quotes" do
+      result = show_real('show game "Elden Ring"')
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(elden.id)
+    end
+
+    it "resolves without a noun filler when a quoted multi-word title is typed" do
+      # No game/video noun — falls back to the game branch (default)
+      result = show_real('show "Tears of the Kingdom"')
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(tears.id)
+    end
+
+    it "resolves with the noun filler and a quoted multi-word title" do
+      result = show_real('show game "Tears of the Kingdom"')
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(tears.id)
+    end
+
+    it "returns not-found for a quoted title that does not match any game" do
+      result = show_real('show game "Dragon Age: Veilguard"')
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      payload = result.events.first[:payload]
+      expect(payload["text"]).to include("Dragon Age: Veilguard")
+    end
+
+    it "resolves by numeric id in free-chat — no quotes needed" do
+      result = show_real("show game #{elden.id}")
+      expect(result).to be_a(Pito::Chat::Result::Ok)
+      expect(result.events.first[:payload]["game_id"]).to eq(elden.id)
+    end
+  end
+
   context "title containing an apostrophe (regression — lexer split ' into :unknown)" do
     let!(:gng) { create(:game, title: "Ghosts 'n Goblins Resurrection") }
 
@@ -193,6 +230,36 @@ RSpec.describe Pito::Chat::Handlers::Show do
       result = handler_for("video").call
       expect(result).to be_a(Pito::Chat::Result::Error)
       expect(result.message_key).to eq("pito.chat.show.needs_ref")
+    end
+
+    context "double-quoted multi-word video title" do
+      let!(:quoted_vid)  { create(:video, channel: channel, title: "Speedrun World Record") }
+      let!(:ranked)      { create(:video, channel: channel, title: "Ranked Gameplay Session") }
+
+      it "resolves a multi-word title wrapped in double quotes" do
+        result = show_real('show video "Speedrun World Record"')
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        expect(result.events.first[:payload]["video_id"]).to eq(quoted_vid.id)
+      end
+
+      it "resolves with the plural noun filler and a quoted multi-word title" do
+        result = show_real('show videos "Ranked Gameplay Session"')
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        expect(result.events.first[:payload]["video_id"]).to eq(ranked.id)
+      end
+
+      it "returns not-found for a quoted title that does not match any video" do
+        result = show_real('show video "Nonexistent Stream"')
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        payload = result.events.first[:payload]
+        expect(payload["text"]).to include("Nonexistent Stream")
+      end
+
+      it "resolves by numeric id in free-chat — no quotes needed" do
+        result = show_real("show video #{quoted_vid.id}")
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        expect(result.events.first[:payload]["video_id"]).to eq(quoted_vid.id)
+      end
     end
 
     context "video title with apostrophe resolved via real lexer/parser" do
