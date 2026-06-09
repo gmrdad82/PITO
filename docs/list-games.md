@@ -557,9 +557,9 @@ Solution = EXTEND the follow-up mechanism (additive), do NOT change the shared p
 other follow-upables use (game_detail / game_list / video_* / channel_list / confirmation
 keep their hashtags, palette entries, and `#help` untouched):
 
-- [ ] T30.1 Add an `internal` flag to the follow-up handler DSL (`self.internal true` on `ChannelVisit`, default false); `#help` + the `#hashtag` palette iterate `Registry.all` but SKIP internal handlers. complexity: [high]
-- [ ] T30.2 Drop `make_followupable!` from the visit message (no visible `reply_handle`); route the auto-visit `consume` POST by the `event_<id>` anchor instead of `#<handle>` (the `ChannelVisit` handler already resolves the channel from `event.payload["channel_id"]`). Keep the visiting→visited mutation working live + on refresh. complexity: [high]
-- [ ] T30.3 Specs: other follow-upables still show handles + appear in `#help`/palette (unchanged); `channel_visit`/`consume` shows no handle, is absent from `#help`/palette, and the visiting→visited flow still works. complexity: [low]
+- [x] T30.1 Added `internal` flag to the follow-up handler DSL (`self.internal true` on `ChannelVisit`); `Help::FollowUpActions` skips internal handlers (gone from `#help`/palette). complexity: [high]
+- [x] T30.2 Dropped `make_followupable!` from the visit message (no `reply_handle`); kept `reply_target` + new `anchor: true` payload flag so `dom_id` still renders `event_<id>`; consume already routes by `event.id`. Visiting→visited intact. complexity: [high]
+- [x] T30.3 Specs: visit message has no handle but keeps its anchor; `channel_visit` absent from `#help`; other targets unchanged; consume flow still flips to :visited. complexity: [low]
 
 ## Phase 31 — `#list-videos-hashtag` (show / delete video)
 

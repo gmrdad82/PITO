@@ -140,17 +140,19 @@ module Pito
 
       private
 
-      # Returns a stable DOM id for anchorable system messages — those carrying
-      # a follow-up engine handle (reply_handle present), which supersedes the old
-      # `theme_list: true` flag. Also preserves `theme_diff: true` as an anchor
-      # gate for backward-compat (ThemeDiffComponent still uses its own id helper,
-      # but SystemComponent may receive a theme_diff payload during reload fallback).
+      # Returns a stable DOM id for anchorable system messages.
       #
-      # Returns nil when neither condition is met or when event is nil.
+      # A message is anchorable when any of the following is true:
+      #   - reply_handle is present (standard user-facing follow-up messages)
+      #   - anchor: true (internal machine-flow messages, e.g. channel_visit)
+      #   - theme_diff: true (backward-compat for ThemeDiffComponent fallback)
+      #
+      # Returns nil when none of the conditions is met or when event is nil.
       def dom_id
         return nil unless @event
 
         anchorable = @reply_handle.present? ||
+                     @payload[:anchor]     == true || @payload[:anchor]     == "true" ||
                      @payload[:theme_diff] == true || @payload[:theme_diff] == "true"
         "event_#{@event.id}" if anchorable
       end

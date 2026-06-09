@@ -51,6 +51,13 @@ RSpec.describe Pito::Hashtag::Handlers::Help do
     expect(titles).to include("CHANNEL")
   end
 
+  it "does NOT list internal handlers (channel_visit/consume must be absent)" do
+    sections = handler.call.events.first[:payload]["sections"]
+    all_rows = sections.flat_map { |s| s["rows"] }
+    all_keys = all_rows.map { |r| r["key"] }
+    expect(all_keys).not_to include("channel_visit")
+  end
+
   it "GAME section includes game_detail with expected actions" do
     sections = handler.call.events.first[:payload]["sections"]
     game_section = sections.find { |s| s["title"] == "GAME" }

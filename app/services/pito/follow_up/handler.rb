@@ -100,6 +100,27 @@ module Pito
           end
         end
 
+        # Mark this handler as internal — it is never user-facing.
+        # Internal handlers:
+        #   - emit no #hashtag handle (no reply_handle in the visit payload)
+        #   - are excluded from #help and the hashtag suggestions palette
+        #   - cannot be reached via a typed `#<handle>` reply
+        #
+        # Call `self.internal true` in the subclass body to opt in.
+        # Default is false (all handlers are public unless declared otherwise).
+        def internal(flag = nil)
+          if flag.nil?
+            @internal ||= false
+          else
+            @internal = flag ? true : false
+          end
+        end
+
+        # Predicate form — returns true for internal handlers.
+        def internal?
+          @internal ||= false
+        end
+
         # Auto-register in Registry when a concrete subclass is defined.
         def inherited(subclass)
           super

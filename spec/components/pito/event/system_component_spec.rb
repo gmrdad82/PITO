@@ -157,8 +157,17 @@ RSpec.describe Pito::Event::SystemComponent do
       expect(segment["id"]).to eq("event_#{diff_event.id}")
     end
 
-    it "does NOT render an id for a plain system message (no reply_handle or theme_diff)" do
-      plain_event = create(:event, conversation:, turn:, kind: "system", position: 3,
+    it "renders id='event_<id>' when payload has anchor: true (internal machine-flow messages)" do
+      anchor_event = create(:event, conversation:, turn:, kind: "system", position: 3,
+                            payload: { "anchor" => true, "reply_target" => "channel_visit", "body" => "Visiting…" })
+      node = render_inline(described_class.new(payload: anchor_event.payload.with_indifferent_access, event: anchor_event))
+      segment = node.css(".pito-segment").first
+      expect(segment).not_to be_nil
+      expect(segment["id"]).to eq("event_#{anchor_event.id}")
+    end
+
+    it "does NOT render an id for a plain system message (no reply_handle, anchor, or theme_diff)" do
+      plain_event = create(:event, conversation:, turn:, kind: "system", position: 4,
                            payload: { "body" => "Regular system message" })
       node = render_inline(described_class.new(payload: plain_event.payload.with_indifferent_access, event: plain_event))
       segment = node.css(".pito-segment").first
