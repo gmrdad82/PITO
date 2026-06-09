@@ -88,6 +88,9 @@ dates read "June 09, 2026"; and the input ghosts ` with` → field tokens as you
   videos/channels suggestions are a later session.
 - Plan tiers `[manual|low|high]`; no `[skipci]`; current branch (`cleanup-fixups`); specs on;
   plain imperative commit messages, no co-author trailer.
+- **Drop misaligned legacy.** When a verb is redefined, remove everything that no longer
+  matches the new direction — code, specs, comments, copy, confirmations — for that verb.
+  No dead leftovers. Applies to every verb rework below.
 
 ## Phase index
 
@@ -96,6 +99,25 @@ dates read "June 09, 2026"; and the input ghosts ` with` → field tokens as you
 - **Phase 3 — Wrapping multi-column table grid**
 - **Phase 4 — `list games` autocomplete: ` with` connector + field tokens**
 - **Phase 5 — Help message rewrite + `list games --help`**
+- **Phase 6 — Polish (post-review tweaks) + platform engine**
+- **Phase 7 — `--help` man page for every chat verb**
+- **Phase 8 — Per-noun `list --help` (games ✅ / channels / videos)**
+- **Phase 9 — `show game --help` / `show video --help`**
+- **Phase 10 — Fix `show game` / `show video` implementation**
+- **Phase 11 — `import videos --help` / `import game --help`**
+- **Phase 12 — Fix `import videos` / `import game` implementation**
+- **Phase 13 — `sync videos --help` / `sync channels --help`**
+- **Phase 14 — Rework `sync` implementation (drop `sync game` + legacy forms)**
+- **Phase 15 — `footage game --help`**
+- **Phase 16 — Rework `footage game` implementation (id only, no title)**
+- **Phase 17 — `delete game --help` / `delete video --help`**
+- **Phase 18 — Rework `delete game` / `delete video` implementation (id only)**
+- **Phase 19 — `reindex game --help` / `reindex video --help`**
+- **Phase 20 — Rework `reindex game` / `reindex video` implementation (id only)**
+- **Phase 21 — `publish video --help` / `unlist video --help` / `schedule video --help`**
+- **Phase 22 — Rework `publish` / `unlist` / `schedule` video implementation (id only)**
+- **Phase 23 — `link`/`unlink` `game`/`video` `--help`**
+- **Phase 24 — Rework `link` / `unlink` implementation (local ids only)**
 
 ---
 
@@ -214,6 +236,149 @@ Per-verb man pages (one atomic task each — author `pito.copy.chat_help.<verb>`
 - [x] T7.15 `unlink --help` — copy added. complexity: [low]
 - [x] T7.16 Specs: `ManPage` + `CommandHelp` (parametrized over all verbs) + dispatcher + `-`→`--help` ghost (Rails + vitest). complexity: [high]
 - [x] T7.17 Commit(s) per cohesive change. complexity: [manual]
+
+## Phase 8 — Per-noun `list --help`
+
+`list <noun> --help` must be noun-aware (today it always shows the games man page).
+
+- [x] T8.1 `list games --help` — games columns man page (done, Phase 5/6).
+- [ ] T8.2 `list channels --help` — `Usage: list channels` + one random witty line from a ~50-variant `Pito::Copy` pool (no args: "there's nothing here" / "what did you expect?" / "found what you were looking for" tone).
+- [ ] T8.3 `list videos --help` — games-style man page with the **video** columns: `game, games` / `duration` / `views` / `likes` / `comments` (copy from `Pito::Copy`).
+
+## Phase 9 — `show game --help` / `show video --help`
+
+Same man style. Each accepts a **title or an id** (id = the plain number, **no `#`**);
+multi-word titles must be wrapped in `"…"`. (Implementation of `show` itself is known-bad
+and will be revisited — these tasks are the `--help` man pages only.)
+
+- [ ] T9.1 `show game --help` — `Usage: show game <title|id>`; accepts a game title (multi-word in `"…"`) or a game id (plain number). Copy from `Pito::Copy`.
+- [ ] T9.2 `show video --help` — `Usage: show video <title|id>`; accepts a video title (multi-word in `"…"`) or a video id (plain number). Copy from `Pito::Copy`.
+
+## Phase 10 — Fix `show game` / `show video` implementation
+
+The real `show` behavior is currently wrong (hallucinated during earlier implementation).
+These tasks fix the actual commands so they accept a title (multi-word in `"…"`) or a
+plain id (no `#`) and resolve/show the right entity. Exact bugs to be specified when we
+get here.
+
+- [ ] T10.1 Fix `show game` implementation — title or plain id resolution + correct game detail render (details TBD on review).
+- [ ] T10.2 Fix `show video` implementation — title or plain id resolution + correct video detail render (details TBD on review).
+
+## Phase 11 — `import videos --help` / `import game --help`
+
+Same man style. Copy from `Pito::Copy`.
+
+- [ ] T11.1 `import videos --help` — `Usage: import videos [for @handle]`; explains: imports for ALL channels when shift+tab is `@all`, for the selected channel when shift+tab has one, or for `@handle` when `for @handle` is given.
+- [ ] T11.2 `import game --help` — `Usage: import game [game title]`; explains: opens the IGDB import Sidebar with the title prefilled (if given) and runs an IGDB search.
+
+## Phase 12 — Fix `import videos` / `import game` implementation
+
+Real behavior is currently wrong (hallucinated). Fix to match the above.
+
+- [ ] T12.1 Fix `import videos` — honor shift+tab scope (`@all` → all channels, selected channel → that one) and `for @handle` override.
+- [ ] T12.2 Fix `import game` — open the Sidebar with the optional title prefilled and perform the IGDB search.
+
+## Phase 13 — `sync videos --help` / `sync channels --help`
+
+Same man style. Copy from `Pito::Copy`. The `with <items>` clause is a parsed comma-list
+built to be extensible (today `videos`; future `analytics` for both forms).
+
+- [ ] T13.1 `sync videos --help` — `Usage: sync videos [only id,id,id]`; scope = shift+tab channel (`@all` = all channels); `only` takes one or more **local numeric ids** (comma-separated, **no titles**). (Future: optional `with analytics` — not now.)
+- [ ] T13.2 `sync channels --help` — `Usage: sync channels [with <items>]`; scope = shift+tab channel (`@all` = all channels); `with` is a comma-list of sync targets (today `videos`; future `analytics`) — e.g. `with videos`, `with videos,analytics`.
+
+## Phase 14 — Rework `sync` implementation (drop `sync game` + legacy forms)
+
+New `sync` = exactly two forms. **Drop completely** (code, specs, comments, copy,
+confirmations): `sync game <ref>` (use `import game` to resync instead), the single
+`sync video <ref>` path, and the hardcoded `sync channel` / `sync channel with videos`
+forms.
+
+- [ ] T14.1 `sync videos [only id,id,id]` — scope by shift+tab (`@all` = all channels); optional `only <ids>` = local numeric ids (comma-separated, no titles). Remove the old single-video path.
+- [ ] T14.2 `sync channels [with <items>]` — scope by shift+tab (`@all` = all channels); optional `with <items>` parsed as a comma-list (today `videos`; **not hardcoded**, extensible to `analytics`). Remove the old hardcoded channel forms + `sync game`.
+
+## Phase 15 — `footage game --help`
+
+Same man style. Copy from `Pito::Copy`.
+
+- [ ] T15.1 `footage game --help` — `Usage: footage game <id> <path>`; `<id>` = local game id (plain number, **no title**); `<path>` = local folder where the footage is stored.
+
+## Phase 16 — Rework `footage game` implementation (id only, no title)
+
+Current `footage <ref> <path>` accepts a title and uses a bare ref — not aligned. Rework to
+the explicit `footage game <id> <path>` form: require a **local game id** (drop title ILIKE
+resolution); keep the path. Drop misaligned code/specs/comments/copy per the global rule.
+
+- [ ] T16.1 Rework `footage game <id> <path>` — resolve game by local id only (no title); keep the local footage path; drop the title-resolution path and align copy/specs.
+
+## Phase 17 — `delete game --help` / `delete video --help`
+
+Same man style. Copy from `Pito::Copy`. Both accept a **local id only** (plain number, no
+`#`) — **never a title**. (Implementation rework to enforce id-only is deferred — `--help`
+man pages only for now.)
+
+- [ ] T17.1 `delete game --help` — `Usage: delete game <id>`; `<id>` = local game id (plain number, no title).
+- [ ] T17.2 `delete video --help` — `Usage: delete video <id>`; `<id>` = local video id (plain number, no title).
+
+## Phase 18 — Rework `delete game` / `delete video` implementation (id only)
+
+Current `delete` accepts title or `#id` — not aligned. Rework to **local id only** (plain
+number, never title). Drop title resolution + misaligned copy/specs per the global rule.
+
+- [ ] T18.1 Rework `delete game <id>` — resolve by local id only (drop title); align copy/specs.
+- [ ] T18.2 Rework `delete video <id>` — resolve by local id only (drop title); align copy/specs.
+
+## Phase 19 — `reindex game --help` / `reindex video --help`
+
+Same man style. Copy from `Pito::Copy`. Both accept a **local id only** (plain number, no
+`#`) — **never a title**.
+
+- [ ] T19.1 `reindex game --help` — `Usage: reindex game <id>`; `<id>` = local game id (re-embed in Voyage).
+- [ ] T19.2 `reindex video --help` — `Usage: reindex video <id>`; `<id>` = local video id (re-embed in Voyage).
+
+## Phase 20 — Rework `reindex game` / `reindex video` implementation (id only)
+
+Rework to **local id only** (never title). Drop title resolution + misaligned copy/specs.
+
+- [ ] T20.1 Rework `reindex game <id>` — resolve by local id only (drop title); align copy/specs.
+- [ ] T20.2 Rework `reindex video <id>` — resolve by local id only (drop title); align copy/specs.
+
+## Phase 21 — `publish` / `unlist` / `schedule` video `--help`
+
+Same man style. Copy from `Pito::Copy`. All accept a **local video id only** (plain number,
+no `#`) — **never a title**.
+
+- [ ] T21.1 `publish video --help` — `Usage: publish video <id>`; `<id>` = local video id (sets YouTube visibility public).
+- [ ] T21.2 `unlist video --help` — `Usage: unlist video <id>`; `<id>` = local video id (sets YouTube visibility unlisted).
+- [ ] T21.3 `schedule video --help` — `Usage: schedule video <id> <date>`; `<id>` = local video id; `<date>` = `dd-mm-yyyy hh:mm`, **local time**, at least **30 min** from now.
+
+## Phase 22 — Rework `publish` / `unlist` / `schedule` video implementation (id only)
+
+Rework to **local video id only** (never title). Drop title resolution + misaligned
+copy/specs per the global rule.
+
+- [ ] T22.1 Rework `publish video <id>` — resolve by local id only; align copy/specs.
+- [ ] T22.2 Rework `unlist video <id>` — resolve by local id only; align copy/specs.
+- [ ] T22.3 Rework `schedule video <id> <date>` — local id only; date `dd-mm-yyyy hh:mm`, **local time**, ≥30 min from now. **Timezone:** date is in the given local time; if the channel timezone matches, scheduled time coincides — otherwise the agent must investigate the channel-timezone vs local-time mismatch and elaborate a solution. Align copy/specs.
+
+## Phase 23 — `link`/`unlink` `game`/`video` `--help`
+
+Same man style. Copy from `Pito::Copy`. Both sides are **local ids only** (plain numbers,
+no `#`, never titles). `link` connector = `to`; `unlink` connector = `from`.
+
+- [ ] T23.1 `link game --help` — `Usage: link game <id> to video <id>` (e.g. `link game 12 to video 32`).
+- [ ] T23.2 `link video --help` — `Usage: link video <id> to game <id>`.
+- [ ] T23.3 `unlink game --help` — `Usage: unlink game <id> from video <id>` (e.g. `unlink game 12 from video 32`).
+- [ ] T23.4 `unlink video --help` — `Usage: unlink video <id> from game <id>`.
+
+## Phase 24 — Rework `link` / `unlink` implementation (local ids only)
+
+Current `link`/`unlink` take a free body (titles/refs) — not aligned. Rework to two-sided
+**local-id** forms: `link game <id> to video <id>` / `link video <id> to game <id>`;
+`unlink game <id> from video <id>` / `unlink video <id> from game <id>`. Drop title/ref
+resolution + misaligned copy/specs per the global rule.
+
+- [ ] T24.1 Rework `link` — parse `game <id> to video <id>` / `video <id> to game <id>` (local ids only); link the pair; align copy/specs.
+- [ ] T24.2 Rework `unlink` — parse `game <id> from video <id>` / `video <id> from game <id>` (local ids only); unlink the pair; align copy/specs.
 
 ## Verification (end-to-end)
 
