@@ -108,7 +108,7 @@ module Pito
 
         def game_not_found_error
           Pito::FollowUp::Result::Error.new(
-            message_key:  "pito.follow_up.game_enhanced.errors.game_not_found",
+            message_key:  "pito.follow_up.game_detail.errors.game_not_found",
             message_args: {}
           )
         end

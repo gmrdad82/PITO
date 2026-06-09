@@ -163,29 +163,4 @@ RSpec.describe Pito::Chat::Handlers::Reindex do
       expect(event[:payload]["video_id"]).to eq(video.id)
     end
   end
-
-  # ── Follow-up detail-context — game_enhanced ─────────────────────────────────
-
-  context "follow-up detail context — game_enhanced" do
-    let!(:game) { create(:game, title: "Elden Ring") }
-
-    it "emits a game_reindex confirmation when invoked from a game_enhanced follow-up context" do
-      source_event = instance_double(
-        Event,
-        payload: { "game_id" => game.id, "reply_target" => "game_enhanced" }
-      )
-      ctx     = Pito::Chat::FollowUpContext.new(source_event: source_event, rest: "")
-      handler = described_class.new(
-        message:      instance_double(Pito::Chat::Message),
-        conversation: Conversation.singleton,
-        follow_up:    ctx
-      )
-      result = handler.call
-      expect(result).to be_a(Pito::Chat::Result::Ok)
-      event = result.events.first
-      expect(event[:kind]).to eq(:confirmation)
-      expect(event[:payload]["command"]).to eq("game_reindex")
-      expect(event[:payload]["game_id"]).to eq(game.id)
-    end
-  end
 end

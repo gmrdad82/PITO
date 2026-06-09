@@ -544,7 +544,7 @@ enhanced message). Remove it from the component itself so it disappears from bot
 `game_enhanced` (actions `reindex`, `channel`) is not follow-up-able anymore. The Enhanced
 (recommendations) message no longer gets a reply handle / hashtag.
 
-- [ ] T29.1 Remove the `game_enhanced` follow-up handler (`reindex`, `channel`); stop stamping the Enhanced message as follow-up-able (no `reply_handle`/hashtag); drop related code, specs, comments, copy, grammar. complexity: [high]
+- [x] T29.1 Remove the `game_enhanced` follow-up handler (`reindex`, `channel`); stop stamping the Enhanced message as follow-up-able (no `reply_handle`/hashtag); drop related code, specs, comments, copy, grammar. complexity: [high]
 
 ## Phase 30 — Make `channel_visit`/`consume` internal-only (hide hashtag, keep flow)
 
