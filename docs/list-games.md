@@ -537,7 +537,7 @@ The `#<id>` line under each channel card is rendered by the shared
 `Pito::Channel::ItemComponent` (used by the `list channels` strip AND the game-detail
 enhanced message). Remove it from the component itself so it disappears from both.
 
-- [ ] T28.1 Remove the `#id` row from `Pito::Channel::ItemComponent` (drop from the component → both `list channels` and the game-detail enhanced message); update specs.
+- [x] T28.1 Remove the `#id` row from `Pito::Channel::ItemComponent` (drop from the component → both `list channels` and the game-detail enhanced message); update specs.
 
 ## Phase 29 — Drop `game_enhanced` follow-up (no hashtag on the Enhanced message)
 

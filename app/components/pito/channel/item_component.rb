@@ -3,17 +3,17 @@
 module Pito
   module Channel
     # The ONE channel item, rendered identically everywhere (centered column,
-    # 120px circular avatar, handle / title / #id). Two surfaces share it and
-    # differ ONLY by kwargs: `list channels` shows the [view] link and no score
-    # bar; the recommended-channels grid hides [view] and shows a ScoreBar.
+    # 120px circular avatar, handle / title). Two surfaces share it and differ
+    # ONLY by kwargs: `list channels` shows the [view] link and no score bar;
+    # the recommended-channels grid hides [view] and shows a ScoreBar.
     #
     # kwargs:
     #   channel:      [Channel]      — the channel record to display.
     #   show_avatar:  [Boolean]      — render the cached avatar variant (default false).
     #   show_visit:   [Boolean]      — render a plain [view] link (default false).
     #                                  NOT VisitComponent (that auto-navigates).
-    #   score:        [Integer, nil] — when present, render a ScoreBarComponent
-    #                                  below the #id. nil omits the bar.
+    #   score:        [Integer, nil] — when present, render a ScoreBarComponent.
+    #                                  nil omits the bar.
     #
     # Usage:
     #   # list channels — avatar + [view], no score bar:
