@@ -644,6 +644,22 @@ describe("pito--suggestions controller", () => {
       expect(result).not.toBeNull()
       expect(result.complete_current).toBe("-help")
     })
+
+    it("'delete game -' ghosts '-help' (verb + noun + partial)", () => {
+      // game_titles slot is dynamic; 'game' is consumed as a dynamic slot word,
+      // then '-' triggers the --help ghost before the dynamic-fetch path.
+      const result = ctrl._computeLocalGhost("delete game -", 13)
+      expect(result).not.toBeNull()
+      expect(result.complete_current).toBe("-help")
+      expect(result.next_hint).toBe("")
+    })
+
+    it("'show video --' ghosts 'help' (verb + noun + partial)", () => {
+      const result = ctrl._computeLocalGhost("show video --", 13)
+      expect(result).not.toBeNull()
+      expect(result.complete_current).toBe("help")
+      expect(result.next_hint).toBe("")
+    })
   })
 
   // ── Lifecycle ────────────────────────────────────────────────────────────

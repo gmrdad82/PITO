@@ -2,52 +2,125 @@
 
 module Pito
   module MessageBuilder
-    # Per-verb `--help` dispatcher.
+    # Two-level `--help` dispatcher for chat verbs.
     #
-    # CommandHelp.call(verb: :show) → { "html" => true, "body" => <man page> }
-    #                              or nil when no help copy exists for the verb.
+    # CommandHelp.call(:show)              → verb-level page (lists all noun forms)
+    # CommandHelp.call(:show, noun: :game) → noun-level page for show game
+    # CommandHelp.call(:list)              → delegates to Game::ListHelp (any noun)
     #
-    # :list → delegates to Game::ListHelp (retains its own rendering path).
-    # Other verbs → reads pito.copy.chat_help.<verb> from I18n:
-    #   {
-    #     "usage"    => "verb <args>",
-    #     "sections" => { "Title" => { "token" => "description", … }, … }
-    #   }
-    # Returns nil when the key is missing or malformed.
+    # Copy lives at pito.copy.chat_help.<verb>:
+    #   verb-level usage  → pito.copy.chat_help.<verb>.usage  (String)
+    #   noun page         → pito.copy.chat_help.<verb>.<noun> = { usage:, sections: }
+    #
+    # Verb-level rendering:
+    #   - Shows the verb-level usage line.
+    #   - Single-noun verbs: renders the one noun page directly (same output).
+    #   - Multi-noun verbs: lists noun forms with a one-liner Options: --help row.
+    #
+    # Returns nil for unknown verb/noun (no copy exists).
     module CommandHelp
       module_function
 
+      # Known noun tokens for each verb.  Determines rendering strategy and
+      # the order in which nouns are listed on the verb-level page.
+      VERB_NOUNS = {
+        show:     %i[game video],
+        delete:   %i[game video],
+        reindex:  %i[game video],
+        footage:  %i[game],
+        link:     %i[game video],
+        unlink:   %i[game video],
+        publish:  %i[video],
+        unlist:   %i[video],
+        schedule: %i[video],
+        import:   %i[videos game],
+        sync:     %i[videos channels]
+      }.freeze
+
       # @param verb [Symbol]
+      # @param noun [Symbol, nil]
       # @return [Hash, nil]
-      def call(verb:)
+      def call(verb, noun: nil)
         return Pito::MessageBuilder::Game::ListHelp.call if verb == :list
 
-        data = help_data(verb)
+        nouns = VERB_NOUNS[verb]
+        return nil unless nouns # unknown verb
+
+        if noun
+          render_noun_page(verb, noun)
+        else
+          render_verb_page(verb, nouns)
+        end
+      end
+
+      # ── Private ──────────────────────────────────────────────────────────────
+
+      # Render a specific noun page.
+      def render_noun_page(verb, noun)
+        data = I18n.t("pito.copy.chat_help.#{verb}.#{noun}", default: nil)
         return nil unless data.is_a?(Hash)
 
-        # I18n returns symbol-keyed hashes for YAML mappings.
         usage    = (data[:usage] || data["usage"]).to_s
         sections = data[:sections] || data["sections"]
         return nil unless sections.is_a?(Hash)
 
-        groups = sections.map do |title, rows|
-          next nil unless rows.is_a?(Hash)
-
-          [ title.to_s, rows.map { |tok, desc| [ tok.to_s, desc.to_s ] } ]
-        end.compact
-
+        groups = build_groups(sections)
         return nil if groups.empty?
 
         body = Pito::MessageBuilder::ManPage.render(usage:, groups:)
         { "html" => true, "body" => body }
       end
+      private_class_method :render_noun_page
 
-      # ── Private ──────────────────────────────────────────────────────────────
-
-      def help_data(verb)
-        I18n.t("pito.copy.chat_help.#{verb}", default: nil)
+      # Render a verb-level page.
+      # Single-noun verb: delegates straight to the one noun page.
+      # Multi-noun verb: usage line + one row per noun form + Options: --help.
+      def render_verb_page(verb, nouns)
+        if nouns.size == 1
+          render_noun_page(verb, nouns.first)
+        else
+          render_multi_noun_verb_page(verb, nouns)
+        end
       end
-      private_class_method :help_data
+      private_class_method :render_verb_page
+
+      # Build a verb-level man page listing noun form usages.
+      def render_multi_noun_verb_page(verb, nouns)
+        verb_usage = I18n.t("pito.copy.chat_help.#{verb}.usage", default: nil)
+        return nil unless verb_usage.is_a?(String) && verb_usage.present?
+
+        # Collect per-noun usage lines.
+        noun_rows = nouns.filter_map do |n|
+          data = I18n.t("pito.copy.chat_help.#{verb}.#{n}", default: nil)
+          next unless data.is_a?(Hash)
+
+          usage = (data[:usage] || data["usage"]).to_s
+          next if usage.blank?
+
+          [ "#{verb} #{n}", usage ]
+        end
+
+        return nil if noun_rows.empty?
+
+        groups = [
+          [ "Forms", noun_rows ],
+          [ "Options", [ [ "--help", "Print this help message" ] ] ]
+        ]
+
+        body = Pito::MessageBuilder::ManPage.render(usage: verb_usage, groups:)
+        { "html" => true, "body" => body }
+      end
+      private_class_method :render_multi_noun_verb_page
+
+      # Convert I18n sections hash into ManPage groups array.
+      def build_groups(sections)
+        sections.filter_map do |title, rows|
+          next unless rows.is_a?(Hash)
+
+          [ title.to_s, rows.map { |tok, desc| [ tok.to_s, desc.to_s ] } ]
+        end
+      end
+      private_class_method :build_groups
     end
   end
 end

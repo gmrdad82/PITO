@@ -119,6 +119,32 @@ RSpec.describe Pito::Chat::Dispatcher do
         body = result.events.first[:payload]["body"]
         expect(body).to include("show")
       end
+
+      it "routes 'delete game --help' to the delete-game noun page" do
+        result = described_class.call(input: "delete game --help", conversation:)
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        body = result.events.first[:payload]["body"]
+        # Noun page for delete game uses id-only wording, not title
+        expect(body).to include("delete game")
+        expect(body).not_to include("title")
+      end
+
+      it "routes 'show game --help' to the show-game noun page (title|id)" do
+        result = described_class.call(input: "show game --help", conversation:)
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        body = result.events.first[:payload]["body"]
+        expect(body).to include("show game")
+        expect(body).to include("title")
+      end
+
+      it "routes 'delete --help' (no noun) to the delete verb-level page (lists forms)" do
+        result = described_class.call(input: "delete --help", conversation:)
+        expect(result).to be_a(Pito::Chat::Result::Ok)
+        body = result.events.first[:payload]["body"]
+        # Verb-level page must mention both noun forms
+        expect(body).to include("game")
+        expect(body).to include("video")
+      end
     end
   end
 end

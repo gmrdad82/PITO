@@ -2149,89 +2149,177 @@ en:
 
       chat_help:
         show:
-          usage: "show <title>"
-          sections:
-            Arguments:
-              "<title>": "Game or video to show (fuzzy title match or #id)"
-            Options:
-              "--help": "Print this help message"
-        import:
-          usage: "import <noun> [title]"
-          sections:
-            Arguments:
-              "<noun>": "What to import: 'videos' to import newer YouTube videos for the scoped channel(s), or 'game' to open the IGDB import sidebar"
-              "[title]": "Optional game title hint for the IGDB sidebar import"
-            Options:
-              "--help": "Print this help message"
-        sync:
-          usage: "sync [target]"
-          sections:
-            Arguments:
-              "game <ref>": "Sync one game's metadata from IGDB"
-              "video <ref>": "Sync one video's metadata from YouTube"
-              "videos": "Sync all videos on the scoped channel(s) from YouTube"
-              "channel": "Sync channel fields and stats for the scoped channel(s)"
-              "channel with videos": "Sync channel and all their videos together"
-            Options:
-              "--help": "Print this help message"
-        footage:
-          usage: "footage <title> <path>"
-          sections:
-            Arguments:
-              "<title>": "Game title or #id whose footage to manage"
-              "<path>": "Absolute or home-relative path to the footage folder (e.g. /mnt/clips or ~/clips)"
-            Options:
-              "--help": "Print this help message"
+          usage: "show game <title|id>  |  show video <title|id>"
+          game:
+            usage: "show game <title|id>"
+            sections:
+              Arguments:
+                "game": "Target noun"
+                "<title|id>": "Multi-word title in \"…\" or local numeric id"
+              Options:
+                "--help": "Print this help message"
+          video:
+            usage: "show video <title|id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<title|id>": "Multi-word title in \"…\" or local numeric id"
+              Options:
+                "--help": "Print this help message"
         delete:
-          usage: "delete <title>"
-          sections:
-            Arguments:
-              "<title>": "Game or video to delete (title or #id); prefix with 'video' to target a video, otherwise a game is assumed"
-            Options:
-              "--help": "Print this help message"
+          usage: "delete game <id>  |  delete video <id>"
+          game:
+            usage: "delete game <id>"
+            sections:
+              Arguments:
+                "game": "Target noun (alias: rm)"
+                "<id>": "Local numeric game id only — not a name string"
+              Options:
+                "--help": "Print this help message"
+          video:
+            usage: "delete video <id>"
+            sections:
+              Arguments:
+                "video": "Target noun (alias: rm)"
+                "<id>": "Local numeric video id only — not a name string"
+              Options:
+                "--help": "Print this help message"
         reindex:
-          usage: "reindex <title>"
-          sections:
-            Arguments:
-              "<title>": "Game or video to re-embed in Voyage (title or #id); prefix with 'video' to target a video"
-            Options:
-              "--help": "Print this help message"
-        publish:
-          usage: "publish <title>"
-          sections:
-            Arguments:
-              "<title>": "Video to publish (title or #id); sets YouTube visibility to public"
-            Options:
-              "--help": "Print this help message"
-        unlist:
-          usage: "unlist <title>"
-          sections:
-            Arguments:
-              "<title>": "Video to unlist (title or #id); sets YouTube visibility to unlisted"
-            Options:
-              "--help": "Print this help message"
-        schedule:
-          usage: "schedule <title> <when>"
-          sections:
-            Arguments:
-              "<title>": "Video to schedule (title or #id)"
-              "<when>": "Publish time in UTC — YYYY-MM-DD or YYYY-MM-DD HH:MM (must be at least 30 minutes from now)"
-            Options:
-              "--help": "Print this help message"
+          usage: "reindex game <id>  |  reindex video <id>"
+          game:
+            usage: "reindex game <id>"
+            sections:
+              Arguments:
+                "game": "Target noun"
+                "<id>": "Local numeric game id — Voyage re-embeds the record"
+              Options:
+                "--help": "Print this help message"
+          video:
+            usage: "reindex video <id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id — Voyage re-embeds the record"
+              Options:
+                "--help": "Print this help message"
+        footage:
+          usage: "footage game <id> <path>"
+          game:
+            usage: "footage game <id> <path>"
+            sections:
+              Arguments:
+                "game": "Target noun"
+                "<id>": "Local numeric game id"
+                "<path>": "Local footage folder path (absolute or ~/…)"
+              Options:
+                "--help": "Print this help message"
         link:
-          usage: "link <title>"
-          sections:
-            Arguments:
-              "<title>": "Two-sided ref: 'game <ref> to video <ref>' or 'video <ref> to game <ref>' — links a game and a video together"
-            Options:
-              "--help": "Print this help message"
+          usage: "link game <id> to video <id>  |  link video <id> to game <id>"
+          game:
+            usage: "link game <id> to video <id>"
+            sections:
+              Arguments:
+                "game": "Target noun"
+                "<id>": "Local numeric game id"
+                "to video <id>": "Local numeric video id to link to"
+              Options:
+                "--help": "Print this help message"
+          video:
+            usage: "link video <id> to game <id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id"
+                "to game <id>": "Local numeric game id to link to"
+              Options:
+                "--help": "Print this help message"
         unlink:
-          usage: "unlink <title>"
-          sections:
-            Arguments:
-              "<title>": "Two-sided ref: 'game <ref> from video <ref>' or 'video <ref> from game <ref>' — removes the link between a game and a video"
-            Options:
-              "--help": "Print this help message"
+          usage: "unlink game <id> from video <id>  |  unlink video <id> from game <id>"
+          game:
+            usage: "unlink game <id> from video <id>"
+            sections:
+              Arguments:
+                "game": "Target noun"
+                "<id>": "Local numeric game id"
+                "from video <id>": "Local numeric video id to unlink from"
+              Options:
+                "--help": "Print this help message"
+          video:
+            usage: "unlink video <id> from game <id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id"
+                "from game <id>": "Local numeric game id to unlink from"
+              Options:
+                "--help": "Print this help message"
+        publish:
+          usage: "publish video <id>"
+          video:
+            usage: "publish video <id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id — sets YouTube visibility to public"
+              Options:
+                "--help": "Print this help message"
+        unlist:
+          usage: "unlist video <id>"
+          video:
+            usage: "unlist video <id>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id — sets YouTube visibility to unlisted"
+              Options:
+                "--help": "Print this help message"
+        schedule:
+          usage: "schedule video <id> <date>"
+          video:
+            usage: "schedule video <id> <date>"
+            sections:
+              Arguments:
+                "video": "Target noun"
+                "<id>": "Local numeric video id"
+                "<date>": "Publish time: dd-mm-yyyy hh:mm (local time, ≥30 min from now)"
+              Options:
+                "--help": "Print this help message"
+        import:
+          usage: "import videos [for @handle]  |  import game [title]"
+          videos:
+            usage: "import videos [for @handle]"
+            sections:
+              Arguments:
+                "videos": "Target noun — imports newer YouTube videos for the scoped channel(s)"
+                "[for @handle]": "Override scope: import only for the given channel handle"
+              Options:
+                "--help": "Print this help message"
+          game:
+            usage: "import game [title]"
+            sections:
+              Arguments:
+                "game": "Target noun — opens the IGDB import sidebar"
+                "[title]": "Optional title to prefill the IGDB search"
+              Options:
+                "--help": "Print this help message"
+        sync:
+          usage: "sync videos [only id,id,id]  |  sync channels [with <items>]"
+          videos:
+            usage: "sync videos [only id,id,id]"
+            sections:
+              Arguments:
+                "videos": "Target noun — syncs video metadata from YouTube for the scoped channel(s)"
+                "[only id,id,id]": "Restrict to these local video ids (comma-separated, no titles)"
+              Options:
+                "--help": "Print this help message"
+          channels:
+            usage: "sync channels [with <items>]"
+            sections:
+              Arguments:
+                "channels": "Target noun — syncs channel fields and stats for the scoped channel(s)"
+                "[with <items>]": "Comma-list of what to include alongside the channel sync (today: videos)"
+              Options:
+                "--help": "Print this help message"
 
       games:
         import:

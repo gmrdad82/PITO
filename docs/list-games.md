@@ -655,10 +655,12 @@ phases (9/11/13/17/19/21/23). Mirrors the hashtag "both levels" decision: bare `
 lists the noun forms; `<verb> <noun> --help` shows the specific page. Single-entity verbs
 (publish/unlist/schedule = video; footage = game) have one form, so verb-level == that form.
 
-- [ ] T38.1 Rework `Pito::MessageBuilder::CommandHelp.call(verb, noun: nil)` — `noun: nil` → verb-level page listing the noun forms (`<verb> game …` / `<verb> video …`); `noun:` given → that noun's page. complexity: [high]
-- [ ] T38.2 Restructure `pito.copy.chat_help.*` → `chat_help.<verb>.<noun>` (+ a verb-level usage/intro); REWRITE the 11 existing Phase 7 keys (id-only, no `#`, no `<title>`); update `command_help_spec`. complexity: [high]
-- [ ] T38.3 Dispatcher: parse the noun from `<verb> <noun> --help` (and bare `<verb> --help`) and pass it to `CommandHelp`. Ensure the `-`→`--help` ghost (Phase 7 T7.3) also fires at `<verb> <noun> -`. complexity: [low]
-- [ ] T38.4 Specs: `delete --help` lists game+video forms; `delete game --help` = game page; bare verb-level for single-entity verbs == their one form. complexity: [low]
+- [x] T38.1 `CommandHelp.call(verb, noun: nil)` — verb-level page lists the noun `Forms:`; `noun:` → specific page; single-entity verb-level == its one form. complexity: [high]
+- [x] T38.2 Restructured `pito.copy.chat_help.<verb>.<noun>` (+ verb-level usage); rewrote all 11 verbs (id-only / quoted-title for show); rewrote `command_help_spec`. complexity: [high]
+- [x] T38.3 Dispatcher parses the noun → `CommandHelp.call(verb, noun:)`; `-`→`--help` ghost already fires at `<verb> <noun> -`. complexity: [low]
+- [x] T38.4 Specs: verb-level lists forms; noun-level specific; single-entity verb-level == one form; unknown → nil. complexity: [low]
+
+**Phase 38 delivers the chat-verb `--help` CONTENT** → the following `--help` content tasks are DONE via the `chat_help.<verb>.<noun>` rewrite: T9.1/9.2 (show), T11.1/11.2 (import), T13.1/13.2 (sync), T15.1 (footage), T17.1/17.2 (delete), T19.1/19.2 (reindex), T21.1/21.2/21.3 (publish/unlist/schedule), T23.1–23.4 (link/unlink). (`list` --help = Phase 8, separate.)
 
 ## Verification (end-to-end)
 

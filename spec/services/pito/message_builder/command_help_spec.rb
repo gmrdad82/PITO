@@ -4,58 +4,109 @@ require "rails_helper"
 
 RSpec.describe Pito::MessageBuilder::CommandHelp do
   describe ".call" do
-    context "when verb is :list" do
+    # ── :list delegation ──────────────────────────────────────────────────────
+
+    context "when verb is :list (any noun)" do
       it "delegates to Game::ListHelp and returns its payload" do
         list_payload = Pito::MessageBuilder::Game::ListHelp.call
-        result = described_class.call(verb: :list)
+        result = described_class.call(:list)
 
         expect(result).to be_a(Hash)
         expect(result["html"]).to be(true)
         expect(result["body"]).to eq(list_payload["body"])
       end
-    end
 
-    context "when verb is :show (has copy)" do
-      it "returns an html payload" do
-        result = described_class.call(verb: :show)
-        expect(result).to be_a(Hash)
-        expect(result["html"]).to be(true)
-      end
-
-      it "body includes a Usage: header" do
-        body = described_class.call(verb: :show)["body"]
-        expect(body).to include("Usage:")
-      end
-
-      it "body includes the show usage line (html-escaped)" do
-        body = described_class.call(verb: :show)["body"]
-        # <title> is html-escaped to &lt;title&gt;
-        expect(body).to include("show")
-        expect(body).to include("&lt;title&gt;")
-      end
-
-      it "body includes --help" do
-        body = described_class.call(verb: :show)["body"]
-        expect(body).to include("--help")
-      end
-
-      it "body is wrapped in .pito-help-block" do
-        body = described_class.call(verb: :show)["body"]
-        expect(body).to include('class="pito-help-block"')
+      it "still delegates when a noun is provided" do
+        list_payload = Pito::MessageBuilder::Game::ListHelp.call
+        result = described_class.call(:list, noun: :games)
+        expect(result["body"]).to eq(list_payload["body"])
       end
     end
 
-    context "when verb is unknown (no copy)" do
-      it "returns nil" do
-        result = described_class.call(verb: :nope)
-        expect(result).to be_nil
+    # ── Unknown verb ──────────────────────────────────────────────────────────
+
+    context "when verb is unknown" do
+      it "returns nil for an entirely unknown verb" do
+        expect(described_class.call(:nope)).to be_nil
+      end
+
+      it "returns nil for an unknown noun on a known verb" do
+        expect(described_class.call(:show, noun: :widget)).to be_nil
       end
     end
 
-    describe "10 new verbs each render a valid help payload" do
-      %i[import sync footage delete reindex publish unlist schedule link unlink].each do |verb|
+    # ── Verb-level pages (bare `<verb> --help`) ───────────────────────────────
+
+    describe "verb-level page (noun: nil)" do
+      context "delete (multi-noun: game + video)" do
+        subject(:result) { described_class.call(:delete) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "body includes 'Usage:'" do
+          expect(result["body"]).to include("Usage:")
+        end
+
+        it "body includes the delete verb" do
+          expect(result["body"]).to include("delete")
+        end
+
+        it "body lists the game form" do
+          expect(result["body"]).to include("game")
+        end
+
+        it "body lists the video form" do
+          expect(result["body"]).to include("video")
+        end
+
+        it "body includes --help option" do
+          expect(result["body"]).to include("--help")
+        end
+
+        it "body is wrapped in .pito-help-block" do
+          expect(result["body"]).to include('class="pito-help-block"')
+        end
+      end
+
+      context "footage (single-noun: game)" do
+        subject(:result) { described_class.call(:footage) }
+
+        it "returns a valid html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "verb-level page == noun-level page for single-entity verb" do
+          noun_result = described_class.call(:footage, noun: :game)
+          expect(result["body"]).to eq(noun_result["body"])
+        end
+
+        it "body includes the footage path argument" do
+          expect(result["body"]).to include("path")
+        end
+      end
+
+      context "show (multi-noun: game + video)" do
+        subject(:result) { described_class.call(:show) }
+
+        it "body includes title|id wording" do
+          # The verb-level usage line references title|id
+          expect(result["body"]).to match(/title.id/i)
+        end
+
+        it "body lists both game and video forms" do
+          expect(result["body"]).to include("game")
+          expect(result["body"]).to include("video")
+        end
+      end
+
+      # Remaining verbs — smoke-test that each renders a valid page
+      %i[reindex link unlink publish unlist schedule import sync].each do |verb|
         context "verb :#{verb}" do
-          subject(:result) { described_class.call(verb: verb) }
+          subject(:result) { described_class.call(verb) }
 
           it "returns an html payload" do
             expect(result).to be_a(Hash)
@@ -73,6 +124,94 @@ RSpec.describe Pito::MessageBuilder::CommandHelp do
           it "body includes '--help'" do
             expect(result["body"]).to include("--help")
           end
+        end
+      end
+    end
+
+    # ── Noun-level pages (`<verb> <noun> --help`) ─────────────────────────────
+
+    describe "noun-level page (noun: given)" do
+      context "delete game --help" do
+        subject(:result) { described_class.call(:delete, noun: :game) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "usage line mentions 'delete game <id>'" do
+          expect(result["body"]).to include("delete game")
+          expect(result["body"]).to include("&lt;id&gt;")
+        end
+
+        it "body describes id-only (never title)" do
+          expect(result["body"]).to include("id")
+          expect(result["body"]).not_to include("title")
+        end
+
+        it "body includes --help option" do
+          expect(result["body"]).to include("--help")
+        end
+      end
+
+      context "show game --help" do
+        subject(:result) { described_class.call(:show, noun: :game) }
+
+        it "usage line mentions title|id" do
+          expect(result["body"]).to include("title")
+          expect(result["body"]).to include("id")
+        end
+
+        it "body is wrapped in .pito-help-block" do
+          expect(result["body"]).to include('class="pito-help-block"')
+        end
+      end
+
+      context "footage game --help (single-entity verb)" do
+        subject(:result) { described_class.call(:footage, noun: :game) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "usage line includes footage game path shape" do
+          expect(result["body"]).to include("footage game")
+          expect(result["body"]).to include("path")
+        end
+      end
+
+      context "import videos --help" do
+        subject(:result) { described_class.call(:import, noun: :videos) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "body mentions @handle override" do
+          expect(result["body"]).to include("handle")
+        end
+      end
+
+      context "sync channels --help" do
+        subject(:result) { described_class.call(:sync, noun: :channels) }
+
+        it "returns an html payload" do
+          expect(result).to be_a(Hash)
+          expect(result["html"]).to be(true)
+        end
+
+        it "body mentions 'with' option" do
+          expect(result["body"]).to include("with")
+        end
+      end
+
+      context "schedule video --help" do
+        subject(:result) { described_class.call(:schedule, noun: :video) }
+
+        it "body mentions dd-mm-yyyy date format" do
+          expect(result["body"]).to include("dd-mm-yyyy")
         end
       end
     end
