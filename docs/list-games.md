@@ -138,7 +138,7 @@ dates read "June 09, 2026"; and the input ghosts ` with` → field tokens as you
 
 ### T0 — Baseline (do first)
 
-- [ ] T0.1 Run the full `bundle exec rspec` + `npm test`; record the exact example counts here as the baseline. complexity: [manual]
+- [x] T0.1 Baseline recorded: **`bundle exec rspec` = 4373 examples, 0 failures**; **`npm test` (vitest) = 329 tests, 0 failures** (commit `8e8f8df1`+). Compare only FULL runs to this. complexity: [manual]
 
 ## Investigation findings (uncertainties → resolutions)
 
