@@ -69,10 +69,10 @@ from context, accepting multiple `to`/`from` ids (HABTM), without consuming the 
 - [x] T2.3 Make `filter_link_unlink` in `app/services/pito/suggestions/engine.rb` return both link & unlink for list and detail targets. complexity: [low]
 - [x] T2.4 Add `actions.link` / `actions.unlink` copy under `list-videos` and `list-games` in `config/locales/pito/copy/en.yml`. complexity: [low]
 - [x] T2.5 Update `show-video` / `show-game` link/unlink usage copy to the multi `to <id>[,id…]` form in `en.yml`. complexity: [low]
-- [ ] T2.6 Add engine ghost spec — list/detail handle palette includes both link & unlink. complexity: [low]
-- [ ] T2.7 Add `video_list`/`game_list` follow-up specs — `link`/`unlink` single + multi-target, and `reply_consumed` stays unset (repeatable). complexity: [low]
-- [ ] T2.8 Run `bundle exec rspec` + `bin/rubocop`; confirm green. complexity: [manual]
-- [ ] T2.9 Commit: `surface link/unlink on lists; show both in palette; help copy`. complexity: [manual]
+- [x] T2.6 Add engine ghost spec — list/detail handle palette includes both link & unlink. complexity: [low]
+- [x] T2.7 Add `video_list`/`game_list` follow-up specs — `link`/`unlink` single + multi-target, and `reply_consumed` stays unset (repeatable). complexity: [low]
+- [x] T2.8 Run `bundle exec rspec` + `bin/rubocop`; confirm green. complexity: [manual]
+- [x] T2.9 Commit: `surface link/unlink on lists; show both in palette; help copy`. complexity: [manual]
 
 ## P3 — Housekeeping + final verification
 

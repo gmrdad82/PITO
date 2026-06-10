@@ -615,9 +615,9 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
     end
   end
 
-  # T19.6 — a detail card offers link XOR unlink based on whether its entity is
-  # already linked (gating still permits both; only the suggestions are shaped).
-  describe "hashtag follow-up: link XOR unlink by existence", :db do
+  # filter_link_unlink is a pass-through: both link and unlink are always
+  # included in the palette regardless of whether a VideoGameLink exists.
+  describe "hashtag follow-up: game_detail palette always includes both link and unlink", :db do
     let(:conversation) { Conversation.create! }
     let(:turn)         { conversation.turns.create!(input_kind: :chat, input_text: "show game x", position: 1) }
     let(:game)         { create(:game, title: "Dead Space") }
@@ -633,15 +633,53 @@ RSpec.describe Pito::Suggestions::Engine, type: :service do
       call(input: "#dead-1000 ", cursor: 11, conversation:)[:menu_items].map { |i| i[:label] }
     end
 
-    it "suggests `link` (not `unlink`) when the game has no link" do
-      expect(labels).to include("link")
-      expect(labels).not_to include("unlink")
+    it "includes both link and unlink when the game has no linked video" do
+      expect(labels).to include("link", "unlink")
     end
 
-    it "suggests `unlink` (not `link`) when the game is already linked" do
+    it "includes both link and unlink when the game is already linked to a video" do
       create(:video_game_link, game:, video: create(:video, :public, channel: create(:channel)))
-      expect(labels).to include("unlink")
-      expect(labels).not_to include("link")
+      expect(labels).to include("link", "unlink")
+    end
+  end
+
+  # filter_link_unlink is a pass-through: list handles that declare link and
+  # unlink in self.actions always expose both, regardless of link-state.
+  describe "hashtag follow-up: list handle palette includes both link and unlink", :db do
+    let(:conversation) { Conversation.create! }
+
+    before { Pito::FollowUp::Registry.register_all! }
+
+    context "game_list" do
+      let(:turn) { conversation.turns.create!(input_kind: :slash, input_text: "/list games", position: 1) }
+
+      before do
+        Event.create_with_position!(
+          conversation:, turn:, kind: "system",
+          payload: { "reply_handle" => "glink-1001", "reply_target" => "game_list", "body" => "games" }
+        )
+      end
+
+      it "includes both link and unlink in the action palette" do
+        result = call(input: "#glink-1001 ", cursor: 12, conversation:)
+        expect(result[:menu_items].map { |i| i[:label] }).to include("link", "unlink")
+      end
+    end
+
+    context "video_list" do
+      let(:turn) { conversation.turns.create!(input_kind: :slash, input_text: "/list videos", position: 1) }
+
+      before do
+        Event.create_with_position!(
+          conversation:, turn:, kind: "system",
+          payload: { "reply_handle" => "vlink-1002", "reply_target" => "video_list", "body" => "videos" }
+        )
+      end
+
+      it "includes both link and unlink in the action palette" do
+        result = call(input: "#vlink-1002 ", cursor: 12, conversation:)
+        expect(result[:menu_items].map { |i| i[:label] }).to include("link", "unlink")
+      end
     end
   end
 
