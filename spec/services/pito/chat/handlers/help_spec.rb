@@ -38,36 +38,81 @@ RSpec.describe Pito::Chat::Handlers::Help do
     expect(payload["sections"]).to be_nil.or be_empty
   end
 
-  # ── GAMES group title ─────────────────────────────────────────────────────
+  it "payload has no table_rows key (all content is in the html body)" do
+    payload = handler.call.events.first[:payload]
+    expect(payload["table_rows"]).to be_nil
+  end
 
-  it "payload body contains 'GAMES' (yellow title)" do
+  # ── Group headings ────────────────────────────────────────────────────────
+
+  it "payload body contains 'GAMES' group title" do
     body = handler.call.events.first[:payload]["body"]
     expect(body).to include("GAMES")
   end
 
-  it "payload body renders GAMES title with text-yellow font-bold classes" do
+  it "payload body contains 'VIDEOS' group title" do
+    body = handler.call.events.first[:payload]["body"]
+    expect(body).to include("VIDEOS")
+  end
+
+  it "payload body contains 'CHANNELS' group title" do
+    body = handler.call.events.first[:payload]["body"]
+    expect(body).to include("CHANNELS")
+  end
+
+  it "payload body renders group titles with text-yellow font-bold classes" do
     body = handler.call.events.first[:payload]["body"]
     expect(body).to include("text-yellow")
     expect(body).to include("font-bold")
   end
 
-  # ── list games kv row ─────────────────────────────────────────────────────
+  # ── GAMES verbs ───────────────────────────────────────────────────────────
 
-  it "payload has a table_rows array" do
-    payload = handler.call.events.first[:payload]
-    expect(payload["table_rows"]).to be_an(Array).and be_present
+  %w[list show import delete reindex link unlink footage].each do |verb|
+    it "body contains GAMES verb '#{verb}'" do
+      body = handler.call.events.first[:payload]["body"]
+      expect(body).to include(verb)
+    end
   end
 
-  it "table_rows contains a row with key 'list games'" do
-    rows = handler.call.events.first[:payload]["table_rows"]
-    keys = rows.map { |r| r["key"] || r[:key] }
-    expect(keys).to include("list games")
+  # ── VIDEOS verbs ──────────────────────────────────────────────────────────
+
+  %w[publish unlist schedule].each do |verb|
+    it "body contains VIDEOS verb '#{verb}'" do
+      body = handler.call.events.first[:payload]["body"]
+      expect(body).to include(verb)
+    end
   end
 
-  it "the 'list games' row value mentions --help" do
-    rows = handler.call.events.first[:payload]["table_rows"]
-    row  = rows.find { |r| (r["key"] || r[:key]) == "list games" }
-    expect(row["value"] || row[:value]).to include("--help")
+  # ── CHANNELS verbs ────────────────────────────────────────────────────────
+
+  it "body contains CHANNELS verb 'sync'" do
+    body = handler.call.events.first[:payload]["body"]
+    expect(body).to include("sync")
+  end
+
+  # ── Hint text present for every row ──────────────────────────────────────
+
+  it "body includes 'use --help for more info' hint text" do
+    body = handler.call.events.first[:payload]["body"]
+    expect(body).to include("use --help for more info")
+  end
+
+  # ── `help` verb is NOT listed ─────────────────────────────────────────────
+
+  it "body does not list 'help' as a verb row (the page IS the help)" do
+    body = handler.call.events.first[:payload]["body"]
+    # The word "help" appears in the hint text — assert the verb span itself
+    # is not present (i.e. no <span ...>help</span> entry).
+    expect(body).not_to include(">help<")
+  end
+
+  # ── Data grid structure ───────────────────────────────────────────────────
+
+  it "body uses pito-data-grid with data-cols=2" do
+    body = handler.call.events.first[:payload]["body"]
+    expect(body).to include('class="pito-data-grid"')
+    expect(body).to include('data-cols="2"')
   end
 
   # ── Grammar registration ──────────────────────────────────────────────────

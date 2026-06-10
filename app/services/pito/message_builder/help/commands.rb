@@ -4,39 +4,63 @@ module Pito
   module MessageBuilder
     module Help
       # Builder for the chat `help` verb — a simple, always-visible system message
-      # listing available chat commands grouped by category.
+      # listing every available chat command grouped by category.
       #
       # == Output shape
       #
       # Returns a Hash with:
-      #   body  — raw HTML fragment (html: true); a yellow bold "GAMES" heading
-      #           rendered via Tailwind utility classes.
+      #   body  — raw HTML fragment (html: true); yellow-bold group headings each
+      #           followed by a two-column .pito-data-grid[data-cols="2"] listing
+      #           the verb and a hint pointing to --help.
       #   html  — true (so the body renders instantly without typewriter)
-      #   table_rows — one kv row: { key: "list games", value: "use --help for more info" }
       #
-      # The `sections` key is intentionally absent so the content is always
-      # visible (sections are hidden behind the ctrl+| expand toggle).
+      # The `sections` and `table_rows` keys are intentionally absent so the full
+      # content is always visible (sections are hidden behind the ctrl+| expand
+      # toggle; table_rows would limit output to a single kv section).
+      #
+      # == Grouping
+      #
+      # VERB_GROUPS is the authoritative ordered map of group → verbs.
+      # Each verb appears in exactly one group; the `help` verb itself is not
+      # listed (it IS the page the user is reading).
+      VERB_GROUPS = {
+        "pito.copy.help.games_group_title"    => %w[list show import delete reindex link unlink footage],
+        "pito.copy.help.videos_group_title"   => %w[publish unlist schedule],
+        "pito.copy.help.channels_group_title" => %w[sync]
+      }.freeze
+
       module Commands
         class << self
-          # @return [Hash] system payload with html body + table_rows
+          # @return [Hash] system payload with html body (always visible)
           def call
             {
-              "body"       => group_title_html,
-              "html"       => true,
-              "table_rows" => [
-                {
-                  "key"   => Pito::Copy.render("pito.copy.help.list_games_label"),
-                  "value" => Pito::Copy.render("pito.copy.help.list_games_hint")
-                }
-              ]
+              "body" => full_body_html,
+              "html" => true
             }
           end
 
           private
 
-          def group_title_html
-            title = ERB::Util.html_escape(Pito::Copy.render("pito.copy.help.games_group_title"))
-            %(<div class="text-yellow font-bold">#{title}</div>)
+          # Concatenates one section per group: a title div + a data-grid of verbs.
+          def full_body_html
+            hint = ERB::Util.html_escape(Pito::Copy.render("pito.copy.help.command_hint"))
+
+            VERB_GROUPS.each_with_index.map do |(title_key, verbs), index|
+              title = ERB::Util.html_escape(Pito::Copy.render(title_key))
+
+              # Omit `mt-3` on the first group so it sits flush at the top,
+              # matching the original single-group spacing.
+              margin = index.zero? ? "" : " mt-3"
+              title_div = %(<div class="text-yellow font-bold#{margin}">#{title}</div>)
+
+              rows = verbs.map do |verb|
+                verb_escaped = ERB::Util.html_escape(verb)
+                %(<span class="text-fg">#{verb_escaped}</span>) \
+                  "<span class=\"text-fg-dim\">#{hint}</span>"
+              end.join
+
+              %(#{title_div}<div class="pito-data-grid" data-cols="2">#{rows}</div>)
+            end.join
           end
         end
       end
