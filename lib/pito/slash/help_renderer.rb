@@ -38,7 +38,10 @@ module Pito
           # the last positional arg (e.g. "igdb--help" instead of "igdb").
           provider = extract_provider(invocation.raw)
 
-          if verb == "help"
+          # `/help --help` and `/themes --help` both render the nonsense
+          # "manual's manual" page: help has no real options, and `/themes` is a
+          # bare Sidebar opener (no args), so its `--help` is the same easter egg.
+          if %w[help themes].include?(verb)
             return nonsense_help
           end
 
