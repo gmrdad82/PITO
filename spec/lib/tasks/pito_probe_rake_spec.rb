@@ -115,22 +115,15 @@ RSpec.describe "pito:tools:probe", type: :rake do
 
       Dir.mktmpdir do |dir|
         File.write(File.join(dir, "clip.mp4"), "x")
-        Footage.create!(game: game, filename: "clip.mp4",
-                        duration_seconds: 100, resolution: "1920x1080")
+        Footage.create!(game: game, filename: "clip.mp4", duration_seconds: 100)
 
         ENV["game"] = game.id.to_s
         ENV["path"] = File.join(dir, "*.mp4")
 
-        probe_result = double(
+        probe_result = Pito::Footage::Probe::Result.new(
           success: true,
           error_message: nil,
-          resolution: "3840x2160",
-          fps: 60.0,
-          duration_seconds: 999,
-          aspect_ratio: "16:9",
-          orientation: "landscape",
-          needs_grading: false,
-          audio_track_names: []
+          duration_seconds: 999
         )
         allow(Pito::Footage::Probe).to receive(:call).and_return(probe_result)
 
@@ -139,7 +132,6 @@ RSpec.describe "pito:tools:probe", type: :rake do
 
         row = Footage.find_by!(game: game, filename: "clip.mp4")
         expect(row.duration_seconds).to eq(999)
-        expect(row.resolution).to eq("3840x2160")
       end
     end
   end

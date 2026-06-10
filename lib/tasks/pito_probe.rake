@@ -69,13 +69,7 @@ namespace :pito do
           {
             game_id: game.id,
             filename: filename,
-            resolution: result.resolution,
-            fps: result.fps,
             duration_seconds: result.duration_seconds,
-            aspect_ratio: result.aspect_ratio,
-            orientation: result.orientation,
-            needs_grading: result.needs_grading,
-            audio_track_names: result.audio_track_names,
             updated_at: Time.current
           },
           unique_by: :index_footages_on_game_id_and_filename
