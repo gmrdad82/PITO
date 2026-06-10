@@ -6,7 +6,7 @@ en:
           list: "List games, channels, or videos"
       show:
         descriptions:
-          show: "Show a game's details (by id or title)"
+          show: "Show a game's details (by id)"
         needs_ref: "Which game? Use `list games` to see ids, then `show game <id>`."
       import:
         descriptions:

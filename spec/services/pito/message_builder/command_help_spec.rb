@@ -192,14 +192,14 @@ RSpec.describe Pito::MessageBuilder::CommandHelp do
       context "show (multi-noun: game + video)" do
         subject(:result) { described_class.call(:show) }
 
-        it "body includes title|id wording" do
-          # The verb-level usage line references title|id
-          expect(result["body"]).to match(/title.id/i)
-        end
-
         it "body lists both game and video forms" do
           expect(result["body"]).to include("game")
           expect(result["body"]).to include("video")
+        end
+
+        it "body uses id-only wording (no title)" do
+          expect(result["body"]).not_to match(/title/i)
+          expect(result["body"]).to include("id")
         end
       end
 
@@ -257,9 +257,9 @@ RSpec.describe Pito::MessageBuilder::CommandHelp do
       context "show game --help" do
         subject(:result) { described_class.call(:show, noun: :game) }
 
-        it "usage line mentions title|id" do
-          expect(result["body"]).to include("title")
+        it "usage line is id-only (no title)" do
           expect(result["body"]).to include("id")
+          expect(result["body"]).not_to include("title")
         end
 
         it "body is wrapped in .pito-help-block" do

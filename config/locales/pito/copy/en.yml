@@ -2116,21 +2116,21 @@ en:
         list:
           usage: "list games  |  list videos  |  list channels"
         show:
-          usage: "show game <title|id>  |  show video <title|id>"
+          usage: "show game <id>  |  show video <id>"
           game:
-            usage: "show game <title|id>"
+            usage: "show game <id>"
             sections:
               Arguments:
                 "game": "Target noun"
-                "<title|id>": "Multi-word title in \"…\" or local numeric id"
+                "<id>": "Local numeric id"
               Options:
                 "--help": "Print this help message"
           video:
-            usage: "show video <title|id>"
+            usage: "show video <id>"
             sections:
               Arguments:
                 "video": "Target noun"
-                "<title|id>": "Multi-word title in \"…\" or local numeric id"
+                "<id>": "Local numeric id"
               Options:
                 "--help": "Print this help message"
         delete:

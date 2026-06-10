@@ -129,12 +129,12 @@ RSpec.describe Pito::Chat::Dispatcher do
         expect(body).not_to include("title")
       end
 
-      it "routes 'show game --help' to the show-game noun page (title|id)" do
+      it "routes 'show game --help' to the show-game noun page (id-only)" do
         result = described_class.call(input: "show game --help", conversation:)
         expect(result).to be_a(Pito::Chat::Result::Ok)
         body = result.events.first[:payload]["body"]
         expect(body).to include("show game")
-        expect(body).to include("title")
+        expect(body).not_to include("title")
       end
 
       it "routes 'delete --help' (no noun) to the delete verb-level page (lists forms)" do

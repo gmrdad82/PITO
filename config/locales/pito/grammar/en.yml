@@ -14,7 +14,7 @@ en:
         games: "Import a game from IGDB into your library"
       chat:
         list: "List games in your library"
-        show: "Show a game or video's details (by id or title)"
+        show: "Show a game or video's details (by id)"
         import: "Import a game from IGDB into your library"
         footage: "Get the footage probe command for a game (by id or title)"
         delete: "Delete a game or video (by id or title)"

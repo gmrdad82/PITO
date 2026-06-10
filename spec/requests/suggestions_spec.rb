@@ -96,11 +96,11 @@ RSpec.describe "POST /suggestions", type: :request do
 
     let!(:lies_of_p) { create(:game, title: "Lies of P") }
 
-    it "returns ghost completing 'li' → 'es of P' for 'show game li'" do
+    it "returns empty ghost for 'show game li' (show is id-only — no title ghost)" do
       input = "show game li"
       post "/suggestions", params: { input: input, cursor: input.length }
       body = response.parsed_body
-      expect(body["ghost"]["complete_current"]).to eq("es of P")
+      expect(body["ghost"]["complete_current"]).to eq("")
     end
 
     it "returns ghost completing 'li' → 'es of P' for 'delete game li'" do

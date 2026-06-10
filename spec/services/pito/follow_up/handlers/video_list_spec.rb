@@ -44,9 +44,10 @@ RSpec.describe Pito::FollowUp::Handlers::VideoList do
     expect(detail["reply_target"]).to eq("video_detail")
   end
 
-  it "resolves by title too" do
+  it "returns not-found for a title ref (show is id-only — no title lookup)" do
     result = handler.call(event:, rest: "show boss rush", conversation:)
-    expect(result.events.first[:payload]["body"]).to include("Boss Rush")
+    expect(result.events.first[:payload]["text"]).to be_present
+    expect(result.events.first[:payload]["video_id"]).to be_nil
   end
 
   it "appends a witty not-found for an unknown reference" do
