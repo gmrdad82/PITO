@@ -50,16 +50,16 @@ capped at 11ch (`00:00:00:00`, covers `99:23:59:59`).
 
 ## P1 — `list games` footage column
 
-- [ ] T1.1 Add `.pito-cell-duration { max-width: 11ch; overflow-wrap: break-word; }` to `app/assets/tailwind/application.css` after `.pito-cell-channel`. complexity: [low]
-- [ ] T1.2 Add `footage` entry to `Game::ListColumns::COLUMNS` (aliases `%w[footage]`, heading "Footage", `align: :right`, `cell_class: "text-fg-dim text-right tabular-nums pito-cell-duration"`, value = `Pito::Formatter::Duration.call` of footages-sum or `—`), placed after `year`. complexity: [low]
-- [ ] T1.3 Add `footage` to `Game::ListColumns` `SORT_SPECS` (key = footages duration sum, `requires_with: true`) and `SORT_VOCAB` (`"footage" => :footage`). complexity: [low]
-- [ ] T1.4 Eager-load `:footages` in `app/services/pito/chat/handlers/list.rb` when `columns.include?(:footage)`. complexity: [low]
-- [ ] T1.5 Add `:footage` to the `fixed_trailing` set in `app/services/pito/message_builder/game/list.rb`. complexity: [low]
-- [ ] T1.6 Add `col_footage_desc` under `pito.copy.list.games_help` in `config/locales/pito/copy/en.yml`. complexity: [low]
-- [ ] T1.7 Run `bin/rails tailwindcss:build`; confirm `.pito-cell-duration` is in the built CSS. complexity: [low]
-- [ ] T1.8 Update `spec/services/pito/message_builder/game/list_columns_spec.rb` + `game/list_spec.rb` for footage (cells/heading/vocabulary/sort/canonical-order/fixed_trailing). complexity: [low]
-- [ ] T1.9 Run `bundle exec rspec` (game list specs) + `bin/rubocop`; green. complexity: [low]
-- [ ] T1.10 Commit: `list games: footage column (total footage duration, right-aligned)`. complexity: [manual]
+- [x] T1.1 Add `.pito-cell-duration { max-width: 11ch; overflow-wrap: break-word; }` to `app/assets/tailwind/application.css` after `.pito-cell-channel`. complexity: [low]
+- [x] T1.2 Add `footage` entry to `Game::ListColumns::COLUMNS` (aliases `%w[footage]`, heading "Footage", `align: :right`, `cell_class: "text-fg-dim text-right tabular-nums pito-cell-duration"`, value = `Pito::Formatter::Duration.call` of footages-sum or `—`), placed after `year`. complexity: [low]
+- [x] T1.3 Add `footage` to `Game::ListColumns` `SORT_SPECS` (key = footages duration sum, `requires_with: true`) and `SORT_VOCAB` (`"footage" => :footage`). complexity: [low]
+- [x] T1.4 Eager-load `:footages` in `app/services/pito/chat/handlers/list.rb` when `columns.include?(:footage)`. complexity: [low]
+- [x] T1.5 Add `:footage` to the `fixed_trailing` set in `app/services/pito/message_builder/game/list.rb`. complexity: [low]
+- [x] T1.6 Add `col_footage_desc` under `pito.copy.list.games_help` in `config/locales/pito/copy/en.yml`. complexity: [low]
+- [x] T1.7 Run `bin/rails tailwindcss:build`; confirm `.pito-cell-duration` is in the built CSS. complexity: [low]
+- [x] T1.8 Update `spec/services/pito/message_builder/game/list_columns_spec.rb` + `game/list_spec.rb` for footage (cells/heading/vocabulary/sort/canonical-order/fixed_trailing). complexity: [low]
+- [x] T1.9 Run `bundle exec rspec` (game list specs) + `bin/rubocop`; green. complexity: [low]
+- [x] T1.10 Commit: `list games: footage column (total footage duration, right-aligned)`. complexity: [manual]
 
 ## P2 — `list videos` duration column alignment + clamp
 

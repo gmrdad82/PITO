@@ -1287,6 +1287,11 @@ html {
    Paired with text-cyan on the cell. Applied via cell_class in the ListColumns. */
 .pito-cell-channel { max-width: 15ch; overflow-wrap: break-word; }
 
+/* Clamp the duration / footage columns (list videos / list games): cap at the
+   widest possible value "99:23:59:59" (11ch). Paired with text-right +
+   tabular-nums on the cell. Applied via cell_class in the ListColumns. */
+.pito-cell-duration { max-width: 11ch; overflow-wrap: break-word; }
+
 /* ── Help block (nvim --help style man page) ───────────────────
    Preformatted monospace block for `list games --help`: preserves the
    builder's space-padding so the Usage/Options/Columns rows align, while

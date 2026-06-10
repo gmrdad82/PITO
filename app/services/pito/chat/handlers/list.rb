@@ -70,6 +70,7 @@ module Pito
           if columns.any?
             includes_args = [ :genres, :developer_companies, :publisher_companies ]
             includes_args << { linked_videos: :channel } if columns.include?(:channels)
+            includes_args << :footages if columns.include?(:footage)
             games = games.includes(*includes_args)
           end
 

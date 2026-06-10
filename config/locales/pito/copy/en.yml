@@ -2050,6 +2050,7 @@ en:
           col_channels_desc: "@handles of channels with linked videos"
           col_release_date_desc: "Release date, e.g. June 09, 2026"
           col_year_desc: "Release year"
+          col_footage_desc: "Total footage duration (d:hh:mm:ss)"
         videos_help:
           usage: "list videos [with <columns>] [sorted by <column>]"
           options_title: "Options:"
