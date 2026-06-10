@@ -2060,6 +2060,8 @@ en:
           opt_sorted_desc: "Sort by a visible column (append desc to reverse)"
           opt_help: "--help"
           opt_help_desc: "Print this help message"
+          col_channel_desc: "Channel @handle"
+          col_visibility_desc: "Visibility — public / unlisted / private"
           col_game_desc: "Linked game title(s)"
           col_duration_desc: "Video duration (hh:mm:ss)"
           col_views_desc: "View count"
@@ -2477,14 +2479,14 @@ en:
               usage: "#<list-videos-hashtag> add <columns>"
               sections:
                 Arguments:
-                  "<columns>": "Comma-separated column names to add: game, duration, views, likes, comments"
+                  "<columns>": "Comma-separated column names to add: channel, visibility, game, duration, views, likes, comments"
                 Options:
                   "--help": "Print this help message"
             remove:
               usage: "#<list-videos-hashtag> remove <columns>"
               sections:
                 Arguments:
-                  "<columns>": "Comma-separated column names to remove: game, duration, views, likes, comments"
+                  "<columns>": "Comma-separated column names to remove: channel, visibility, game, duration, views, likes, comments"
                 Options:
                   "--help": "Print this help message"
             sort:
@@ -2493,6 +2495,8 @@ en:
                 "Sort columns":
                   "id": "Row number"
                   "title": "Video title (alphabetical)"
+                  "channel": "Channel @handle — requires the channel column to be visible"
+                  "visibility": "Visibility — requires the visibility column to be visible"
                   "game": "Linked game(s) — requires the game column to be visible"
                   "duration": "Video duration — requires the duration column to be visible"
                   "views": "View count — requires the views column to be visible"
@@ -3828,6 +3832,8 @@ en:
           - "No channels. %{title} is waiting to be covered."
 
       videos:
+        columns:
+          visibility: "Visibility"
         not_found:
           - "No video matching %{ref}."
           - "Couldn't find %{ref}."
