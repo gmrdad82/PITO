@@ -61,6 +61,12 @@ RSpec.describe Pito::MessageBuilder::Video::List do
         expect(cell[:text]).to eq(videos.first.title)
         expect(cell[:class]).to include("text-fg")
       end
+
+      it "title cell (index 1) carries the pito-cell-title class" do
+        cell = payload["table_rows"].first[:cells][1]
+        expect(cell[:class]).to include("pito-cell-title")
+        expect(cell[:class]).to include("text-fg")
+      end
     end
 
     describe "cell 3 — channel handle" do

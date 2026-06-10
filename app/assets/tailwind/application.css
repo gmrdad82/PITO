@@ -1277,6 +1277,11 @@ html {
 .pito-data-grid[data-cols="8"][data-fixed-leading="1"][data-fixed-trailing="1"] { grid-template-columns: max-content max-content max-content repeat(4,minmax(0,1fr)) max-content; }
 .pito-data-grid[data-cols="8"][data-fixed-leading="1"][data-fixed-trailing="2"] { grid-template-columns: max-content max-content max-content repeat(3,minmax(0,1fr)) max-content max-content; }
 
+/* Clamp the list Title (2nd) column: cap the title cell's width so long titles
+   word-wrap to a second line, instead of the max-content track expanding to fit
+   the widest title. Applied to the title cell in Game/Video::List builders. */
+.pito-cell-title { max-width: 34ch; overflow-wrap: break-word; }
+
 /* ── Help block (nvim --help style man page) ───────────────────
    Preformatted monospace block for `list games --help`: preserves the
    builder's space-padding so the Usage/Options/Columns rows align, while

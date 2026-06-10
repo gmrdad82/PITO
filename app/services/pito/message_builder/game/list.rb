@@ -34,7 +34,7 @@ module Pito
               {
                 cells: [
                   { text: "##{game.id}", class: "text-cyan tabular-nums text-right whitespace-nowrap" },
-                  { text: game.title,    class: "text-fg" },
+                  { text: game.title,    class: "text-fg pito-cell-title" },
                   *ListColumns.cells(game, cols)
                 ]
               }

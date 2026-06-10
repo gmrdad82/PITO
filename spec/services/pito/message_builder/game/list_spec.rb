@@ -103,7 +103,13 @@ RSpec.describe Pito::MessageBuilder::Game::List do
 
     it "second cell has text-fg class" do
       cell = payload["table_rows"].first[:cells][1]
-      expect(cell[:class]).to eq("text-fg")
+      expect(cell[:class]).to include("text-fg")
+    end
+
+    it "title cell (index 1) carries the pito-cell-title class" do
+      cell = payload["table_rows"].first[:cells][1]
+      expect(cell[:class]).to include("pito-cell-title")
+      expect(cell[:class]).to include("text-fg")
     end
   end
 

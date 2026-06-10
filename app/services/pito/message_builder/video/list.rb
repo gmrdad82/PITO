@@ -39,7 +39,7 @@ module Pito
           {
             cells: [
               { text: "##{video.id}",           class: "text-cyan tabular-nums text-right whitespace-nowrap" },
-              { text: video.title,              class: "text-fg" },
+              { text: video.title,              class: "text-fg pito-cell-title" },
               { text: video.channel.at_handle,  class: "text-cyan whitespace-nowrap" },
               { text: privacy_label(video),     class: "text-fg-faded whitespace-nowrap" },
               *ListColumns.cells(video, columns)
